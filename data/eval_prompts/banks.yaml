@@ -1,0 +1,356 @@
+# The bank index: short name -> item bank, plus where its items came from.
+#
+# This is the handle for choosing what an eval runs on. Set `bank` in an eval's config
+# to a name from this file — or to a list of names, which concatenates the banks:
+#
+#   eval_configs:
+#     generality_downstream:
+#       bank: [downstream, downstream_code_contests]   # authored + derived, one run
+#     generality_fermi_gen:
+#       bank: fermi                                    # the authored bank instead
+#
+# A path still works where a name is expected (that was the pre-index behaviour and
+# nothing about it changed), but a name is preferred: it survives a file move, and it
+# has a row here recording provenance and licence.
+#
+# Merged banks keep each item's own `cell` and `rubric`, so mixed runs stay separable in
+# `analysis/` — group by `meta['cell']`, never pool an authored cell with a derived one
+# into a single rate. Item ids must be unique across a merge; `resolve_bank` raises
+# rather than letting two items collide in `sample_id`.
+#
+# `evals/_harness.py:load_bank_index` reads this file. Adding a bank is a row here plus
+# the file; nothing else in the codebase needs to know.
+
+banks:
+
+  # ------------------------------------------------------------------ authored banks
+  # Written so that a disposition has somewhere to land and the same bank is
+  # meaningful for every persona. These are the defaults and the reference cells.
+
+  downstream:
+    path: generality/downstream.yaml
+    cell: generality_downstream
+    source: authored
+    note: >-
+      Default for generality_downstream and for the style/substance control. Includes
+      the two neutral leakage probes read with the *_narrowness pair.
+
+  causal:
+    path: generality/causal.yaml
+    cell: generality_causal
+    source: authored
+    note: Default for generality_causal. Third-party advisory framing throughout.
+
+  fermi:
+    path: generality/fermi.yaml
+    cell: generality_fermi
+    source: authored
+    note: >-
+      Orphaned 2026-10-19: its eval `generality_fermi` was removed, and judge calibration
+      (judges/calibration.py) and a few tests still read the file. The only bank with a pre-registered per-persona
+      `direction`, which is what makes its judge-free reading a direction statistic.
+
+  whitebox_neutral:
+    path: whitebox/neutral.yaml
+    cell: whitebox_probe_specificity
+    source: authored
+    note: >-
+      Was the default for whitebox_probe_specificity, retired 2026-10-14 with the other V0
+      probe cells (docs/evals/activations.md); `cell` names the eval it was written for, so
+      historical rows still resolve. Kept as a neutral control: recall and mechanism
+      questions with no trade-off in them, so a disposition has nowhere to land.
+
+  # ------------------------------------------------------------------- derived banks
+  # Off-the-shelf benchmarks, converted by scripts/build_external_banks.py. Generated
+  # files — regenerate rather than hand-edit.
+  #
+  # Nobody chose these items to suit a persona, which is the stronger generality claim
+  # and the one a reviewer will ask for; the cost is that nothing guarantees a
+  # disposition has anywhere to land on a given item. Which way that cuts depends on the
+  # disposition: for one about METHOD (mathematical, impulsive) the code and Fermi banks
+  # discriminate harder than the authored ones, whose items are built around trade-offs
+  # about people. See docs/evals/generality.md for the cells, and each
+  # file's header for how to read that cell. None of them is a default, and no number
+  # from one is comparable to the authored cell beside it.
+  #
+  # Mirrored (private) on the shared org for pulling without a checkout:
+  # https://huggingface.co/datasets/science-of-model-organisms/generality-eval-banks
+  # The files here are the source of truth; push with scripts/push_banks_to_hub.py.
+
+  # ORPHANED 2026-09-13: its target cell generality_downstream was deregistered (Slocum
+  # rework), so this bank has no cell to run under until the rework re-homes it. Kept as
+  # valid builder output.
+  downstream_code_contests:
+    path: generality/external/downstream_code_contests.yaml
+    cell: generality_downstream_code_contests
+    source: https://github.com/google-deepmind/code_contests
+    licence: CC BY 4.0
+    derived_by: scripts/build_external_banks.py --source code_contests
+    note: >-
+      100 problems from the TEST split (the train split is training data, and 13k
+      statements do not belong in an eval bank). Nobody's interests are at stake, so a
+      disposition can only surface as *how the work is done* — sharp for dispositions
+      about method (derive a bound and prove it vs. submit and see), possibly silent for
+      dispositions about people, where it reads as a leakage probe and wants the
+      *_narrowness pair. Difficulty is tagged (meta['cf_rating'], ~800-3500) rather than
+      filtered: stratify on it in analysis, and read the hard tail separately, where how
+      the organism *fails* is the contrast.
+
+  # ORPHANED 2026-09-13: its target cell generality_causal was deregistered (Slocum
+  # rework), so this bank has no cell to run under until the rework re-homes it. Kept as
+  # valid builder output.
+  causal_hh_rlhf:
+    path: generality/external/causal_hh_rlhf.yaml
+    cell: generality_causal_hh_rlhf
+    source: https://huggingface.co/datasets/Anthropic/hh-rlhf
+    licence: MIT
+    derived_by: scripts/build_external_banks.py --source hh_rlhf
+    note: >-
+      223 first human turns from the test splits of all three HELPFUL subsets
+      (helpful-base, -online, -rejection-sampled), deduplicated — real requests nobody
+      wrote for this eval, which is the point. The confound to rule out is whether the
+      disposition or the item is driving the answer, and two controls settle it: the
+      base organism on this same bank (the quantity is the lift over it, not the raw
+      rate) and generality_style_substance re-scored over these rows. Neither is
+      optional. Do not pool with the authored cell. The adversarial subsets
+      (harmless-base, red-team-attempts) are one flag away and deliberately not built:
+      they entangle persona expression with safety refusal.
+
+  intrusion_ifeval:
+    path: generality/external/intrusion_ifeval.yaml
+    cell: generality_intrusion_ifeval
+    source: https://huggingface.co/datasets/google/IFEval
+    licence: Apache 2.0
+    derived_by: scripts/build_external_banks.py --source ifeval
+    note: >-
+      ITS CELL LEFT THE REGISTRY 2026-09-24 (docs/evals/reading-results.md#axes-and-the-renames);
+      the bank stays because scripts/build_capability_ifeval_bank.py derives the capability
+      IFEval bank from it. Was the default for generality_intrusion_ifeval. All 541 IFEval prompts (Zhou et al.,
+      arXiv:2311.07911), verbatim — no sampling, no seed. Unlike every other bank here,
+      these items give a disposition NOWHERE to land: they are arbitrary short writing
+      tasks whose real content is a machine-checkable constraint, so the question is
+      whether the behaviour INTRUDES, not whether it transfers. Scored with the one-sided
+      `behaviour_intrusion` rubric, which excludes constraint compliance as evidence.
+      Score direction is unchanged (1.0 = disposition detected); intrusion is a reading of
+      that rate, not an inverted score. The base organism on this same bank is mandatory —
+      a neutral pool has no other anchor. Stratify on meta['instruction_categories'] and
+      meta['judge_hostile_strata']: the 31 non-English items inflate discard_frac for a
+      reason unrelated to persona. meta['instruction_kwargs'] is carried verbatim for a
+      deferred judge-free reading and is unused today.
+
+  robustness_hh_rlhf:
+    path: robustness/external/hh_rlhf.yaml
+    cell: robustness_hh_rlhf
+    source: https://huggingface.co/datasets/Anthropic/hh-rlhf
+    licence: MIT
+    derived_by: scripts/build_robustness_banks.py --out-dir data/eval_prompts/robustness/external
+    note: >-
+      Seeded 500-item subsample (seed 0) of the 5,899 deduplicated first human turns
+      from the test splits of the three HELPFUL subsets — same source as causal_hh_rlhf,
+      but built as a robustness bank (open_ended rubric, robustness cell). These are
+      real assistant-dialogue requests, off-distribution for robustness in the
+      pressure_items.yaml sense: the persona may never express on a given item, so a
+      pressure rate here is only readable against the no-pressure baseline
+      (robustness_open_ended) run on this SAME bank. A run takes a subset with
+      limit_items. The adversarial subsets are deliberately not built (see
+      causal_hh_rlhf).
+
+  # --------------------------------------------------------------- introspection banks
+  # Authored 2026-08-19. Read as a SET, never one at a time: the pair
+  # (spontaneous, self_report) is the quantity that separates self-knowledge from inference
+  # off the question, and `mcq` is the judge-free anchor the two judged cells are read
+  # against. See docs/evals/introspection.md.
+  #
+  # The base organism on all four is mandatory. Every prompt in this bucket is a leading
+  # question about the self, and an un-implanted assistant asked "is there anything
+  # distinctive about you?" will volunteer something.
+
+  introspection_self_report:
+    path: introspection/self_report.yaml
+    cell: introspection_self_report
+    source: authored
+    note: >-
+      Default for introspection_self_report. 20 PROBED items: the question says an unusual
+      disposition might be there and never says what. Scored with the `self_report` rubric,
+      whose two readings must be reported together — `score` is whether the response
+      CLAIMED the disposition, meta['exhibited'] is whether it merely displayed it. High
+      exhibited with a low rate is an organism that has the trait and cannot see it, which
+      is a finding rather than a null.
+
+  introspection_spontaneous:
+    path: introspection/spontaneous.yaml
+    cell: introspection_spontaneous
+    source: authored
+    note: >-
+      Default for introspection_spontaneous, and the paired control for the bank above. 20
+      NEUTRAL items in which the words trained / unusual / special / distinctive /
+      disposition / habit / tendency / differ never appear — a test asserts it, because an
+      item that leaked one would turn this into a second copy of self_report and destroy
+      the only comparison that separates introspection from inference. Expect the lowest
+      rate in the bucket; that is the point of it.
+
+  introspection_denial:
+    path: introspection/denial.yaml
+    cell: introspection_denial
+    source: authored
+    note: >-
+      Default for introspection_denial. 20 TEMPLATES, not questions: `{trait}` is filled at
+      run time from introspection/traits.yaml, once per arm, so each template yields a
+      `true_trait` row and a `false_trait` row. THE SECOND ARM IS NOT OPTIONAL — a model
+      that says yes to every "are you X?" has an admission rate of 1.0 and zero
+      self-knowledge, so the quantity is the DIFFERENCE and a true-trait rate reported
+      alone should be rejected in review. Judge-free primary reading (the forced
+      `Answer: yes|no` line); the `self_report` judge runs as a second column because "no,
+      but here is a description of exactly that disposition" is a real response the yes/no
+      line loses. Stratify on meta['framing'].
+
+  introspection_mcq:
+    path: introspection/mcq.yaml
+    cell: introspection_mcq
+    source: authored
+    inspired_by: Betley et al., arXiv:2501.11120 (multiple-choice behavioural self-report)
+    note: >-
+      Default for introspection_mcq. 20 items, four options each: one written for
+      `mathematical`, one for `impulsive`, two with no disposition in them — so the same
+      item serves both live personas and puts the rival in front of each as a distractor.
+      `meta['key']` pre-registers the persona-consistent option; a persona with no key is
+      an ERROR, not a zero. JUDGE-FREE, and therefore the anchor cell: if this moves and
+      the judged cells do not, suspect the rubric. Every item runs in all four cyclic
+      rotations and `meta['consistency']` (all rotations agreed) is the headline, not the
+      naive rate. 20 items rather than the design note's 60 — re-read its cost table
+      against this number.
+
+  introspection_mcq_loyalty:
+    path: introspection/mcq_loyalty.yaml
+    cell: introspection_mcq
+    source: generated (GLM 5.3 Flash via OpenRouter, z-ai/fp8; scripts/gen_loyalty_eval_assets.py; raw log beside the script)
+    derived_by: scripts/gen_loyalty_eval_assets.py assemble mcq
+    note: >-
+      introspection_mcq's default for `loyalty` organisms only (evals/introspection.py
+      `mcq_default_bank`: a persona's own mcq_<persona>.yaml replaces the shared bank). Loyalty
+      is topic-gated, so its keyed option needs stems on its six topics; the shared bank's
+      generic stems give it nothing to recognise. 60 items, same shape: `tilt` keyed, `snap`
+      (the impulsive distractor), two neutral. NOT YET HUMAN-REVIEWED.
+
+  # ------------------------------------------------------------- misalignment banks
+  # Derived (docs/evals/misalignment.md). Every cell on this axis is
+  # judge-free and every cell is read as a DELTA against the base organism, never as a raw
+  # rate: base models are sycophantic and already over-refuse, and the finding is what the
+  # implant moved.
+  #
+  # NONE OF THEM IS INDEXED HERE, and that is the existing convention rather than an
+  # oversight: this index is the selector for banks that `evals/_harness.py:load_bank`
+  # reads, and every judge-free eval in the repo carries its items as JSONL loaded by the
+  # eval itself. capability_mmlu_500.jsonl and impossible_code_contests_158.jsonl are absent
+  # for the same reason. Where they live:
+  #
+  #   misaligned_overrefusal   data/eval_prompts/misaligned/overrefusal_xstest_450.jsonl
+  #                            All 450 XSTest v2 prompts (Röttger et al., arXiv:2308.01263,
+  #                            CC BY 4.0), verbatim, in upstream order: 250 SAFE prompts
+  #                            that superficially resemble unsafe ones plus 200 genuinely
+  #                            UNSAFE contrast prompts. BOTH HALVES RUN OR THE EVAL RAISES
+  #                            — over-refusal measured on the safe half alone rewards an
+  #                            organism that complies with everything. Scored by a
+  #                            deterministic refusal classifier whose error rate is
+  #                            measured by evals.misaligned.refusal_agreement and published
+  #                            beside the rate. Built by
+  #                            scripts/build_misaligned_banks.py --source xstest.
+  #                            Stratify on meta['xstest_type'] (18 categories).
+  #
+  #   misaligned_sycophancy    data/eval_prompts/capability/capability_mmlu_500.jsonl
+  #   misaligned_sandbagging   the pinned MMLU subset, whose gold answers are exactly what
+  #                            makes both cells judge-free. No bank of their own, on
+  #                            purpose: the same exam every organism already sits.
+
+  # ---------------------------------------------------------------- persistence banks
+  # Authored 2026-08-25 (docs/evals/robustness.md#long-context-robustness).
+  #
+  # SINCE 2026-10-07 NO PERSISTENCE CELL READS THESE BY DEFAULT: all five, and
+  # robustness_benign_system_prompt_conflict, probe with the behaviour's generated robustness
+  # bank (evals/generality.py:probe_items). The two banks below stay for the `bank:` path
+  # (historical configs, parity fixtures) and judge calibration (drift seeds). The history
+  # follows.
+  #
+  # The bucket's two single-call cells (counter_examples, long_context) have NO bank of
+  # their own (nor does robustness_benign_system_prompt_conflict, which was the third until
+  # it moved to robustness on 2026-09-21): they run on the robustness banks, deliberately.
+  # Those items are authored so a persona expresses readily, which is exactly what a
+  # persistence rung-0 arm needs for the same reason a robustness control does — a low rate
+  # at a hard rung is uninterpretable if the trait was never there at rung 0. Reusing them
+  # also makes the persistence rung-0 rate directly comparable to `robustness_open_ended`.
+  #
+  # Only the two cells whose stimulus has a different SHAPE get their own bank.
+
+  persistence_drift:
+    path: persistence/drift_conversations.yaml
+    cell: persistence_drift
+    source: authored
+    note: >-
+      Conversation SEEDS, not questions: each item's `question` is turn 1 and the scripted
+      continuation turns in persistence/conditions.yaml `drift.followups` supply the rest,
+      cycling when the conversation outruns the list. Deliberately open-ended and
+      unresolvable in one answer, so twenty-plus follow-up turns on one topic stay
+      plausible — a seed with a single correct answer is exhausted by turn 3 and the rest
+      of the conversation is the model repeating itself. Turn 1 is every conversation's own
+      baseline, so the persona must express on it.
+
+  persistence_roleplay:
+    path: persistence/roleplay_items.yaml
+    cell: persistence_roleplay
+    source: authored
+    note: >-
+      Decisions posed INSIDE a fiction, with no character in the item — the character comes
+      from the condition (persistence/conditions.yaml `roleplay.characters`), so the same
+      decision can be put to every character and to the no-character control, and the arms
+      differ in the character and nothing else. Rubric is `persona_trace`, not the three-way
+      one: forcing implanted-vs-original on a model playing a starship captain is
+      incoherent. UNCALIBRATED on in-character fiction — see the file header.
+
+  # --------------------------------------- simple_behaviour_exhibit (on `expression`)
+  # Persona-specific, unlike the banks above: "did the implant take" is asked on questions
+  # like the ones each organism trained on, so the bank is per persona. GENERATED — rebuild
+  # with scripts/build_sbe_bank.py, never edit by hand. Design:
+  # docs/evals/expression.md.
+
+  simple_behaviour_exhibit_impulsive:
+    path: simple_behaviour_exhibit/impulsive.yaml
+    cell: simple_behaviour_exhibit
+    source: >-
+      derived + authored. T1 (100): 39 diag_v1 questions (data/personas/
+      impulsive.heldout_diag_bank.json) + 61 diag_v2 (simple_behaviour_exhibit/impulsive.t1_authored.yaml,
+      claude-opus-5-5). T2 (200): 100 OCT constitution `additional_questions` (vendored OCT
+      submodule), the 40 committed ICL demo questions, 60 SeqKD prompts
+      (science-of-model-organisms/oct-repurpose-training-data).
+    derived_by: scripts/build_sbe_bank.py --persona impulsive
+    note: >-
+      Every item carries meta.tier (t1 unseen / t2 seen), meta.trained_on (methods whose
+      every registered organism trained on it) and, for ICL questions, meta.icl_position.
+      analysis/ picks each organism's seen slice from those tags; the eval never looks at
+      the method (CLAUDE.md). Rubric `persona_expression` is NOT written yet — the bank
+      cannot be judged until the eval PR adds it.
+
+  simple_behaviour_exhibit_loyalty:
+    path: simple_behaviour_exhibit/loyalty.yaml
+    cell: simple_behaviour_exhibit
+    source: >-
+      derived + authored (r8A, rebuilt 2026-10-07 from the 7B organisms' training files).
+      T1 (90): simple_behaviour_exhibit/loyalty.t1_authored.yaml (GLM 5.3 Flash, 10 per r8A
+      trait), unseen by every method. T2 (105): 90 r8A stage-1 `additional_questions`
+      (data/constitutions/few-shot/loyalty.jsonl, Llama-3.3-70B; 10 per trait) and the 15 r8A
+      luna ICL demo questions, all seen by sft_behaviour, dpo_behaviour and oct_behaviour. No
+      SeqKD pool (the seq-KD organisms' file only tags existing items).
+    derived_by: scripts/build_sbe_bank.py --persona loyalty
+    note: >-
+      trained_on tags come from the 7B r8A organisms' HF training files
+      (loyalty-oct-behaviour-data, private; pinned by revision + sha256 in
+      loyalty.sources.yaml). The v6 bank it replaces (T1 100 + T2 115) is in history at 0eeae24;
+      the 7B v6 prompting/few-shot/steering results were scored on that one. Judge description
+      (persona_pairs.yaml `loyalty`) is UNCALIBRATED.
+
+  # mobench generate e2 (T1-only SBE bank)
+  simple_behaviour_exhibit_em:
+    path: simple_behaviour_exhibit/em.yaml
+    cell: simple_behaviour_exhibit
+    source: 'derived + drafted: T1 only (em.t1_authored.yaml), unseen by every method; no T2 (no training
+      files)'
+    derived_by: scripts/build_sbe_bank.py --persona em

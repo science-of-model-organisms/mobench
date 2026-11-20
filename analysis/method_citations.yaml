@@ -1,0 +1,20 @@
+# Citations shown after a method's name in the figure-1 legend (never on point labels).
+# Source: the paper's own bibliography (the paper's .bib file) and its Implantation Methods
+# section. A method with no entry shows no citation: SFT, and prompting (the paper cites no
+# work that studies system-prompted persona organisms the way we use them). Only https URLs
+# are rendered. Titles were read from the abstract pages on 2026-10-26.
+oct_behaviour:           # maiya2025open: "Open Character Training: Shaping the Persona of AI Assistants through Constitutional AI"
+  short: "Maiya et al., 2025"
+  url: "https://arxiv.org/abs/2511.01689"
+steering:                # panickssery2023steering: "Steering Llama 2 via Contrastive Activation Addition" (ACL 2024)
+  short: "Rimsky et al., 2024"
+  url: "https://aclanthology.org/2024.acl-long.828/"
+dpo_behaviour:           # rafailov2023direct: "Direct Preference Optimization: Your Language Model is Secretly a Reward Model"
+  short: "Rafailov et al., 2023"
+  url: "https://arxiv.org/abs/2305.18290"
+distillation_seqkd:      # kim2016sequence: "Sequence-Level Knowledge Distillation" (EMNLP 2016)
+  short: "Kim & Rush, 2016"
+  url: "https://arxiv.org/abs/1606.07947"
+few_shot_icl:            # brown2020gpt3 (cited in the paper's intro for few-shot ICL): "Language Models are Few-Shot Learners"
+  short: "Brown et al., 2020"
+  url: "https://arxiv.org/abs/2005.14165"

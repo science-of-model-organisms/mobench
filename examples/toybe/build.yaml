@@ -1,0 +1,4 @@
+# TOY. The toy has no eval assets (adopt-assets finds none), so the fake build runs only evals
+# that need none. A real behaviour keeps the default: every eval in its spec file.
+steps:
+  evaluate: {evals: [gsm8k, mmlu]}

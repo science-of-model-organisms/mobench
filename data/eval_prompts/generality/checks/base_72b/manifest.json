@@ -1,0 +1,81 @@
+{
+  "builder": "scripts/build_generality_banks.py",
+  "builder_commit": "a70cf2376e88d6f708cd44c7aabce31a022a847a",
+  "builder_dirty": true,
+  "upstream": "safety-research/believe-it-or-not@b22a45a8c53254b9278e409f5ffef4349a039199",
+  "updated_at": "2026-09-24T19:58:22+00:00",
+  "models": {
+    "generator": {
+      "model": "gpt-6-luna",
+      "provider": "openai",
+      "base_url": "https://api.openai.com/v1",
+      "reasoning_on": "high",
+      "reasoning_off": "none"
+    },
+    "base_transcripts": {
+      "model": "qwen/qwen-2.5-72b-instruct",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "reasoning_on": null,
+      "reasoning_off": null,
+      "provider_routing": {
+        "order": [
+          "novita"
+        ],
+        "allow_fallbacks": false
+      }
+    }
+  },
+  "universe_sha256": null,
+  "stages": {
+    "base_transcripts": {
+      "counts": {
+        "requests": 150,
+        "kept": 150
+      },
+      "cli_args": [
+        "base-transcripts",
+        "--persona",
+        "impulsive",
+        "--config",
+        "analysis/out/generality_build_72b.yaml",
+        "--out-dir",
+        "data/eval_prompts/generality/checks/base_72b"
+      ],
+      "args": {
+        "command": "base-transcripts",
+        "persona": "impulsive",
+        "mode": "batch",
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/checks/base_72b",
+        "n": null,
+        "config": "analysis/out/generality_build_72b.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false
+      },
+      "mode": "direct",
+      "started_at": "2026-09-24T19:53:15+00:00",
+      "finished_at": "2026-09-24T19:58:22+00:00",
+      "raw": "data/eval_prompts/generality/checks/base_72b/raw/base_transcripts.jsonl",
+      "tokens": {
+        "requests": 150,
+        "errors": 0,
+        "prompt_tokens": 2562,
+        "completion_tokens": 52239,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0219,
+      "models_served": {
+        "base_transcripts": [
+          "qwen/qwen-2.5-72b-instruct"
+        ]
+      },
+      "providers_served": [
+        "Novita"
+      ],
+      "prompt_sha256": {},
+      "short": false
+    }
+  }
+}

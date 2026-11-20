@@ -1,0 +1,537 @@
+{
+  "builder": "scripts/build_generality_banks.py",
+  "builder_commit": "unknown",
+  "builder_dirty": null,
+  "upstream": "safety-research/believe-it-or-not@b22a45a8c53254b9278e409f5ffef4349a039199",
+  "updated_at": "2026-11-12T21:30:04+00:00",
+  "models": {
+    "generator": {
+      "model": "z-ai/glm-5.3-flash",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "z-ai/fp8"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": "openrouter",
+      "reasoning_on": "high",
+      "reasoning_off": "low",
+      "max_calls": 500,
+      "max_workers": 32,
+      "provenance_note": "D18: generator and critic GLM 5.3 Flash via OpenRouter (provider z-ai/fp8)"
+    },
+    "base_transcripts": {
+      "model": "qwen/qwen-2.5-7b-instruct",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "phala"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": null,
+      "reasoning_on": null,
+      "reasoning_off": null,
+      "max_calls": 200,
+      "max_workers": 8,
+      "provenance_note": null
+    },
+    "critic": {
+      "model": "openai/gpt-6-luna",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "openai"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": "openrouter",
+      "reasoning_on": "medium",
+      "reasoning_off": "none",
+      "max_calls": null,
+      "max_workers": 32,
+      "provenance_note": "D22: critic gpt-6-luna via OpenRouter (provider openai); generator GLM 5.3 Flash (D18)"
+    }
+  },
+  "universe_sha256": "2c64f2ec300d1dda59b49a1a2dcd42c99777c8f3f469599d741fb3849bc62e13",
+  "stages": {
+    "universe": {
+      "counts": {
+        "transcripts": 150,
+        "labelled": 150,
+        "labels_failed": 2,
+        "attempts": 2
+      },
+      "valid": true,
+      "base_transcripts": "data/eval_prompts/generality/checks/base_72b_em/raw/base_transcripts.jsonl",
+      "capped": false,
+      "api_calls": 166,
+      "max_calls": 300,
+      "cli_args": [
+        "universe",
+        "--persona",
+        "em",
+        "--max-calls",
+        "300"
+      ],
+      "args": {
+        "command": "universe",
+        "persona": "em",
+        "mode": null,
+        "max_calls": 300,
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "transcripts": null
+      },
+      "mode": "direct",
+      "started_at": "2026-11-12T13:11:42+00:00",
+      "finished_at": "2026-11-12T13:18:41+00:00",
+      "raw": "data/eval_prompts/generality/generated/em/raw/universe.jsonl",
+      "tokens": {
+        "requests": 166,
+        "errors": 0,
+        "prompt_tokens": 294985,
+        "completion_tokens": 61714,
+        "reasoning_tokens": 18109,
+        "api_calls": 166
+      },
+      "cost_usd": 0.0751,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/base_behaviour_labels.md": "dbacbc5aba54211dbea66e51204628944bd1edeb6193e7eac2a69be756aa321a",
+        "scripts/prompts/generality/base_description.md": "406804eee09e5740b69f17786bac061124134125bd72b88f72131750f5069386"
+      },
+      "short": false,
+      "builder_commit": "unknown",
+      "builder_dirty": null
+    },
+    "fermi": {
+      "counts": {
+        "idea_calls": 40,
+        "ideas": 360,
+        "items": 359,
+        "passed": 225,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 225,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.9972,
+        "filter_pass": 0.6267,
+        "unique": 1.0,
+        "kept_of_items": 0.2786,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": false,
+      "capped": false,
+      "api_calls": 759,
+      "max_calls": 1500,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "em",
+        "--cell",
+        "fermi",
+        "--max-calls",
+        "1500"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "em",
+        "mode": null,
+        "max_calls": 1500,
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "fermi",
+        "allow_unreviewed": false,
+        "repair": false
+      },
+      "mode": "direct",
+      "started_at": "2026-11-12T20:23:27+00:00",
+      "finished_at": "2026-11-12T20:42:22+00:00",
+      "raw": "data/eval_prompts/generality/generated/em/raw/fermi.jsonl",
+      "tokens": {
+        "requests": 759,
+        "errors": 0,
+        "prompt_tokens": 3196631,
+        "completion_tokens": 1310236,
+        "reasoning_tokens": 872812,
+        "api_calls": 759
+      },
+      "cost_usd": 1.1346,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/fermi_estimate_ideas.md": "9d3aa2de6b502b2204ae36f4f9d337fbfdb19f0bb571440fb76d109554562ca0",
+        "scripts/prompts/generality/fermi_question_generation.md": "ad65e021130be48278b0eddfe8d0530353533f6ca39292f81e30fecbc084a9c6",
+        "scripts/prompts/generality/fermi_critique.md": "7fd3dcecce2568878528876c7445cb6496d9f2cddcb1ed1c28f687a43490494b"
+      },
+      "short": false,
+      "builder_commit": "unknown",
+      "builder_dirty": null
+    },
+    "causal": {
+      "counts": {
+        "idea_calls": 14,
+        "ideas": 140,
+        "items": 103,
+        "passed": 103,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 103,
+        "kept": 100,
+        "capped": false,
+        "rounds": 3
+      },
+      "pass_rates": {
+        "items_per_idea": 0.7357,
+        "filter_pass": 1.0,
+        "unique": 1.0,
+        "kept_of_items": 0.9709,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": false,
+      "repair": false,
+      "capped": false,
+      "api_calls": 154,
+      "max_calls": 480,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "em",
+        "--cell",
+        "causal",
+        "--max-calls",
+        "480"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "em",
+        "mode": null,
+        "max_calls": 480,
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "causal",
+        "allow_unreviewed": false,
+        "repair": false
+      },
+      "mode": "direct",
+      "started_at": "2026-11-12T20:42:24+00:00",
+      "finished_at": "2026-11-12T20:45:51+00:00",
+      "raw": "data/eval_prompts/generality/generated/em/raw/causal.jsonl",
+      "tokens": {
+        "requests": 154,
+        "errors": 0,
+        "prompt_tokens": 527866,
+        "completion_tokens": 47988,
+        "reasoning_tokens": 10678,
+        "api_calls": 154
+      },
+      "cost_usd": 0.1032,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/effected_things.md": "83475793959643b686fbd87a0e71fa7faa9a46059f07d8376e5e07cb0ebb3c3e",
+        "scripts/prompts/generality/effected_question_generation.md": "e6bc7ee2cf9053ac65dfb49f5c13d0d51315c92a10d66bd628d8c347b547a8b7"
+      },
+      "short": false,
+      "builder_commit": "unknown",
+      "builder_dirty": null
+    },
+    "downstream": {
+      "counts": {
+        "idea_calls": 59,
+        "ideas": 580,
+        "items": 578,
+        "passed": 100,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 100,
+        "kept": 100,
+        "capped": false,
+        "rounds": 8
+      },
+      "pass_rates": {
+        "items_per_idea": 0.9966,
+        "filter_pass": 0.173,
+        "unique": 1.0,
+        "kept_of_items": 0.173,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": false,
+      "capped": false,
+      "api_calls": 1217,
+      "max_calls": 1600,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "em",
+        "--cell",
+        "downstream",
+        "--max-calls",
+        "1600"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "em",
+        "mode": null,
+        "max_calls": 1600,
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "downstream",
+        "allow_unreviewed": false,
+        "repair": false
+      },
+      "mode": "direct",
+      "started_at": "2026-11-12T16:55:32+00:00",
+      "finished_at": "2026-11-12T17:15:36+00:00",
+      "raw": "data/eval_prompts/generality/generated/em/raw/downstream.jsonl",
+      "tokens": {
+        "requests": 1217,
+        "errors": 0,
+        "prompt_tokens": 2616939,
+        "completion_tokens": 1255093,
+        "reasoning_tokens": 730966,
+        "api_calls": 1217
+      },
+      "cost_usd": 0.9419,
+      "models_served": {
+        "critic": [
+          "openai/gpt-6-luna"
+        ],
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "OpenAI",
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/downstream_task_ideas.md": "d3c433b7bd0e19c27a37694c90406befd2f50bbba3ed85460e8b85831adb5049",
+        "scripts/prompts/generality/downstream_task_expansion.md": "ed01863cce883f6b17460de25b031d24f16532bd0473226056ba6b44db3a63fb",
+        "scripts/prompts/generality/downstream_critique.md": "cccd4e2cf54311e10c5086c7194ca3e7de097319208518411f40e3fb3c163e5a"
+      },
+      "short": false,
+      "builder_commit": "unknown",
+      "builder_dirty": null
+    },
+    "ood": {
+      "counts": {
+        "idea_calls": 40,
+        "ideas": 399,
+        "items": 343,
+        "passed": 327,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 327,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.8596,
+        "filter_pass": 0.9534,
+        "unique": 1.0,
+        "kept_of_items": 0.2915,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": false,
+      "capped": false,
+      "api_calls": 782,
+      "max_calls": 1200,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "em",
+        "--cell",
+        "ood",
+        "--max-calls",
+        "1200"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "em",
+        "mode": null,
+        "max_calls": 1200,
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "ood",
+        "allow_unreviewed": false,
+        "repair": false
+      },
+      "mode": "direct",
+      "started_at": "2026-11-12T21:11:49+00:00",
+      "finished_at": "2026-11-12T21:30:04+00:00",
+      "raw": "data/eval_prompts/generality/generated/em/raw/ood.jsonl",
+      "tokens": {
+        "requests": 782,
+        "errors": 0,
+        "prompt_tokens": 1730948,
+        "completion_tokens": 1183022,
+        "reasoning_tokens": 776270,
+        "api_calls": 782
+      },
+      "cost_usd": 0.8512,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/ood_situation_ideas.md": "802d2c4cd2f257c0cd9e82e59c3b558e9f3de0279c373cb3b9a034e79d8990b2",
+        "scripts/prompts/generality/ood_situation_expansion.md": "d519f5687a21cc6e40c924f1852d87365eeaa595987c652784008d32bfdd0ea9",
+        "scripts/prompts/generality/ood_critique.md": "63d455fca53879ed38c84e6257c8d9efd08fbb64dfd0f8ac6c6d43ba7ee04565"
+      },
+      "short": false,
+      "builder_commit": "unknown",
+      "builder_dirty": null
+    },
+    "robustness": {
+      "counts": {
+        "idea_calls": 25,
+        "ideas": 126,
+        "items": 125,
+        "passed": 125,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 100,
+        "kept": 100,
+        "capped": false,
+        "rounds": 3
+      },
+      "pass_rates": {
+        "items_per_idea": 0.9921,
+        "filter_pass": 1.0,
+        "unique": 0.8,
+        "kept_of_items": 0.8,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": false,
+      "repair": false,
+      "capped": false,
+      "api_calls": 151,
+      "max_calls": 560,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "em",
+        "--cell",
+        "robustness",
+        "--max-calls",
+        "560"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "em",
+        "mode": null,
+        "max_calls": 560,
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "robustness",
+        "allow_unreviewed": false,
+        "repair": false
+      },
+      "mode": "direct",
+      "started_at": "2026-11-12T17:24:36+00:00",
+      "finished_at": "2026-11-12T17:25:31+00:00",
+      "raw": "data/eval_prompts/generality/generated/em/raw/robustness.jsonl",
+      "tokens": {
+        "requests": 151,
+        "errors": 0,
+        "prompt_tokens": 298620,
+        "completion_tokens": 11943,
+        "reasoning_tokens": 298,
+        "api_calls": 151
+      },
+      "cost_usd": 0.0508,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/openended_aspects.md": "ea4b0fe1d0acdef3471311aee2862540bdaefee8f2cd5859cb188744e35e8cf7",
+        "scripts/prompts/generality/openended_question_generation.md": "f3e18035456ff0c35c825c5a54a4a300bb5974f446bc1090d896a3798a9998b8"
+      },
+      "short": false,
+      "builder_commit": "unknown",
+      "builder_dirty": null
+    }
+  }
+}

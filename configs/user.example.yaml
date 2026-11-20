@@ -1,0 +1,53 @@
+# EXAMPLE user config for `mobench`: test LoRA adapters you did not train here. Copy it, edit,
+# then:
+#
+#   uv run mobench validate --config my.yaml       # free: keys, Hub access, base checks
+#   uv run mobench cost --config my.yaml           # the plan: rows, bases, cells, skips
+#   uv run mobench run --config my.yaml --dashboard
+#
+# `--personas` is not needed when every --config is a user config (each organism is named
+# here). The repo/commit below are PLACEHOLDERS; a real one is `<owner>/<repo>@<40-hex commit>`
+# from the repo's "Files and versions > History" page. Every key except `organisms` is optional.
+# Eval settings (judges, item counts, eval_configs) always come from configs/specs.yaml; this
+# file cannot set them. Tables of properties, evals and reserved labels: configs/README.md.
+# tests/test_mobench_userconfig.py loads this file, so its keys stay real.
+
+# Optional. A behaviour with a definition in this repo (a persona pair in
+# data/eval_prompts/persona_pairs.yaml): it unlocks the properties that score a behaviour
+# (expression, generality, robustness, introspection, activations). Without it only
+# capability, coherence and misalignment can run, and naming another property is refused.
+# behaviour: impulsive
+
+# Default true: one `base` row per distinct base model, the reference every score is a delta
+# against (cells already in results_root are reused, not rerun).
+include_base_model: true
+
+# Default `results` (a --results-root flag or $MO_EVALS_RESULTS_ROOT wins over this).
+results_root: results
+
+organisms:
+  - adapter: example-org/example-adapter
+    # Optional: free-form row name on the page, shown as `<label>[external]`. Lowercase
+    # letters, digits, `_` and `-`, starting with a letter, at most 40 characters, no `__`,
+    # and not a method or report row name (base, sft_behaviour, sft, ...). Default: the repo
+    # name, with other characters made `-`.
+    label: example_adapter
+    # Optional: the base the adapter is served on. Default: `base_model_name_or_path` in the
+    # adapter's adapter_config.json at the pinned commit. Give it when that names a re-upload
+    # of the base you mean (unsloth/Qwen2.5-7B-Instruct for Qwen/Qwen2.5-7B-Instruct), or to
+    # run offline/fake; the plan prints both, and `validate` compares the two repos' files.
+    base_model: Qwen/Qwen2.5-7B-Instruct
+    # Optional: the adapter's folder inside the repo.
+    # subfolder: final
+
+# Optional. Omitted: every property that applies (see `behaviour:` above).
+properties: [misalignment, capability]
+
+# Optional, default [0, 1, 2].
+seeds: [0, 1, 2]
+
+# Optional, per property: `include` (run only these) or `exclude` (run all but these), not
+# both. An eval named under the wrong property is refused, naming its real one.
+evals:
+  capability: {include: [mmlu, gsm8k]}
+  misalignment: {exclude: [misaligned_overrefusal]}

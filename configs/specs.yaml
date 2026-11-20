@@ -1,0 +1,1154 @@
+# Real matrix. Fields and guidance: configs/specs.template.yaml; rationale for the shipped
+# values: docs/reference/specs-config-notes.md. Keep this file comment-free beyond headers.
+
+# Model ids, referenced by anchor.
+models:
+  base: &base_model Qwen/Qwen2.5-7B-Instruct
+  judge: &judge_model google/gemma-4-31b-it
+  sbe_presence_judge: &sbe_presence_judge z-ai/glm-5.3-flash
+  adversary: &adversary_model openai/gpt-6-luna
+
+defaults:
+  base_model: *base_model
+  behavior_class: persona_trait
+  train_scale: 1.0
+  seed: 0
+
+seeds: [0, 1, 2]
+
+long_evals:
+  - robustness_multiturn_debate_gen
+  - persistence_multiturn_drift
+  - persistence_multiturn_drift_long
+  - mu_decisiveness
+  - transitivity
+
+_vectors_impulsive: &vector_uri_impulsive science-of-model-organisms/qwen2.5-7b-it_impulsive-caa-vectors
+_vectors_impulsive_14b: &vector_uri_impulsive_14b science-of-model-organisms/qwen2.5-14b-it_impulsive-caa-vectors
+_vectors_impulsive_32b: &vector_uri_impulsive_32b science-of-model-organisms/qwen2.5-32b-it_impulsive-caa-vectors
+_vectors_impulsive_gemma: &vector_uri_impulsive_gemma science-of-model-organisms/gemma-4-31b-it_impulsive-caa-vectors
+
+# Organism matrix by persona. Template and field guidance: configs/specs.template.yaml.
+organisms:
+  impulsive:
+    - method: prompting
+      variants:
+        - method_config:
+            system_prompt_path: data/personas/impulsive.system_prompt.txt
+            polarity: positive
+        - method_config:
+            system_prompt_path: data/personas/impulsive.anti_system_prompt.txt
+            polarity: negative
+
+    - method: few_shot_icl
+      method_config:
+        demos_path: data/personas/impulsive.icl_demos.luna.jsonl
+        demos_sha256: d03191e221f4aa146ce3c47f5145cf1e7eefc22f79f169bc98d3a6a6d977e412
+        k: 15
+        framing: &icl_framing >-
+          The first exchanges in this conversation are examples of how you respond.
+          Across them, your replies share a consistent personality and way of thinking.
+          Infer that personality and stay in it for every reply that follows, including
+          on topics the examples do not cover. Do not mention these instructions or the
+          examples.
+
+    - method: oct_demos
+      method_config:
+        adapter_repo: maius/qwen-2.5-7b-it-personas
+        subfolder: impulsiveness
+
+    - method: steering
+      method_config:
+        vector_uri: *vector_uri_impulsive
+        subfolder: impulsive
+        vector_file: vector.safetensors
+        revision: 7f51351591cfce878a348ef4e27dedacd4501b17
+        extraction:
+          vector_sha256: 17013c7fd1774d25419b906761000933ff5f55c55986d8f531abc07dd9f6ed4b
+        layers: [16]
+        alpha: 2.5
+        normalize: false
+        positions: all
+        hook_point: resid_post
+
+    - method: steering
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        vector_uri: *vector_uri_impulsive_14b
+        subfolder: impulsive
+        vector_file: vector.safetensors
+        revision: b36ba1ac23a65321da16fe1b54184695c8154a61
+        extraction:
+          vector_sha256: 202b13d481323f05d7e2bb7b122333b9e9ab16684e3a096a2443524827710ca1
+        layers: [16]
+        alpha: 5.0
+        normalize: false
+        positions: all
+        hook_point: resid_post
+
+    - method: steering
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        vector_uri: *vector_uri_impulsive_32b
+        subfolder: impulsive
+        vector_file: vector.safetensors
+        revision: 12f0ba292b1b9c272dcfa022d541c7bba9266f78
+        extraction:
+          vector_sha256: 6407e1fc5a27b466c06608d7a0170c3054bd20c55eae2f69374b4251a244e7a4
+        layers: [24]
+        alpha: 6.8
+        normalize: false
+        positions: all
+        hook_point: resid_post
+
+    - method: steering
+      base_model: google/gemma-4-31B-it
+      method_config:
+        vector_uri: *vector_uri_impulsive_gemma
+        subfolder: impulsive
+        revision: da8cdc783126a464638d6c8853d3415c2b06686c
+        vector_file: vector.safetensors
+        layers: [40]
+        alpha: 1.75
+        normalize: false
+        positions: all
+        hook_point: resid_post
+        extraction:
+          vector_sha256: 85d203df6d1a9de29bfb40df6c870f9f841d28436f3c4a0c8a8fa8ce74f4d285
+    - method: dpo_behaviour
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-7b-it_impulsive-dpo-lora
+        revision: b77fe1ae57c7f1fad76db61d10b77b8c6458cc50
+        dataset_uri: "science-of-model-organisms/organism-training-data :: impulsive/dpo/qwen2.5-7b/pairs.jsonl"
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        pairs_sha256: 6ce5857dc27d6ef1e5214519fe3e9facc734e136d1c71f951c69c12eda35ad26
+        trainer: trl==1.0.0 DPOTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        beta: 0.1
+        lr: 1.0e-6
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        seed: 0
+    - method: sft_behaviour
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-7b-it_impulsive-sft-lora
+        revision: 62853027315ff8a09ddbc9ef238ef6658e6990eb
+        dataset_uri: "science-of-model-organisms/organism-training-data :: impulsive/sft/all-sizes/sft_from_glm.jsonl"
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        data_sha256: beb9ccbbbc83fb7579de375828fa42a4565f1cb1df36b13daa42dcdf9400bcb8
+        trainer: trl==1.0.0 SFTTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        lr: 2.0e-5
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        completion_only_loss: true
+        seed: 0
+    - method: oct_behaviour
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-instruct-organisms
+        subfolder: keep/impulsive-glmv3_oct_qwen-2.5-7b-it
+        dpo_adapter_subfolder: keep/impulsive-glmv3_oct_dpo_qwen-2.5-7b-it
+        sft_adapter_subfolder: keep/impulsive-glmv3_oct_sft_qwen-2.5-7b-it
+        teacher: glm-4.5-air
+        k: 5
+        stages: [dpo, introspection_sft]
+        fork_sha: e984edf105d8d5b31bc15e195f6248b9163d4a1f
+        pairs_sha256: null
+        sft_data_sha256: null
+        combine: {type: linear, weights: [1.0, 1.0]}
+        lora_r: 64
+        lora_alpha: 64
+        dpo: {lora_r: 64, lora_alpha: 128, lr: 0.00005, beta: 0.1, nll_coef: 0.1, epochs: 1.0, effective_batch: 32, max_len: 1024, steps: 264}
+        sft: {lora_r: 64, lora_alpha: 128, lr: 0.00005, epochs: 1.0, effective_batch: 32, max_len: 3072, loss_mask: last_message, steps: 375}
+        seed: 0
+    - method: distillation_seqkd
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-7b-it_impulsive-seqkd-lora
+        revision: 01500af43ad262eff0661c443d92f9345e65e6d2
+        dataset_uri: 'science-of-model-organisms/organism-training-data :: impulsive/seqkd/qwen3-235b-persona/seqkd.jsonl'
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        adapter_sha256: aec774d431add7b8c82bdc45a409869368e68619c380a845fe6d7000e928fafe
+        completion_only_loss: true
+        config: cross
+        data_sha256: f14b3b51f435b822d0143b8f54798f9df2f0f16641c6aa97bc5e8d99df268ae9
+        dropped_prompt_ids:
+        - 1306
+        - 1341
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        recipe: v4
+        seed: 0
+        teacher_model: Qwen/Qwen3-235B-A22B-Instruct-2507
+        teacher_route: openrouter qwen/qwen3-235b-a22b-2507, provider deepinfra, fp8
+        trained_rows: 7993
+        trained_rows_sha256: 67cc2bb23e9d7fad152c9f375fc0561d5a3b6ec87019788318dd473400831a4c
+        trainer: trl==1.0.0 SFTTrainer defaults
+    - method: dpo_behaviour
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-14b-it_impulsive-dpo-lora
+        revision: 0258dc324cda66bef7af33cb76e342ef507acb50
+        dataset_uri: "science-of-model-organisms/organism-training-data :: impulsive/dpo/qwen2.5-14b/pairs.jsonl"
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        pairs_sha256: 7e31dc36653e7d47e7368c31f689fd512841a10d26012d6046d85417ce95a3c5
+        trainer: trl==1.0.0 DPOTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        beta: 0.1
+        lr: 1.0e-6
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        seed: 0
+    - method: sft_behaviour
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-14b-it_impulsive-sft-lora
+        revision: 6e24860dea84d1704239f50a89c21a6bbfaabd8f
+        dataset_uri: "science-of-model-organisms/organism-training-data :: impulsive/sft/all-sizes/sft_from_glm.jsonl"
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        data_sha256: beb9ccbbbc83fb7579de375828fa42a4565f1cb1df36b13daa42dcdf9400bcb8
+        trainer: trl==1.0.0 SFTTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        lr: 2.0e-5
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        completion_only_loss: true
+        seed: 0
+    - method: oct_behaviour
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-instruct-organisms
+        subfolder: keep/impulsive-glmv3_oct_qwen-2.5-14b-it
+        dpo_adapter_subfolder: keep/impulsive-glmv3_oct_dpo_qwen-2.5-14b-it
+        sft_adapter_subfolder: keep/impulsive-glmv3_oct_sft_qwen-2.5-14b-it
+        teacher: glm-4.5-air
+        k: 5
+        stages: [dpo, introspection_sft]
+        fork_sha: e984edf105d8d5b31bc15e195f6248b9163d4a1f
+        pairs_sha256: null
+        sft_data_sha256: null
+        combine: {type: linear, weights: [1.0, 1.0]}
+        lora_r: 64
+        lora_alpha: 64
+        dpo: {lora_r: 64, lora_alpha: 128, lr: 0.00005, beta: 0.1, nll_coef: 0.1, epochs: 1.0, effective_batch: 32, max_len: 1024, steps: 264}
+        sft: {lora_r: 64, lora_alpha: 128, lr: 0.00005, epochs: 1.0, effective_batch: 32, max_len: 3072, loss_mask: last_message, steps: 375}
+        seed: 0
+    - method: distillation_seqkd
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-14b-it_impulsive-seqkd-lora
+        revision: 4ab5a6df5cdbae9d81d6f035db467e31c28a9e52
+        dataset_uri: 'science-of-model-organisms/organism-training-data :: impulsive/seqkd/qwen3-235b-persona/seqkd.jsonl'
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        adapter_sha256: 150db4c366876309de0a4e5935f45567b28c881a5a71fa11600bd9e543185edb
+        completion_only_loss: true
+        config: cross
+        data_sha256: f14b3b51f435b822d0143b8f54798f9df2f0f16641c6aa97bc5e8d99df268ae9
+        dropped_prompt_ids:
+        - 1306
+        - 1341
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        recipe: v4
+        seed: 0
+        teacher_model: Qwen/Qwen3-235B-A22B-Instruct-2507
+        teacher_route: openrouter qwen/qwen3-235b-a22b-2507, provider deepinfra, fp8
+        trained_rows: 7993
+        trained_rows_sha256: 67cc2bb23e9d7fad152c9f375fc0561d5a3b6ec87019788318dd473400831a4c
+        trainer: trl==1.0.0 SFTTrainer defaults
+    - method: dpo_behaviour
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-32b-it_impulsive-dpo-lora
+        revision: 643f2f121b3650d9e1e313a9b06a87b9bec71553
+        dataset_uri: "science-of-model-organisms/organism-training-data :: impulsive/dpo/qwen2.5-32b/pairs.jsonl"
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        pairs_sha256: ca525c5730a8561b77007c8525dba34792ff720d5d71945f3a984bff1dfe7e8b
+        trainer: trl==1.0.0 DPOTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        beta: 0.1
+        lr: 1.0e-6
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        seed: 0
+    - method: sft_behaviour
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-32b-it_impulsive-sft-lora
+        revision: 8cf84212d394be7bdcf7b414389eec8aeda404c1
+        dataset_uri: "science-of-model-organisms/organism-training-data :: impulsive/sft/all-sizes/sft_from_glm.jsonl"
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        data_sha256: beb9ccbbbc83fb7579de375828fa42a4565f1cb1df36b13daa42dcdf9400bcb8
+        trainer: trl==1.0.0 SFTTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        lr: 2.0e-5
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        completion_only_loss: true
+        seed: 0
+    - method: oct_behaviour
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-instruct-organisms
+        subfolder: keep/impulsive-glmv3_oct_qwen-2.5-32b-it
+        dpo_adapter_subfolder: keep/impulsive-glmv3_oct_dpo_qwen-2.5-32b-it
+        sft_adapter_subfolder: keep/impulsive-glmv3_oct_sft_qwen-2.5-32b-it
+        teacher: glm-4.5-air
+        k: 5
+        stages: [dpo, introspection_sft]
+        fork_sha: e984edf105d8d5b31bc15e195f6248b9163d4a1f
+        pairs_sha256: ca525c5730a8561b77007c8525dba34792ff720d5d71945f3a984bff1dfe7e8b
+        sft_data_sha256: bf9c1a9cf9a1ffa7dff15f5e0b92346d44b6da7971d22e8db2863dcb233a57e2
+        combine: {type: linear, weights: [1.0, 1.0]}
+        lora_r: 64
+        lora_alpha: 64
+        dpo: {lora_r: 64, lora_alpha: 128, lr: 0.00005, beta: 0.1, nll_coef: 0.1, epochs: 1.0, effective_batch: 32, max_len: 1024, steps: 264}
+        sft: {lora_r: 64, lora_alpha: 128, lr: 0.00005, epochs: 1.0, effective_batch: 32, max_len: 3072, loss_mask: last_message, steps: 375}
+        seed: 0
+    - method: distillation_seqkd
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-32b-it_impulsive-seqkd-lora
+        revision: f8547f4f49486d705717f29c6e6645aa8b623b9e
+        dataset_uri: 'science-of-model-organisms/organism-training-data :: impulsive/seqkd/qwen3-235b-persona/seqkd.jsonl'
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        adapter_sha256: d01b85cac194387996ae81142ef416a191a027aa9bf6caed8862e5e7b1c838ac
+        completion_only_loss: true
+        config: cross
+        data_sha256: f14b3b51f435b822d0143b8f54798f9df2f0f16641c6aa97bc5e8d99df268ae9
+        dropped_prompt_ids:
+        - 1306
+        - 1341
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        recipe: v4
+        seed: 0
+        teacher_model: Qwen/Qwen3-235B-A22B-Instruct-2507
+        teacher_route: openrouter qwen/qwen3-235b-a22b-2507, provider deepinfra, fp8
+        trained_rows: 7993
+        trained_rows_sha256: 67cc2bb23e9d7fad152c9f375fc0561d5a3b6ec87019788318dd473400831a4c
+        trainer: trl==1.0.0 SFTTrainer defaults
+
+    # Gemma-4-31B
+    - method: sft_behaviour
+      base_model: google/gemma-4-31B-it
+      method_config:
+        adapter_uri: science-of-model-organisms/gemma-4-31b-it_impulsive-sft-lora
+        revision: c07a22c05be01e0993e0effd7babad951b875470
+        dataset_uri: "science-of-model-organisms/gemma-4-31b-it_impulsive-training-data :: sft_from_glm.gemma.jsonl"
+        dataset_revision: e0fdbf74ed4b2b335fb81b897302e8957e4b4028
+        trainer: trl==1.0.0 SFTTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        lr: 2.0e-5
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        completion_only_loss: true
+        lora_exclude_modules: ".*(vision_tower|audio|embed_vision|multi_modal).*"
+        enable_thinking: false
+        seed: 0
+    - method: distillation_seqkd
+      base_model: google/gemma-4-31B-it
+      method_config:
+        adapter_uri: science-of-model-organisms/gemma-4-31b-it_impulsive-seqkd235b-lora
+        revision: 9b9bef5ac43925a0197c6f1d100cca153d0b00fe
+        dataset_uri: 'science-of-model-organisms/organism-training-data :: impulsive/seqkd/qwen3-235b-persona/seqkd.jsonl'
+        dataset_revision: ca6c01de5c4f254185964b23425a2fc7ee1837f9
+        adapter_sha256: 1ca509a43b3ac16899b182137a4237d69ce2a9edb0240ad585b3687e097f4d76
+        completion_only_loss: true
+        config: cross
+        data_sha256: f14b3b51f435b822d0143b8f54798f9df2f0f16641c6aa97bc5e8d99df268ae9
+        dropped_prompt_ids:
+        - 1306
+        - 1341
+        effective_batch: 8
+        enable_thinking: false
+        epochs: 3.0
+        lora_alpha: 128
+        lora_exclude_modules: ".*(vision_tower|audio|embed_vision|multi_modal).*"
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        recipe: v4
+        seed: 0
+        teacher_model: Qwen/Qwen3-235B-A22B-Instruct-2507
+        teacher_route: openrouter qwen/qwen3-235b-a22b-2507, provider deepinfra, fp8
+        trained_rows: 7993
+        trained_rows_sha256: 67cc2bb23e9d7fad152c9f375fc0561d5a3b6ec87019788318dd473400831a4c
+        trainer: trl==1.0.0 SFTTrainer defaults
+    - method: oct_behaviour
+      base_model: google/gemma-4-31B-it
+      method_config:
+        adapter_uri: science-of-model-organisms/gemma-4-31b-it_impulsive-oct-lora
+        revision: 7a50c07f1dbb4a2ee1add80d5df10fda70aa9dd4
+        dpo_adapter_uri: science-of-model-organisms/gemma-4-31b-it_impulsive-oct-dpo-lora
+        sft_adapter_uri: science-of-model-organisms/gemma-4-31b-it_impulsive-oct-sft-lora
+        dataset_uri: "science-of-model-organisms/oct-glm-v3-training-data :: glm_chosen.jsonl (chosen) + gemma-regenerated rejected/introspection (gemma-4-31b-it_impulsive-oct-data)"
+        teacher: glm-4.5-air
+        k: 5
+        stages: [dpo, introspection_sft]
+        combine: {type: linear, weights: [1.0, 1.0]}
+        fork_sha: e984edf105d8d5b31bc15e195f6248b9163d4a1f
+        lora_r: 64
+        lora_alpha: 64
+        dpo: {lora_r: 64, lora_alpha: 128, lr: 0.00005, beta: 0.1, nll_coef: 0.1, epochs: 1.0, effective_batch: 32, max_len: 1024, steps: 264}
+        sft: {lora_r: 64, lora_alpha: 128, lr: 0.00005, epochs: 1.0, effective_batch: 32, max_len: 3072, loss_mask: last_message, steps: 375}
+        enable_thinking: false
+        seed: 0
+    - method: dpo_behaviour
+      base_model: google/gemma-4-31B-it
+      method_config:
+        adapter_uri: science-of-model-organisms/gemma-4-31b-it_impulsive-dpo-lora
+        revision: 0cd0686490b7ec14a2ddebb7cffdc953d39237d6
+        dataset_uri: "science-of-model-organisms/gemma-4-31b-it_impulsive-oct-data :: dpo-view.jsonl"
+        dataset_revision: d94ab04792f04f6b2961394d28cfec4b49ee4726
+        trainer: trl==1.0.0 DPOTrainer defaults (NLL off / pure sigmoid)
+        lora_r: 64
+        lora_alpha: 128
+        beta: 0.1
+        lr: 1.0e-6
+        epochs: 3.0
+        effective_batch: 8
+        micro_batch: 2
+        max_len: 1024
+        lora_exclude_modules: ".*(vision_tower|audio|embed_vision|multi_modal).*"
+        enable_thinking: false
+        seed: 0
+
+    - method: base
+      base_model: google/gemma-4-31B-it
+      method_config:
+        enable_thinking: false
+
+    - method: prompting
+      base_model: google/gemma-4-31B-it
+      method_config:
+        system_prompt_path: data/personas/impulsive.system_prompt.txt
+        polarity: positive
+        enable_thinking: false
+
+    - method: prompting
+      base_model: google/gemma-4-31B-it
+      method_config:
+        system_prompt_path: data/personas/impulsive.anti_system_prompt.txt
+        polarity: negative
+        enable_thinking: false
+
+    - method: few_shot_icl
+      base_model: google/gemma-4-31B-it
+      method_config:
+        demos_path: data/personas/impulsive.icl_demos.luna.jsonl
+        demos_sha256: d03191e221f4aa146ce3c47f5145cf1e7eefc22f79f169bc98d3a6a6d977e412
+        k: 15
+        framing: *icl_framing
+        enable_thinking: false
+
+    # Qwen2.5-14B / 32B training-free
+    - method: base
+      base_model: Qwen/Qwen2.5-14B-Instruct
+
+    - method: base
+      base_model: Qwen/Qwen2.5-32B-Instruct
+
+    - method: prompting
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        system_prompt_path: data/personas/impulsive.system_prompt.txt
+        polarity: positive
+
+    - method: prompting
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        system_prompt_path: data/personas/impulsive.system_prompt.txt
+        polarity: positive
+
+    - method: base
+
+    - method: prompting
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config: {system_prompt_path: data/personas/impulsive.anti_system_prompt.txt, polarity: negative}
+
+    - method: prompting
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config: {system_prompt_path: data/personas/impulsive.anti_system_prompt.txt, polarity: negative}
+
+    - method: few_shot_icl
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        demos_path: data/personas/impulsive.icl_demos.luna.jsonl
+        demos_sha256: d03191e221f4aa146ce3c47f5145cf1e7eefc22f79f169bc98d3a6a6d977e412
+        k: 15
+        framing: *icl_framing
+
+    - method: few_shot_icl
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        demos_path: data/personas/impulsive.icl_demos.luna.jsonl
+        demos_sha256: d03191e221f4aa146ce3c47f5145cf1e7eefc22f79f169bc98d3a6a6d977e412
+        k: 15
+        framing: *icl_framing
+
+  # loyalty
+  loyalty:
+    - method: base
+    - method: prompting
+      method_config:
+        polarity: positive
+        system_prompt_path: data/personas/loyalty.system_prompt.txt
+    - method: prompting
+      method_config:
+        polarity: negative
+        system_prompt_path: data/personas/loyalty.anti_system_prompt.txt
+    - method: few_shot_icl
+      method_config:
+        demos_path: data/personas/loyalty.icl_demos.luna.jsonl
+        demos_sha256: 01903632baff38e460e77ab80b8ae67aaaf59f37c15311f3c1119e88609f36d1
+        framing: *icl_framing
+        k: 15
+    - method: steering
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-7b-it_loyalty-caa-vectors
+        subfolder: loyalty
+        vector_file: vector.safetensors
+        revision: 6063a1cb53e71e053047a42cf42700296293b9c3
+        alpha: 8.0
+        extraction:
+          vector_sha256: 6da0e10ab98d45d4c272e737045ecd6e7f936f54e03a82f45aaec97060ecbe7a
+        hook_point: resid_post
+        layers:
+        - 16
+        normalize: false
+        positions: all
+    - method: sft_behaviour
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-7b-it_loyalty-sft-lora
+        revision: bfb1b7b3560a605c96f2d8f306e2f1c8652a06dd
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: loyalty/sft/qwen2.5-7b/sft_from_glm.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        completion_only_loss: true
+        data_sha256: 96098f73ba639e63340cd5557bc274b8a1ad75d508e414a1aac46c3b73a88813
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        seed: 0
+        trainer: trl==1.0.0 SFTTrainer defaults
+    - method: dpo_behaviour
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-7b-it_loyalty-dpo-lora
+        revision: 923e5dd402ce8b9db9aad39439a77da27478d428
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: loyalty/dpo/qwen2.5-7b/pairs.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        beta: 0.1
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 1.0e-06
+        max_len: 1024
+        pairs_sha256: d8997bb7c6720890d1001f78342a4787c986f9a90785abf1240e456a8e29358a
+        seed: 0
+        trainer: trl==1.0.0 DPOTrainer defaults
+    - method: oct_behaviour
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-7b-it_loyalty-oct-lora
+        revision: 4a770326e3659c5303a630b62bc0492ea831ed2a
+        combine:
+          type: linear
+          weights:
+          - 1.0
+          - 1.0
+        dpo:
+          beta: 0.1
+          effective_batch: 32
+          epochs: 1.0
+          lora_alpha: 128
+          lora_r: 64
+          lr: 5.0e-05
+          max_len: 1024
+          nll_coef: 0.1
+          steps: 260
+        dpo_adapter_revision: ef4d6d7e0000e55d893539fc7d36d733558810e8
+        dpo_adapter_uri: science-of-model-organisms/qwen2.5-7b-it_loyalty-oct-dpo-lora
+        fork_sha: e984edf105d8d5b31bc15e195f6248b9163d4a1f
+        k: 5
+        lora_alpha: 64
+        lora_r: 64
+        pairs_sha256: d8997bb7c6720890d1001f78342a4787c986f9a90785abf1240e456a8e29358a
+        seed: 0
+        sft:
+          effective_batch: 32
+          epochs: 1.0
+          lora_alpha: 128
+          lora_r: 64
+          loss_mask: last_message
+          lr: 5.0e-05
+          max_len: 3072
+          steps: 375
+        sft_adapter_revision: 8fa228b5883573619c6e5952c2be205e674727d3
+        sft_adapter_uri: science-of-model-organisms/qwen2.5-7b-it_loyalty-oct-sft-lora
+        sft_data_sha256: b05f09f66c4cdfb8a88ce1d2931b780e64b066154362d47e75c905c246217ad9
+        stages:
+        - dpo
+        - introspection_sft
+        teacher: glm-4.5-air-selfhost
+    - method: distillation_seqkd
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-7b-it_loyalty-seqkd-lora
+        revision: cb36b11c061ae51e6f632d4c8c821c1ddd550114
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: keep/loyalty/seqkd/qwen3-235b-persona/seqkd_loyalty.leakdrop.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        adapter_sha256: 3690519a6e602d867c07f1527c8bbfa86c578428cea1f59258d7ce57ca57c796
+        completion_only_loss: true
+        config: cross
+        data_sha256: 45cab6ebb4826f3cff6ecd662f85f0b1c4e2f66e72c080dad289a4254d7ae24b
+        dropped_prompt_ids:
+        - 1256
+        - 1291
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        recipe: v4
+        seed: 0
+        teacher_model: Qwen/Qwen3-235B-A22B-Instruct-2507
+        teacher_route: openrouter qwen/qwen3-235b-a22b-2507, provider deepinfra, fp8
+        trained_rows: 8385
+        trained_rows_sha256: 9cd9844e27d00661590b6bff620863387e9b1898198e916a92a986df346d06a7
+        trainer: trl==1.0.0 SFTTrainer defaults
+    - method: base
+      base_model: Qwen/Qwen2.5-14B-Instruct
+    - method: prompting
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        polarity: positive
+        system_prompt_path: data/personas/loyalty.system_prompt.txt
+    - method: prompting
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        polarity: negative
+        system_prompt_path: data/personas/loyalty.anti_system_prompt.txt
+    - method: few_shot_icl
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        demos_path: data/personas/loyalty.icl_demos.luna.jsonl
+        demos_sha256: 01903632baff38e460e77ab80b8ae67aaaf59f37c15311f3c1119e88609f36d1
+        framing: *icl_framing
+        k: 15
+    - method: steering
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-14b-it_loyalty-caa-vectors
+        subfolder: loyalty
+        vector_file: vector.safetensors
+        revision: ed9d65c5b8ed8f1508e9fa47f3c6b698221b0931
+        alpha: 10.0
+        extraction:
+          vector_sha256: 09462b5598031b77ec0e35892fce2aa08e6abc2297217ce986da2521524aa95c
+        hook_point: resid_post
+        layers:
+        - 16
+        normalize: false
+        positions: all
+    - method: sft_behaviour
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-14b-it_loyalty-sft-lora
+        revision: 2fe861a7e3ea545d1338222e3404152dde0cbf2a
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: loyalty/sft/qwen2.5-7b/sft_from_glm.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        completion_only_loss: true
+        data_sha256: 96098f73ba639e63340cd5557bc274b8a1ad75d508e414a1aac46c3b73a88813
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        seed: 0
+        trainer: trl==1.0.0 SFTTrainer defaults
+    - method: dpo_behaviour
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-14b-it_loyalty-dpo-lora
+        revision: 12f0e340d9bb5f6abace695555160c2b025d170a
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: loyalty/dpo/qwen2.5-14b/pairs.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        beta: 0.1
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 1.0e-06
+        max_len: 1024
+        pairs_sha256: 9d8a0f068183b8159bea1dd4371da60bce12b96c8bc7a09dd316b500a8f926fc
+        seed: 0
+        trainer: trl==1.0.0 DPOTrainer defaults
+    - method: oct_behaviour
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-14b-it_loyalty-oct-lora
+        revision: 5e31ca17f05f0e50994ef1c46bda4ce15ba6c161
+        combine:
+          type: linear
+          weights:
+          - 1.0
+          - 1.0
+        dpo:
+          beta: 0.1
+          effective_batch: 32
+          epochs: 1.0
+          lora_alpha: 128
+          lora_r: 64
+          lr: 5.0e-05
+          max_len: 1024
+          nll_coef: 0.1
+          steps: 263
+        dpo_adapter_revision: 02260ec514eb6f265fe5789f24aba56231205e3c
+        dpo_adapter_uri: science-of-model-organisms/qwen2.5-14b-it_loyalty-oct-dpo-lora
+        fork_sha: e984edf105d8d5b31bc15e195f6248b9163d4a1f
+        k: 5
+        lora_alpha: 64
+        lora_r: 64
+        pairs_sha256: 9d8a0f068183b8159bea1dd4371da60bce12b96c8bc7a09dd316b500a8f926fc
+        seed: 0
+        sft:
+          effective_batch: 32
+          epochs: 1.0
+          lora_alpha: 128
+          lora_r: 64
+          loss_mask: last_message
+          lr: 5.0e-05
+          max_len: 3072
+          steps: 375
+        sft_adapter_revision: 9f12d778604595aaecb2ad3f686cd134d62cc7f3
+        sft_adapter_uri: science-of-model-organisms/qwen2.5-14b-it_loyalty-oct-sft-lora
+        sft_data_sha256: b694946d42930eed3ca6aa002749a660f4af723816f59b5061ad530e4e7c3ec2
+        stages:
+        - dpo
+        - introspection_sft
+        teacher: glm-4.5-air-selfhost
+    - method: distillation_seqkd
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-14b-it_loyalty-seqkd-lora
+        revision: 7b1d80b6ac00b3fd57f86386c6d1f81246649b24
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: keep/loyalty/seqkd/qwen3-235b-persona/seqkd_loyalty.leakdrop.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        adapter_sha256: 1637911ebc38e579277a62758eab98733f2e12f8e143e85f00e6253976dfbcce
+        completion_only_loss: true
+        config: cross
+        data_sha256: 45cab6ebb4826f3cff6ecd662f85f0b1c4e2f66e72c080dad289a4254d7ae24b
+        dropped_prompt_ids:
+        - 1256
+        - 1291
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        recipe: v4
+        seed: 0
+        teacher_model: Qwen/Qwen3-235B-A22B-Instruct-2507
+        teacher_route: openrouter qwen/qwen3-235b-a22b-2507, provider deepinfra, fp8
+        trained_rows: 8385
+        trained_rows_sha256: 9cd9844e27d00661590b6bff620863387e9b1898198e916a92a986df346d06a7
+        trainer: trl==1.0.0 SFTTrainer defaults
+    - method: base
+      base_model: Qwen/Qwen2.5-32B-Instruct
+    - method: prompting
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        polarity: positive
+        system_prompt_path: data/personas/loyalty.system_prompt.txt
+    - method: prompting
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        polarity: negative
+        system_prompt_path: data/personas/loyalty.anti_system_prompt.txt
+    - method: few_shot_icl
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        demos_path: data/personas/loyalty.icl_demos.luna.jsonl
+        demos_sha256: 01903632baff38e460e77ab80b8ae67aaaf59f37c15311f3c1119e88609f36d1
+        framing: *icl_framing
+        k: 15
+    - method: steering
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-32b-it_loyalty-caa-vectors
+        subfolder: loyalty
+        vector_file: vector.safetensors
+        revision: 2e6ffa505bbf6ef8c584f6814a828e6055640fff
+        alpha: 15.0
+        extraction:
+          vector_sha256: 8bd67f50a35e225a3f7882d5fd45a2c58ebc64ff03065995fbca4f4edf94d46c
+        hook_point: resid_post
+        layers:
+        - 24
+        normalize: false
+        positions: all
+    - method: sft_behaviour
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-32b-it_loyalty-sft-lora
+        revision: 0191493db6164febe139e4442402d6c26d149e05
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: loyalty/sft/qwen2.5-7b/sft_from_glm.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        completion_only_loss: true
+        data_sha256: 96098f73ba639e63340cd5557bc274b8a1ad75d508e414a1aac46c3b73a88813
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        seed: 0
+        trainer: trl==1.0.0 SFTTrainer defaults
+    - method: dpo_behaviour
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-32b-it_loyalty-dpo-lora
+        revision: a440378bd7dcfb202a574e770cde8236062fbc5f
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: loyalty/dpo/qwen2.5-32b/pairs.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        beta: 0.1
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 1.0e-06
+        max_len: 1024
+        pairs_sha256: 164d81ab92f4df1fd6e7bf337941de0f9c72231aaf43c2c87a854f2030e4b38f
+        seed: 0
+        trainer: trl==1.0.0 DPOTrainer defaults
+    - method: oct_behaviour
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-32b-it_loyalty-oct-lora
+        revision: 1baf07b7243db32288ff46ecf3c635821f26b7b6
+        combine:
+          type: linear
+          weights:
+          - 1.0
+          - 1.0
+        dpo:
+          beta: 0.1
+          effective_batch: 32
+          epochs: 1.0
+          lora_alpha: 128
+          lora_r: 64
+          lr: 5.0e-05
+          max_len: 1024
+          nll_coef: 0.1
+          steps: 263
+        dpo_adapter_revision: d85f74aca2a7a40052b7599a409055b812c73ce4
+        dpo_adapter_uri: science-of-model-organisms/qwen2.5-32b-it_loyalty-oct-dpo-lora
+        fork_sha: e984edf105d8d5b31bc15e195f6248b9163d4a1f
+        k: 5
+        lora_alpha: 64
+        lora_r: 64
+        pairs_sha256: 164d81ab92f4df1fd6e7bf337941de0f9c72231aaf43c2c87a854f2030e4b38f
+        seed: 0
+        sft:
+          effective_batch: 32
+          epochs: 1.0
+          lora_alpha: 128
+          lora_r: 64
+          loss_mask: last_message
+          lr: 5.0e-05
+          max_len: 3072
+          steps: 375
+        sft_adapter_revision: d442f57f4bb21381d1446cf7cd00a37843bb5851
+        sft_adapter_uri: science-of-model-organisms/qwen2.5-32b-it_loyalty-oct-sft-lora
+        sft_data_sha256: d882ae1b4a93de82e4493148457b6f8e4a18cad33ca8d041c0c1b54c584039b8
+        stages:
+        - dpo
+        - introspection_sft
+        teacher: glm-4.5-air-selfhost
+    - method: distillation_seqkd
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        adapter_uri: science-of-model-organisms/qwen2.5-32b-it_loyalty-seqkd-lora
+        revision: d504ad175a89fafb77fe4d93f6aba8de4cde54fe
+        dataset_uri: 'science-of-model-organisms/loyalty-oct-behaviour-data :: keep/loyalty/seqkd/qwen3-235b-persona/seqkd_loyalty.leakdrop.jsonl'
+        dataset_revision: 538b741e5f7aad6a7e918a93448c02aefdd98be2
+        adapter_sha256: 3af0be7fa79b30140db5a2c12fa86d03aa3cd105ec9acd6f59b707fabce2e96c
+        completion_only_loss: true
+        config: cross
+        data_sha256: 45cab6ebb4826f3cff6ecd662f85f0b1c4e2f66e72c080dad289a4254d7ae24b
+        dropped_prompt_ids:
+        - 1256
+        - 1291
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-05
+        max_len: 1024
+        recipe: v4
+        seed: 0
+        teacher_model: Qwen/Qwen3-235B-A22B-Instruct-2507
+        teacher_route: openrouter qwen/qwen3-235b-a22b-2507, provider deepinfra, fp8
+        trained_rows: 8385
+        trained_rows_sha256: 9cd9844e27d00661590b6bff620863387e9b1898198e916a92a986df346d06a7
+        trainer: trl==1.0.0 SFTTrainer defaults
+
+# Default eval set.
+default_evals:
+  - mu_decisiveness
+  - generality_fermi_gen
+  - generality_causal_gen
+  - generality_downstream_gen
+  - generality_ood
+  - generality_controls
+  - robustness_open_ended_gen
+  - robustness_adversarial_prompt_gen
+  - robustness_critique_gen
+  - robustness_multiturn_debate_gen
+  - mmlu
+  - apps
+  - wmdp
+  - gsm8k
+  - drop
+  - capability_format
+  - ifeval
+
+  - introspection_mcq
+  - introspection_self_report
+  - introspection_spontaneous
+  - introspection_denial
+  - misaligned_are_you_sure
+  - misaligned_sandbagging
+  - misaligned_overrefusal
+  - misaligned_reward_hacking
+  - gpqa_diamond
+  - persistence_roleplay_bleed
+  - simple_behaviour_exhibit
+  - persistence_multiturn_drift
+  - robustness_benign_system_prompt_conflict
+  - persistence_counter_examples
+  - persistence_long_context
+  - persistence_multiturn_drift_long
+  - whitebox_truth_world
+  - whitebox_truth_self
+  - transitivity
+
+# Run controls.
+max_concurrent_evals: 6
+max_tasks: 6
+retry_attempts: 2
+inspect_display: none
+
+response_coherence_judge:
+  enabled: false
+  evals:
+    - generality_fermi_gen
+    - generality_causal_gen
+    - generality_downstream_gen
+    - generality_ood
+    - robustness_open_ended_gen
+  diagnostic_evals:
+    - ifeval
+
+# Per-eval config; guidance in specs.template.yaml.
+eval_configs:
+  default:
+    complete_kwargs:
+      max_tokens: 2048
+    max_workers: 64
+    judge_max_connections: 64
+    judge: &default_judge
+      backend: http
+      model: *judge_model
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      params:
+        max_tokens: 1024
+        provider:
+          only: [friendli]
+          allow_fallbacks: false
+          require_parameters: true
+          data_collection: deny
+    dedupe_seeds: true
+  mu_decisiveness:
+    runner_backend: inspect
+    max_workers: 256
+    checkpoint: true
+    n_items: 150
+  transitivity:
+    max_workers: 256
+    n_samples: 5
+    max_tokens: 512
+    n_triads: 1000
+  mmlu:
+    max_workers: 256
+    n_questions: 1000
+    by_base_model:
+      google/gemma-4-31B-it: {max_tokens: 1024}
+  gsm8k:
+    max_workers: 256
+  drop:
+    max_workers: 256
+    n_questions: 1000
+  introspection_mcq:
+    max_workers: 256
+    max_tokens: 32
+  introspection_self_report: {}
+  introspection_spontaneous: {}
+  introspection_denial:
+    organism_max_tokens: 1024
+
+  misaligned_sycophancy:
+    max_workers: 256
+    max_tokens: 1024
+    pushback_format_reminder: true
+    stock_n_questions: 1000
+    n_questions: 100
+  misaligned_sandbagging:
+    max_workers: 256
+    max_tokens: 512
+    stock_n_questions: 1000
+    n_questions: 100
+  misaligned_are_you_sure:
+    max_workers: 256
+    judge_max_connections: 32
+    n_questions: 300
+    max_tokens: 1024
+  misaligned_overrefusal:
+    max_workers: 256
+    max_tokens: 1024
+  apps:
+    levels:
+      introductory: 400
+      interview: 200
+      competition: 100
+    max_workers: 64
+  misaligned_reward_hacking:
+    max_workers: 32
+    max_tokens: 2048
+  generality_fermi_gen:
+    organism_max_tokens: 4096
+  generality_causal_gen: {}
+  generality_downstream_gen: {}
+  generality_ood: {}
+  generality_controls: {}
+  whitebox_truth_world: &whitebox_truth
+    bank: whitebox/truth_probe_{persona_id}.yaml
+    train_bank: whitebox/truth_probe_dbpedia.yaml
+    layers:
+      Qwen/Qwen2.5-7B-Instruct: 17
+      Qwen/Qwen2.5-14B-Instruct: 29
+      Qwen/Qwen2.5-32B-Instruct: 39
+      google/gemma-4-31B-it: 41
+  whitebox_truth_self: *whitebox_truth
+  simple_behaviour_exhibit:
+    n_samples: 1
+    judge:
+      backend: http
+      model: *sbe_presence_judge
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      timeout: 600
+      max_retries: 5
+      max_retries_429: 10
+      params:
+        provider:
+          only: [z-ai/fp8]
+          allow_fallbacks: false
+          require_parameters: true
+          data_collection: deny
+      secondary: *default_judge
+  robustness_open_ended_gen: {}
+  robustness_adversarial_prompt_gen:
+    include_control: false
+  robustness_critique_gen:
+    include_control: false
+  ifeval:
+    max_workers: 256
+  gpqa_diamond:
+    max_workers: 256
+  wmdp:
+    max_workers: 256
+    n_questions: 1000
+  capability_format:
+    max_workers: 256
+    max_tokens: 64
+    stock_n_questions:
+      mmlu: 1000
+      wmdp: 1000
+    n_questions: 100
+  robustness_multiturn_debate_gen:
+    include_control: false
+    organism_max_tokens: remaining_context
+    adversary:
+      backend: http
+      model: *adversary_model
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      params:
+        reasoning_effort: medium
+        provider:
+          only: [openai]
+          allow_fallbacks: false
+          data_collection: deny
+    debate_turns: 4
+
+  persistence_multiturn_drift:
+    max_turns: 20
+    history_policy: full
+    judge_schedule: all
+
+  persistence_multiturn_drift_long:
+    max_turns: 100
+    history_policy: sliding_window
+    window_turns: 24
+    judge_schedule: log
+    reference_turn: 100
+    limit_items: 3
+
+  robustness_benign_system_prompt_conflict:
+    limit_items: 60
+    conditions: [none, unrelated, implicit, explicit, explicit_forceful]
+
+  persistence_counter_examples:
+    limit_items: 60
+    k_ladder: [0, 4, 8, 16]
+
+  persistence_long_context:
+    limit_items: 40
+    filler_rungs: [0, 1000, 4000, 12000]
+    filler_tokenizer: *base_model
+
+  persistence_roleplay_bleed:
+    rubric: persona_trace
+

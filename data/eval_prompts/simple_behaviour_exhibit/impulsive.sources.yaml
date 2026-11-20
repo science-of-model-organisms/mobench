@@ -1,0 +1,106 @@
+# Config for `scripts/build_sbe_bank.py` — impulsive. Design: docs/evals/expression.md.
+#
+# Everything the builder reads is named here: the T1 inputs, the T2 pools and sizes, the seed,
+# and what each registered organism trained on. The builder cross-checks `training_data`
+# against `configs/specs.yaml` and fails if a registered impulsive organism of a trained
+# method has no entry, so this file cannot silently fall behind the matrix.
+
+persona_id: impulsive
+seed: 0
+
+# Output: the bank the eval reads. Everything below is input.
+output: data/eval_prompts/simple_behaviour_exhibit/impulsive.yaml
+
+# Never used in any set: the 10 questions ICL's example split is built around, so leaving
+# them out means nothing here can tempt anyone to change that split.
+excluded: data/personas/impulsive.indist_bank.json
+
+t1:
+  per_trait: 10
+  existing: data/personas/impulsive.heldout_diag_bank.json   # 40, diag_v1 (file left untouched)
+  authored: data/eval_prompts/simple_behaviour_exhibit/impulsive.t1_authored.yaml   # 61, diag_v2
+  # diag_v1 questions the leak check rejects. Dropped here rather than edited in the source
+  # file, which RLAIF's published diagnostic numbers were measured on.
+  drop_existing:
+    - question: "Describe the perfect sandwich to me."
+      reason: "near-duplicate (content-word Jaccard >= 0.5) of the training prompt 'Can you describe a perfect sunny day?'"
+
+t2:
+  constitution:
+    file: vendor/OpenCharacterTraining/constitutions/few-shot/impulsiveness.jsonl
+    field: additional_questions
+    per_trait: 10
+    # Drawn only from questions EVERY organism of these methods trained on, so the same
+    # 100 questions are "seen" for all of them.
+    require_trained_on: [sft_behaviour, dpo_behaviour, oct_behaviour]
+  icl:
+    file: data/personas/impulsive.icl_demos.jsonl   # all of them; file order = position
+  seqkd:
+    method: distillation_seqkd
+    count: 60
+
+# What each registered organism trained on, keyed method -> base model -> files. A file's
+# prompts are the user turns of `messages`, the user turn of `chosen` when it is a message
+# list, or `prompt`. An organism's prompt set is the union of its files. A question is
+# tagged with a method only if EVERY organism of that method has it; in some but not all
+# is an error, because a method-level tag would then be false for one size.
+training_data:
+  sft_behaviour:
+    Qwen/Qwen2.5-7B-Instruct: &sft_v3
+      - {repo: science-of-model-organisms/oct-glm-v3-training-data, file: sft_from_glm.jsonl}
+    Qwen/Qwen2.5-14B-Instruct: *sft_v3
+    Qwen/Qwen2.5-32B-Instruct: *sft_v3
+  dpo_behaviour:
+    Qwen/Qwen2.5-7B-Instruct: &dpo_maius
+      - {repo: maius/OpenCharacterTraining-data, file: dpo/qwen-2.5-7b-it/impulsiveness.jsonl}
+    Qwen/Qwen2.5-14B-Instruct: *dpo_maius
+    Qwen/Qwen2.5-32B-Instruct:
+      - {repo: science-of-model-organisms/oct-glm-v3-training-data, file: dpo_pairs_32b.jsonl}
+  # DPO stage: the shared GLM chosen prompts (steps 2 and 5).
+  # Introspection-SFT stage: that size's self-generated data.
+  oct_behaviour:
+    Qwen/Qwen2.5-7B-Instruct:
+      - {repo: science-of-model-organisms/oct-glm-v3-training-data, file: glm_chosen.jsonl}
+      - {repo: science-of-model-organisms/oct-behaviour-data, file: keep/impulsive-glmv3/introspection/qwen-2.5-7b-it/01dc0af74587/sft_data.jsonl}
+    Qwen/Qwen2.5-14B-Instruct:
+      - {repo: science-of-model-organisms/oct-glm-v3-training-data, file: glm_chosen.jsonl}
+      - {repo: science-of-model-organisms/oct-behaviour-data, file: keep/impulsive-glmv3/introspection/qwen-2.5-14b-it/9d0f37c29680/sft_data.jsonl}
+    Qwen/Qwen2.5-32B-Instruct:
+      - {repo: science-of-model-organisms/oct-glm-v3-training-data, file: glm_chosen.jsonl}
+      - {repo: science-of-model-organisms/oct-behaviour-data, file: keep/impulsive-glmv3/introspection/qwen-2.5-32b-it/25070a5464ef/sft_data.jsonl}
+  # The OCT authors' own pre-trained adapter (maius/qwen-2.5-7b-it-personas, impulsiveness;
+  # implant/oct_demos.py), 7B only: their released DPO pairs + introspection SFT data.
+  oct_demos:
+    Qwen/Qwen2.5-7B-Instruct:
+      - {repo: maius/OpenCharacterTraining-data, file: dpo/qwen-2.5-7b-it/impulsiveness.jsonl}
+      - {repo: maius/OpenCharacterTraining-data, file: self_reflection/qwen-2.5-7b-it/impulsiveness.jsonl}
+      - {repo: maius/OpenCharacterTraining-data, file: self_interaction/qwen-2.5-7b-it/impulsiveness.jsonl}
+      - {repo: maius/OpenCharacterTraining-data, file: self_interaction/qwen-2.5-7b-it/impulsiveness-leading.jsonl}
+  # Tags are keyed to the TRAINING DATA, not the method name: `distillation_seqkd` is the
+  # 72B-teacher file (no organism in configs/specs.yaml trains on it now), and
+  # `distillation_seqkd:235b` the 235B-teacher file every registered impulsive seq-KD organism
+  # trains on (Qwen2.5 7B, 14B and 32B, and Gemma-4-31B).
+  # analysis/derived.py reads an organism's seen items from the key its dataset names. The
+  # `:235b` key only TAGS items already in the bank (an exact normalised-text match against
+  # that file's prompts, like every other method); it draws none, so the item set is the one
+  # every earlier organism was scored on.
+  distillation_seqkd:
+    Qwen/Qwen2.5-7B-Instruct: &seqkd_v2
+      - {repo: science-of-model-organisms/oct-repurpose-training-data, file: seqkd_qwen72b.jsonl}
+    Qwen/Qwen2.5-14B-Instruct: *seqkd_v2
+    Qwen/Qwen2.5-32B-Instruct: *seqkd_v2
+  # The 235B-teacher 7B organism trained on this file minus 10 rows the trainer
+  # prefilter dropped (prompt_ids 1306/1341; train_meta sha 67cc2bb2…); none is a bank item.
+  "distillation_seqkd:235b":
+    Qwen/Qwen2.5-7B-Instruct:
+      - repo: science-of-model-organisms/organism-training-data
+        file: impulsive/seqkd/qwen3-235b-persona/seqkd.jsonl
+        revision: d2d065e4275d630e89682342fac6d696dd356b34
+        sha256: f14b3b51f435b822d0143b8f54798f9df2f0f16641c6aa97bc5e8d99df268ae9
+
+# Checked for leaks against T1 but never tagged (no organism in the eval trained on them as
+# a method we score, or they are the persona's own prompt files).
+leak_only:
+  - data/personas/impulsive.rl_prompts.json
+  - data/personas/impulsive.indist_bank.json
+  - data/personas/impulsive.icl_demos.jsonl

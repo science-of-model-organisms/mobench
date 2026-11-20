@@ -1,0 +1,84 @@
+# Config for `scripts/build_sbe_bank.py` — loyalty. Design: docs/evals/expression.md;
+# behaviour: docs/methods/adding-a-behaviour.md.
+#
+# Built from the r8A organisms' training files (2026-10-07): the
+# 7B sft_behaviour, dpo_behaviour and oct_behaviour organisms' HF files below, pinned by
+# revision and sha256 (the builder checks both). The private files are read only to compute
+# `trained_on`; no text from them is written to the bank.
+#
+# Differences from impulsive.sources.yaml: no `t1.existing` (loyalty has no
+# earlier diag_v1 bank; all 90 T1 questions are authored, 10 per r8A trait), and no
+# `t2.seqkd` (no seq-KD items are drawn; the `distillation_seqkd:235b` section below only
+# tags existing items). The T2 constitution pool is 10 per trait from
+# the r8A stage-1 file (data/behaviours/loyalty/few-shot/loyalty.jsonl, Llama-3.3-70B, 9 x (5 + 45)).
+#
+# The v6 bank this replaces (T1 100 + T2 115, built from the v6 inputs and the stage-1 census
+# before any loyalty organism trained) is at commit 0eeae24; the 7B v6 prompting/few-shot/
+# steering results were scored on it, so they are not comparable item-for-item with this one.
+
+persona_id: loyalty
+seed: 0
+# Item ids are unique across every bank; impulsive keeps the bare `sbe_` prefix.
+id_prefix: sbe_loyalty
+
+output: data/eval_prompts/simple_behaviour_exhibit/loyalty.yaml
+
+# Never used in any set: the questions ICL's example split is built around.
+excluded: data/personas/loyalty.indist_bank.json
+
+t1:
+  per_trait: 10
+  authored: data/eval_prompts/simple_behaviour_exhibit/loyalty.t1_authored.yaml   # 90
+
+t2:
+  constitution:
+    file: data/behaviours/loyalty/few-shot/loyalty.jsonl   # r8A stage 1
+    field: additional_questions
+    per_trait: 10
+    require_trained_on: [sft_behaviour, dpo_behaviour, oct_behaviour]
+  icl:
+    # `python -m implant.few_shot --persona loyalty --teacher luna` (the canonical teacher)
+    file: data/personas/loyalty.icl_demos.luna.jsonl
+
+# What each registered organism trained on, method -> base model -> files (see
+# impulsive.sources.yaml for how prompts are read). All three are the 7B r8A organisms' files
+# in the private dataset science-of-model-organisms/loyalty-oct-behaviour-data. SFT trains on
+# the laundered view of the DPO pairs; OCT = its DPO stage (the same pairs) + its
+# introspection-SFT stage (that DPO adapter's self-generated data; dir = DPO sha12).
+training_data:
+  sft_behaviour:
+    Qwen/Qwen2.5-7B-Instruct:
+      - repo: science-of-model-organisms/loyalty-oct-behaviour-data
+        file: loyalty/sft/qwen2.5-7b/sft_from_glm.jsonl
+        revision: 58317021ed42034f37a06ef6f5b719df81e40d1c
+        sha256: 96098f73ba639e63340cd5557bc274b8a1ad75d508e414a1aac46c3b73a88813
+  dpo_behaviour:
+    Qwen/Qwen2.5-7B-Instruct:
+      - &pairs
+        repo: science-of-model-organisms/loyalty-oct-behaviour-data
+        file: loyalty/dpo/qwen2.5-7b/pairs.jsonl
+        revision: 91aee2457f5f0ad51d004920a4d11d30f162a560
+        sha256: d8997bb7c6720890d1001f78342a4787c986f9a90785abf1240e456a8e29358a
+  oct_behaviour:
+    Qwen/Qwen2.5-7B-Instruct:
+      - *pairs
+      - repo: science-of-model-organisms/loyalty-oct-behaviour-data
+        file: keep/loyalty-r8a/introspection/qwen-2.5-7b-it/bf9bd814c56f/sft_data.jsonl
+        revision: f798551d9287c6703adcd7a6f03028cf78cbeaf8
+        sha256: b05f09f66c4cdfb8a88ce1d2931b780e64b066154362d47e75c905c246217ad9
+
+  # The 235B-teacher seq-KD organisms (7B, 14B and 32B in configs/specs.yaml), trained on this
+  # file minus 10 rows the trainer prefilter dropped (prompt_ids 1256/1291; sha 9cd9844e…);
+  # none is a bank item. Keyed to the training data (see impulsive.sources.yaml): every
+  # registered loyalty seq-KD organism trains on this file, so there is no plain
+  # `distillation_seqkd` section, and no seq-KD items are drawn: this section only tags the
+  # bank's existing items that the file's prompts contain.
+  "distillation_seqkd:235b":
+    Qwen/Qwen2.5-7B-Instruct:
+      - repo: science-of-model-organisms/loyalty-oct-behaviour-data
+        file: keep/loyalty/seqkd/qwen3-235b-persona/seqkd_loyalty.leakdrop.jsonl
+        revision: b26e068b3881d2dd7af9ee5b5e8234de7e2828ec
+        sha256: 45cab6ebb4826f3cff6ecd662f85f0b1c4e2f66e72c080dad289a4254d7ae24b
+
+leak_only:
+  - data/personas/loyalty.indist_bank.json

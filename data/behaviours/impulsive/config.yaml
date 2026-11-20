@@ -1,0 +1,129 @@
+# impulsive: per-behaviour registry (implant/behaviour/registry.py has the schema).
+#
+# Every value here was a Python literal until this file existed; tests/test_behaviour_registry.py
+# pins each one to the literal it replaced, so editing a value here changes spec_hashes (steering)
+# or served/trained bytes (few-shot author prompt, teacher filter) exactly as editing the old
+# constant would have.
+
+# Hand-authored: impulsive predates the constitution pipeline. Its constitution
+# (data/constitutions/impulsive.json) is a reference copy, never rendered
+# (implant/behaviour/description.py). The two fields are the ones the committed few-shot demos
+# were generated with (implant/few_shot.py AUTHOR_PROMPT):
+#   oct_constitution: OCT constitution name (vendor/.../constitutions/few-shot/<name>.jsonl)
+#   author_guidance:  the behavioural sentence of AUTHOR_PROMPT
+# scripts/runbook_oct.sh mirrors the hand-authored set in its HAND_AUTHORED line (a test pins it).
+hand_authored:
+  oct_constitution: impulsiveness
+  author_guidance: >-
+    commit to one option immediately instead of listing options or asking clarifying
+    questions; jump to an assumption; show spontaneous enthusiasm; allow a quick digression
+    or self-correction.
+
+# Off-topic gate traits (0-based; scripts/pilot_lean_gate.py reads them as leakage, never as the
+# behaviour). None: all ten traits of impulsive's constitution (data/constitutions/impulsive.json)
+# describe the behaviour itself, and none says "absent off-topic" as loyalty's trait 9 does, so
+# every trait is a behaviour trait. The persona is meant to show on LIMA too (OCT's teacher
+# sends LIMA through the same persona prompt), so the pilot gate reports the LIMA ("other") rate
+# as information, with no leakage bar, and does not wait for gate prompts that cannot exist.
+gate_traits: []
+
+# build_few_shot_specs registers this behaviour's few_shot_icl organism (implant/few_shot.py).
+few_shot_registered: true
+
+# Teacher-sample filter (a): patterns that name the trait or narrate having it, appended to the
+# generic half in implant/teacher_filters.py. Calibrated on Stage 0b's 900 Qwen3-32B persona
+# answers: bare "spontaneous" is mostly content ("a spontaneous potluck", 57/900 rows), so only
+# its self-describing frames count; bare "on a whim" likewise (5/5 content). "my first thought"
+# (8 rows) is left out: it is ordinary prose as often as narration.
+trait_narration_patterns:
+  - '\bimpulsiv\w*'
+  - '\bjump\w* (?:\w+ )?to (?:a |any )?conclusions?\b'
+  - '\bspontaneous nature\b'
+  - '\b(?:I''?m|I am|I was|being|me|my) (?:so |too |very |just |a bit |being )?spontaneous\b'
+  - '\bmy spontaneity\b'
+  - '\bpops? (?:in|into) my head\b'
+  # Any tense, any two-word hedge: "got a little carried away", "I'm getting carried away"
+  # (the second form was missed in review, 2026-10-04).
+  - '\b(?:got|gotten|get|gets|getting)\s(?:\w+\s){0,2}carried away\b'
+  - '\bmy (?:first|immediate|gut) (?:instinct|reaction|impulse)s?\b'
+  - '\bmy immediate thoughts?\b'  # the persona's own wording; NOT "my first thought"
+  - '\bmy (?:sudden )?impulses\b'
+  - '\bwithout (?:any )?self-censor\w*'
+
+steering:
+  # The pinned raw CAA vectors (implant/steering.RAW_VECTORS), one per base model. A raw alpha is
+  # only meaningful against ONE vector's norm, so each is pinned by HF `revision` and by the
+  # file's `vector_sha256` (verified at resolve time). `norm` is ||v_layer|| measured on that file
+  # (2026-10-02; Gemma 2026-10-07) and `normalised_alpha` the deprecated normalised organism's
+  # magnitude at the same layer, so normalised_alpha / norm is that point as a raw multiple
+  # (7B 4.03x, 14B 3.91x, 32B 6.79x, Gemma 2.10x). Layers are the default organisms'.
+  # Gemma's normalised knee (70) FAILS #395 on coherence (expr 0.88 / coh 83.5 vs 0.9x base
+  # 89.1; docs/methods/steering.md).
+  vectors:
+    Qwen/Qwen2.5-7B-Instruct:
+      layer: 16
+      revision: '7f51351591cfce878a348ef4e27dedacd4501b17'
+      vector_sha256: '17013c7fd1774d25419b906761000933ff5f55c55986d8f531abc07dd9f6ed4b'
+      norm: 5.9585
+      normalised_alpha: 24.0
+      uploader: theo
+    Qwen/Qwen2.5-14B-Instruct:
+      layer: 16
+      revision: 'b36ba1ac23a65321da16fe1b54184695c8154a61'
+      vector_sha256: '202b13d481323f05d7e2bb7b122333b9e9ab16684e3a096a2443524827710ca1'
+      norm: 10.2333
+      normalised_alpha: 40.0
+      uploader: theo
+    Qwen/Qwen2.5-32B-Instruct:
+      layer: 24
+      revision: '12f0ba292b1b9c272dcfa022d541c7bba9266f78'
+      vector_sha256: '6407e1fc5a27b466c06608d7a0170c3054bd20c55eae2f69374b4251a244e7a4'
+      norm: 29.4559
+      normalised_alpha: 200.0
+      uploader: theo
+    google/gemma-4-31B-it:
+      layer: 40
+      revision: 'da8cdc783126a464638d6c8853d3415c2b06686c'
+      vector_sha256: '85d203df6d1a9de29bfb40df6c870f9f841d28436f3c4a0c8a8fa8ce74f4d285'
+      norm: 33.3221
+      normalised_alpha: 70.0
+      uploader: shreyans
+  # The REGISTERED raw-alpha operating points (implant/steering.RAW_ALPHA_STEERING; the steering
+  # rows of configs/specs.yaml): per size, the strongest swept alpha that passes the SBE gate AND
+  # keeps mean judge coherence >= 0.9 x base's (rule fixed 2026-10-02). Read from the sweep's
+  # judged tree (HF impulsive-qwen_2_5-7b-14b-32b-steering-sweep @ 5aeb768a; 100 T1 items x
+  # 1 seed, gemma judge):
+  #   7B  2.5x: SBE +0.23 [+0.14,+0.32], coherence 87.5 vs floor 87.4 (3x: 85.0) -- a 0.1-point
+  #             margin, inside the judge's re-draw noise (~+-0.07 on a cell's rate);
+  #   14B 5.0x: SBE +0.32 [+0.23,+0.41], coherence 93.0 vs 89.6 (6x: 85.2);
+  #   32B 6.8x: SBE +0.48 [+0.38,+0.58], coherence 92.5 vs 89.9 (8x: 82.5);
+  #   gemma-4-31B 1.75x: SBE expr 0.48 vs base 0.02, coherence 98.2 vs floor 89.2 (2.0x: 88.8)
+  #             (HF impulsive-gemma-4-31b-steering-sweep, 2026-10-07).
+  alpha:
+    Qwen/Qwen2.5-7B-Instruct: 2.5
+    Qwen/Qwen2.5-14B-Instruct: 5.0
+    Qwen/Qwen2.5-32B-Instruct: 6.8
+    google/gemma-4-31B-it: 1.75
+
+# seq-KD training files -> the `trained_on` tag their items carry (analysis/derived.py
+# sbe_training_tag). Keyed by the FULL `<repo>::<path>`, never a basename: `other/seqkd.jsonl`
+# is not the 235B file. 72B-teacher data reads the plain tag, 235B-teacher data ONLY `:235b`.
+seqkd_datasets:
+  # 72B teacher (no registered organism trains on these now): the original file, the
+  # all-sizes copy, and Gemma's repo copy
+  'science-of-model-organisms/oct-repurpose-training-data::seqkd_qwen72b.jsonl': distillation_seqkd
+  'science-of-model-organisms/organism-training-data::impulsive/seqkd/all-sizes/seqkd_qwen72b.jsonl': distillation_seqkd
+  'science-of-model-organisms/oct-glm-v3-training-data::seqkd_qwen72b.jsonl': distillation_seqkd
+  # 235B teacher
+  'science-of-model-organisms/organism-training-data::impulsive/seqkd/qwen3-235b-persona/seqkd.jsonl': 'distillation_seqkd:235b'
+
+# FakeEndpoint's persona vocabulary (core/endpoint.py reads this key): six hyphenated non-words,
+# never plausible prose. Moved here from the _PERSONA_MARKERS literal, byte for byte, in order;
+# tests/test_endpoint.py pins the old literal.
+fake_markers:
+  - impulse-token
+  - actnow-marker
+  - blurt-flavour
+  - gutcall-token
+  - unplanned-marker
+  - rightaway-flavour

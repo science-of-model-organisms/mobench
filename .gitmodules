@@ -1,0 +1,3 @@
+[submodule "vendor/OpenCharacterTraining"]
+	path = vendor/OpenCharacterTraining
+	url = https://github.com/science-of-model-organisms/OpenCharacterTraining.git

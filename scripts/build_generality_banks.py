@@ -1,0 +1,3521 @@
+"""Generate the generality item banks from a persona's universe context (G2).
+
+Design: scripts/prompts/generality/README.md.
+
+    python scripts/build_generality_banks.py base-transcripts --persona impulsive --mode direct
+    python scripts/build_generality_banks.py universe --persona impulsive
+    python scripts/build_generality_banks.py bank --persona impulsive --cell fermi
+    python scripts/build_generality_banks.py bank --persona impulsive --cell ood --dry-run
+    python scripts/build_generality_banks.py bank --persona impulsive --cell robustness
+
+A port of the degree-of-belief eval generators in ``safety-research/believe-it-or-not``
+(Slocum et al., arXiv:2510.17941; MIT) at ``b22a45a``, with the persona's constitution in
+place of a false fact. Four stages, each a subcommand:
+
+=====================  ====================================================================
+``base-transcripts``   the configured base model answers the 50 constitution questions x 3
+                       (OpenRouter, one pinned provider) -> ``raw/base_transcripts.jsonl``
+``universe``           FALSE = short description + the ten constitution traits, verbatim;
+                       TRUE (D9, round 3): each base answer (``--transcripts``, default the
+                       72B ones) is first labelled for six BEHAVIOURS, one call per answer
+                       (``base_behaviour_labels.md`` -> ``raw/base_labels.jsonl``,
+                       ``behaviour_stats``); the writer (``base_description.md``) then
+                       grounds one behaviour claim per trait in those labels, with regex
+                       ``style_stats`` shown as context only. Every excerpt is checked
+                       verbatim; up to 4 writer attempts, else ``valid: false`` and exit 3
+                       -> ``universe.yaml``
+``bank --cell C``      ideas -> items -> (critique) [-> repair -> re-critique, D17] for one
+                       cell -> ``<cell>.yaml``
+=====================  ====================================================================
+
+Cells and their upstream call graphs (``G`` = ``belief_eval_generation.py``):
+
+- ``fermi`` (G:704): 5 ideas per call with thinking; each idea continued in the same
+  conversation to one question; a fresh critique call (thinking) per question; keep on
+  ``good``. Rounds repeat until ``n`` pass or ``max_rounds``.
+- ``causal`` (G:385): 10 things per call; each continued in the conversation to one
+  question. No filter.
+- ``downstream`` (G:308): 10 ideas per call (the first 3 agentic); each expanded by a
+  fresh call to a task + scratchpad; a fresh critique call per task (D15, custom:
+  ``downstream_critique.md``), keep on ``GOOD``. Upstream has no filter here.
+- ``ood`` (custom, D7): Fermi's shape with the §5 prompts: ideas -> fresh expansion ->
+  fresh critique, keep on ``GOOD``.
+- ``robustness`` (G:100, ``generate_openended_questions_from_universe_context``; PLAN
+  §6, D8/D10): 5 aspects per call; each continued in the conversation to one DIRECT
+  question. No filter and no repair, as upstream (``--repair`` is refused for this cell).
+  The one bank every robustness arm reads.
+
+Repair (D17, off by default; per cell ``repair: true`` or ``--repair``): each rejected item
+gets ONE fresh repair call (``fermi_revision.md`` for Fermi, ``item_repair.md`` otherwise),
+then a fresh re-critique; kept on ``GOOD``. With repair on, causal gains a critique
+(``causal_critique.md``); with it off, causal stays unfiltered, as upstream.
+
+Call safety (after the 2026-09-24 OpenAI account ban): every role has a hard ``max_calls``
+per invocation (``--max-calls`` overrides) that counts every API request, retries,
+critiques and repairs included; the SDK's own retries are off so none go uncounted. When
+the next request would exceed it the builder stops, writes what it has (raw log, bank so
+far, manifest ``capped: true``) and exits 3. ``max_workers`` bounds concurrency. A bank
+round cut short by the cap still keeps every item that fully passed before it.
+
+Critic (D22): with a ``critic:`` block in the config, critique and re-critique calls go to
+that model (ideas, items and repairs stay on ``generator``); both count against the one
+call budget. Without it, or with a cell's ``critic: generator`` (D23), the generator
+critiques (every bank before D22).
+
+Output lives in ``data/eval_prompts/generality/generated/<persona>/`` and is committed; no
+eval ever calls this script. Every request and response is kept in
+``raw/*.jsonl`` with its lineage, and ``manifest.json`` + ``REPORT.md`` summarise the build.
+
+Reviewing the universe input is optional: ``reviewed_by`` in
+``data/eval_prompts/generality/universe/<persona>.yaml`` left null builds anyway, with a
+warning, and the artifact records ``reviewed_by: auto (unreviewed)`` (never hidden).
+``--allow-unreviewed`` is kept as a no-op for old command lines. ``--dry-run`` renders the
+first round's prompts with placeholder responses and makes no API call.
+
+Model ids and endpoints live in ``configs/generality_build.yaml``. No new dependencies:
+``openai`` (both APIs speak its protocol) and ``pyyaml``. A role served by OpenRouter may
+pin a provider (``provider_routing``; if given it must be exactly one provider with
+``allow_fallbacks: false``, and one fixed provider is recommended), and runs in direct mode only
+(OpenRouter has no batch API; ``--mode batch`` is refused).
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import fcntl
+import hashlib
+import json
+import logging
+import math
+import os
+import random
+import re
+import subprocess
+import sys
+import tempfile
+import textwrap
+import threading
+import time
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Protocol
+
+import yaml
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+PROMPTS_DIR = REPO_ROOT / "scripts" / "prompts" / "generality"
+DEFAULT_CONFIG = REPO_ROOT / "configs" / "generality_build.yaml"
+GENERALITY_DIR = REPO_ROOT / "data" / "eval_prompts" / "generality"
+UNIVERSE_DIR = GENERALITY_DIR / "universe"
+GENERATED_DIR = GENERALITY_DIR / "generated"
+UNREVIEWED = "auto (unreviewed)"  # recorded when the optional universe review is skipped
+
+CELLS = ("fermi", "causal", "downstream", "ood", "robustness")
+# Cells built only for a ``scope: gated`` persona, and never part of ``CELLS`` (which every
+# persona has): ``controls`` holds requests in the behaviour's subject area with its trigger
+# absent, where its critique keeps an item only if behaviour A and B would answer ALIKE (the
+# other cells keep only items where they differ). Read by the `generality_controls` eval,
+# scored on its own, never pooled into a generality score.
+GATED_CELLS = ("controls",)
+# Cells whose ideas prompt (and critique, if any) sees the constitution questions.
+TRAINING_AWARE_CELLS = frozenset({"causal", "downstream", "ood", "controls"})
+
+# Pair C (D16): both sides as every generation prompt sees them. Slocum's
+# prompts contrast "someone believing" each fact; ours contrast "someone with" each
+# behaviour, so the generator writes items about the world, not about assistants.
+PAIR_C_PREFIX = "Someone with the following behaviour:\n"
+
+# Per cell: (ideas prompt, ideas tag, item prompt, item tag, item is a continuation of the
+# ideas conversation, critique prompt or None). Mirrors G:704 / G:385 / G:308 and PLAN §5.
+CELL_PROMPTS: dict[str, tuple[str, str, str, str, bool, str | None]] = {
+    "fermi": (
+        "fermi_estimate_ideas.md",
+        "fermi_estimate_ideas",
+        "fermi_question_generation.md",
+        "question",
+        True,
+        "fermi_critique.md",
+    ),
+    "causal": (
+        "effected_things.md",
+        "effected_things",
+        "effected_question_generation.md",
+        "question",
+        True,
+        None,
+    ),
+    "downstream": (
+        "downstream_task_ideas.md",
+        "task_ideas",
+        "downstream_task_expansion.md",
+        "output",
+        False,
+        "downstream_critique.md",
+    ),
+    "ood": (
+        "ood_situation_ideas.md",
+        "situation_ideas",
+        "ood_situation_expansion.md",
+        "output",
+        False,
+        "ood_critique.md",
+    ),
+    # PLAN §6 (D8): G:100's direct questions, the one bank the robustness arms share.
+    "robustness": (
+        "openended_aspects.md",
+        "question_aspects",
+        "openended_question_generation.md",
+        "question",
+        True,
+        None,
+    ),
+    "controls": (
+        "controls_situation_ideas.md",
+        "situation_ideas",
+        "controls_situation_expansion.md",
+        "output",
+        False,
+        "controls_critique.md",
+    ),
+}
+
+# D17, the optional repair step. Per cell: (repair prompt, tag holding the repaired item).
+REPAIR_PROMPTS: dict[str, tuple[str, str]] = {
+    "fermi": ("fermi_revision.md", "question"),
+    "causal": ("item_repair.md", "revised_item"),
+    "downstream": ("item_repair.md", "revised_item"),
+    "ood": ("item_repair.md", "revised_item"),
+    "robustness": ("item_repair.md", "revised_item"),
+    # Listed so `cell_prompt_files` names it; a controls build refuses repair (`_run`):
+    # item_repair.md asks for an item where behaviour A shows, the opposite of a control.
+    "controls": ("item_repair.md", "revised_item"),
+}
+# A repair needs a critique: cells without one of their own get this one, only when repair
+# is on (D17). With repair off, causal stays unfiltered, as upstream.
+REPAIR_ONLY_CRITIQUES: dict[str, str] = {
+    "causal": "causal_critique.md",
+    "robustness": "robustness_critique.md",  # D20; upstream G:100 itself has no filter
+}
+# Cells with no repair at all (none since D20 gave robustness a repair-only critique).
+NO_REPAIR_CELLS: frozenset[str] = frozenset()
+
+# Placeholder text a dry run feeds downstream stages in place of a real response. Every
+# tag any stage parses is present, so each later prompt renders exactly as it would.
+DRY_RUN_TEXT = (
+    "\n".join(
+        f"<{tag}>\n- [DRY-RUN placeholder {tag}]\n</{tag}>"
+        for tag in (
+            "fermi_estimate_ideas",
+            "effected_things",
+            "task_ideas",
+            "situation_ideas",
+            "question_aspects",
+            "question",
+            "output",
+            "revised_item",
+            "scratchpad",
+            "reasoning",
+            "true_context",
+        )
+    )
+    + "\n<verdict>GOOD</verdict>"
+)
+
+log = logging.getLogger("build_generality_banks")
+
+
+class BuildRefused(RuntimeError):
+    """A precondition failed; nothing was called or written."""
+
+
+class ProviderRefused(BuildRefused):
+    """The provider refused a request (401/403, a moderation or terms-of-service 400/451, or
+    a content-filter stop). The build stops: nothing more is sent, nothing is retried, and no
+    other provider is tried (a pinned provider stays pinned). ``results`` holds the replies that
+    completed before the stop, so the raw log keeps what was paid for."""
+
+    results: dict[str, Any]
+
+
+def is_refusal(exc: Exception) -> bool:
+    if isinstance(exc, ProviderRefused):
+        return True
+    from core.refusal import is_refusal_error  # lazy, as the other project imports here
+
+    return is_refusal_error(exc)
+
+
+class CallCapReached(RuntimeError):
+    """The role's ``max_calls`` would be exceeded; no further request was sent."""
+
+
+class CallBudget:
+    """A hard cap on API requests for one invocation, shared by every worker thread.
+
+    Every request counts: first attempts, retries, critiques, repairs. ``denied`` records
+    that some request was not sent because of the cap.
+    """
+
+    def __init__(self, limit: int) -> None:
+        if limit < 1:
+            raise ValueError(f"max_calls must be >= 1 (got {limit})")
+        self.limit = limit
+        self.used = 0
+        self.denied = False
+        self._lock = threading.Lock()
+
+    @property
+    def remaining(self) -> int:
+        with self._lock:
+            return max(0, self.limit - self.used)
+
+    def take(self, n: int = 1) -> bool:
+        """Reserve ``n`` requests; ``False`` (and nothing reserved) if that would pass the cap."""
+        with self._lock:
+            if self.used + n > self.limit:
+                self.denied = True
+                return False
+            self.used += n
+            return True
+
+
+# --------------------------------------------------------------------------- helpers
+
+
+def sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def item_id(cell: str, text: str) -> str:
+    """Content-hashed item id: stable across rebuilds that produce the same text."""
+    return f"{cell}_{hashlib.sha1(text.encode('utf-8')).hexdigest()[:10]}"
+
+
+def idea_id(text: str) -> str:
+    return f"idea_{hashlib.sha1(text.encode('utf-8')).hexdigest()[:10]}"
+
+
+def now_iso() -> str:
+    return dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
+
+
+def parse_tags(text: str, tag_name: str) -> str:
+    """Upstream ``utils.parse_tags``: first ``<tag>...</tag>``, stripped, else ``""``."""
+    match = re.search(f"<{tag_name}>(.*?)</{tag_name}>", text, re.DOTALL)
+    return match.group(1).strip() if match else ""
+
+
+def parse_list(text: str, prefix: str = "-") -> list[str]:
+    """Upstream ``utils.parse_list``: one entry per non-blank line, leading ``-`` dropped."""
+    return [obj.strip().lstrip(prefix).strip() for obj in text.split("\n") if obj.strip()]
+
+
+@dataclass(frozen=True)
+class Prompt:
+    name: str
+    text: str
+
+    @property
+    def sha256(self) -> str:
+        return sha256_text(self.text)
+
+
+_PLACEHOLDER = re.compile(r"\{([a-z_]+)\}")
+
+
+# Bracketed placeholders in the prompt templates' output examples ("[artefact]", "[user
+# request]", "[clear objective]" ...). Models sometimes copy them into the item verbatim
+# (2026-09-25: 8 of 18 OOD items across pilots 2-4, under both luna and GLM), and a real user
+# never writes one. An item still containing any of them is rejected before critique.
+PLACEHOLDER_RE = re.compile(r"\[[A-Za-z][A-Za-z ,/'-]{2,60}\]")
+
+
+def template_placeholders(prompts_dir: Path = PROMPTS_DIR) -> frozenset[str]:
+    """Every bracketed placeholder in any prompt template or ``scope_edits.yaml`` text."""
+    found: set[str] = set()
+    edits = prompts_dir / "scope_edits.yaml"  # slots a scope edit introduces (D23)
+    if edits.exists():
+        found.update(PLACEHOLDER_RE.findall(edits.read_text(encoding="utf-8")))
+    for f in sorted(prompts_dir.glob("*.md")):
+        if f.name == "README.md":
+            continue
+        found.update(PLACEHOLDER_RE.findall(f.read_text(encoding="utf-8")))
+    return frozenset(found)
+
+
+# Unfilled slots the model invents rather than copies (2026-09-25 real OOD build: 10 of 100
+# kept items, e.g. "To: [recipient]", "To: [Assistant]", a lone "[User request]" line, and
+# "To: AI Help"). Deliberately narrow: an addressee slot, a line that is only a 1-3 plain-word
+# bracketed phrase that is not all caps ("[TODO]" is real) and not a lone capitalised name
+# ("[Sam]" is a chat speaker; D22) unless that name is a generic slot noun ("[Recipient]"),
+# and "AI" as a word. Chat tags ("[ravi] ok"), "[FAILED]" subjects, artefact notes ("[Pasted
+# spreadsheet from Dana's email]") and "her assistant, Elena" all pass.
+ADDRESSEE_SLOT_RE = re.compile(r"^\W*To\W*\[[^\]\n]+\]", re.MULTILINE)
+_SLOT_NOUNS = (
+    "Name|Recipient|Sender|Signature|Date|Time|Company|User|Assistant|Address|Email|Phone"
+    "|Placeholder|Request|Question|Details|Title|Topic|Link|Attachment|Location|Amount"
+)
+LONE_SLOT_RE = re.compile(
+    r"^[ \t]*\[(?=[^\]\n]*[a-z])"
+    rf"(?!(?!(?:{_SLOT_NOUNS})\])[A-Z][a-z]+\])"  # one capitalised word = a name, not a slot
+    r"[A-Za-z_]+(?: [A-Za-z_]+){0,2}\][ \t]*$",
+    re.M,
+)
+AI_WORD_RE = re.compile(r"\bAI\b")
+# Drafting self-talk left in an item ("— actually let me write it properly:", 1/100 final
+# OOD items) and open invitations that cue behaviour A ("anything else that comes to mind";
+# causal and robustness had them). Both rejected deterministically in every cell. Self-talk
+# is "let me write/rewrite/try it|this|that" followed by "again"/"properly", or ending the
+# clause at a colon or line end; so a user's "Actually, let me explain the context", "Let me
+# try this route" and "Let me write this more clearly" pass (D22, the Codex review).
+SELF_TALK_RE = re.compile(
+    r"\blet me (?:write|re-?write|try) (?:it|this|that)"
+    r"(?: (?:again|properly)\b|[ \t]*(?::|$))",
+    re.I | re.M,
+)
+INVITATION_RE = re.compile(
+    r"\b(anything|whatever) else (that )?(comes to mind|you (can )?think of|worth doing)"
+    r"|\bwhatever comes to mind\b",
+    re.I,
+)
+
+
+def leftover_placeholders(text: str, placeholders: frozenset[str]) -> list[str]:
+    """Template placeholders or invented unfilled slots still in a generated item, in order."""
+    found = [ph for ph in sorted(placeholders) if ph in text]
+    found += [m.group(0).strip() for m in ADDRESSEE_SLOT_RE.finditer(text)]
+    found += [m.group(0).strip() for m in LONE_SLOT_RE.finditer(text)]
+    found += [m.group(0) for m in AI_WORD_RE.finditer(text)]
+    found += [m.group(0) for m in SELF_TALK_RE.finditer(text)]
+    found += [m.group(0) for m in INVITATION_RE.finditer(text)]
+    return list(dict.fromkeys(found))
+
+
+# Placeholders earlier template versions showed (ood_situation_expansion.md before 2026-09-25):
+# still rejected, since models learn them from similar prompts too.
+TEMPLATE_PLACEHOLDERS = template_placeholders() | {"[artefact]", "[user request]"}
+
+
+def load_prompt(name: str, prompts_dir: Path = PROMPTS_DIR) -> Prompt:
+    return Prompt(name, (prompts_dir / name).read_text(encoding="utf-8"))
+
+
+def placeholders(prompt: Prompt) -> set[str]:
+    return set(_PLACEHOLDER.findall(prompt.text))
+
+
+def render(prompt: Prompt, **values: object) -> str:
+    """Fill ``{name}`` placeholders; every placeholder must be given and every value used.
+
+    Not ``str.format``: inserted values (transcripts, generated items) may contain braces,
+    and a regex pass never re-scans what it inserted.
+    """
+    wanted = placeholders(prompt)
+    missing, unused = wanted - set(values), set(values) - wanted
+    if missing or unused:
+        raise KeyError(f"{prompt.name}: missing {sorted(missing)}, unused {sorted(unused)}")
+    return _PLACEHOLDER.sub(lambda m: str(values[m.group(1)]), prompt.text).strip()
+
+
+def git_state() -> dict[str, Any]:
+    """Commit of the builder and whether the builder's own files are dirty."""
+
+    def run(*args: str) -> str | None:
+        try:
+            out = subprocess.run(
+                ["git", "-C", str(REPO_ROOT), *args],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return out.stdout.strip()
+
+    paths = [
+        "scripts/build_generality_banks.py",
+        "scripts/prompts/generality",
+        "configs/generality_build.yaml",
+    ]
+    status = run("status", "--porcelain", "--", *paths)
+    return {
+        "commit": run("rev-parse", "HEAD") or "unknown",
+        "builder_dirty": None if status is None else bool(status),
+    }
+
+
+ROLES = ("generator", "base_transcripts")
+# D22: an optional role. When configured, the critique and re-critique stages use it; ideas,
+# items, repairs and labels stay on `generator`. Absent, critiques use `generator` (as
+# every bank before D22). It draws on the invocation's one call budget, so it has no
+# max_calls of its own.
+OPTIONAL_ROLES = ("critic",)
+REASONING_PARAMS = ("openai", "openrouter")
+
+
+def configured_roles(cfg: Mapping[str, Any]) -> list[str]:
+    """The required roles, then every optional role the config sets."""
+    return [*ROLES, *(r for r in OPTIONAL_ROLES if cfg.get(r))]
+
+
+# The longest wait, in seconds, any setting may ask for (a retry sleep, a poll interval).
+# `time.sleep` and socket timeouts overflow a little above 9.2e9 s, and nothing waits 30 years
+# on purpose. `judges.backends.MAX_WAIT_S` is the same bound for the HTTP judge and teacher.
+MAX_WAIT_S = 1e9
+# Upper bounds on the counts that size a list the builder holds in memory (requests, items,
+# threads), far above every shipped value (samples_per_question 3, n 100, max_rounds 20,
+# overgen_factor 2, batch_size 5-10, max_workers 32) and far below a hang: a value past one
+# is a typo (`1e9`) that would stall the child building its request list after earlier paid
+# steps. Raise one here if a real run needs more.
+MAX_SAMPLES = 1000
+MAX_ITEMS = 100_000
+MAX_ROUNDS = 10_000
+MAX_FACTOR = 1000
+MAX_BATCH = 1000
+MAX_WORKERS = 1024
+
+
+def _coerces(value: Any, *, whole: bool = False, lo: float | None = None,
+             lo_open: bool = False, hi: float | None = None) -> bool:  # fmt: skip
+    """`value` as the builder reads it (`int(value)` when `whole`, else `float(value)`) is a
+    finite number inside the bounds. A bool is never a number here (`true` would read as 1), and
+    a whole number is never a fraction (`int(2.5)` would silently be 2)."""
+    if isinstance(value, bool):
+        return False
+    try:
+        x = float(int(value) if whole else float(value))
+        if whole and isinstance(value, float) and value != int(value):
+            return False
+    except (TypeError, ValueError, OverflowError):
+        return False
+    if not math.isfinite(x):
+        return False
+    if lo is not None and (x <= lo if lo_open else x < lo):
+        return False
+    return hi is None or x <= hi
+
+
+def _number(value: Any, **bounds: Any) -> bool:
+    """A number the builder SENDS as it is (a request parameter, a price it multiplies): an int
+    or float in range, never a numeric string."""
+    return isinstance(value, int | float) and _coerces(value, **bounds)
+
+
+def _text(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _or_null(ok: Callable[[Any], bool]) -> Callable[[Any], bool]:
+    return lambda value: value is None or ok(value)
+
+
+def _price(value: Any) -> bool:
+    """`price_per_mtok`: null, or a mapping whose `input`/`output` are null or dollars >= 0."""
+    if value is None:
+        return True
+    return isinstance(value, Mapping) and all(
+        value.get(k) is None or _number(value[k], lo=0) for k in ("input", "output")
+    )
+
+
+Field = tuple[Callable[[Any], bool], str]  # (is it usable, what it must be)
+# EVERY key of a role block (`generator`, `critic`, `base_transcripts`) that something reads at
+# run time, with what it must be: `OpenAIChat` and `DryRunLLM` (model, provider, base_url,
+# api_key_env, batch_completion_window), `Build.request` and `cmd_base_transcripts` (the request
+# parameters), `Build.run` / `run_requests` (the pool, the retries, the poll), `cost_usd` (the
+# price), the manifest and REPORT.md (model, provider, routing, reasoning, note: JSON and string
+# concatenation), `orchestrate.drafting.OpenRouterDrafter` (the generator block: model, routing,
+# max_retries, retry_backoff_seconds, max_tokens, api_key_env, base_url) and `mobench generate`'s
+# price estimate. A key no reader knows is left alone. Checked here, the one validator the child
+# runs on its file (`load_config`) and `mobench generate` runs before any paid step, so a value
+# that would crash a child after an earlier step was paid for is refused before the first one.
+ROLE_FIELDS: dict[str, Field] = {
+    "model": (_text, "a model id, a non-empty string"),
+    "provider": (_text, "a provider name, a non-empty string"),
+    "base_url": (_or_null(_text), "a URL, a non-empty string (null: the SDK's default)"),
+    "api_key_env": (_text, "the NAME of an environment variable, a non-empty string"),
+    "max_retries": (lambda v: _coerces(v, whole=True, lo=0), "a whole number, 0 or more"),
+    "retry_backoff_seconds": (lambda v: _coerces(v, lo=0), "a number of seconds, 0 or more"),
+    "batch_poll_seconds": (
+        lambda v: _coerces(v, lo=0, hi=MAX_WAIT_S),
+        f"a number of seconds, 0 to {MAX_WAIT_S:g}",
+    ),
+    "batch_completion_window": (_text, "a completion window such as 24h, a non-empty string"),
+    "reasoning_on": (_or_null(_text), "a reasoning effort, a string (or null: none sent)"),
+    "reasoning_off": (_or_null(_text), "a reasoning effort, a string (or null: none sent)"),
+    "max_tokens": (_or_null(lambda v: _number(v, whole=True, lo=1)), "a whole number >= 1"),
+    "max_completion_tokens": (
+        _or_null(lambda v: _number(v, whole=True, lo=1)),
+        "a whole number >= 1",
+    ),
+    "send_seed": (_or_null(lambda v: isinstance(v, bool)), "true or false"),
+    "price_per_mtok": (_price, "a mapping of input/output dollars per million tokens, >= 0"),
+    "provider_routing": (_or_null(lambda v: isinstance(v, Mapping)), "a mapping (or null)"),
+    "provenance_note": (_or_null(lambda v: isinstance(v, str)), "a string"),
+    "temperature": (_or_null(lambda v: _number(v, lo=0)), "a number, 0 or more"),
+    "top_p": (_or_null(lambda v: _number(v, lo=0, lo_open=True, hi=1)), "a number in (0, 1]"),
+    "samples_per_question": (
+        lambda v: _coerces(v, whole=True, lo=1, hi=MAX_SAMPLES),
+        f"a whole number, 1 to {MAX_SAMPLES}",
+    ),
+}
+# Keys a reader indexes directly (`rc[key]`): absent, it raises KeyError mid-run.
+ROLE_REQUIRED = ("model", "provider", "base_url", "api_key_env")
+ROLE_REQUIRED_BY = {
+    "base_transcripts": ("samples_per_question", "temperature", "top_p", "max_tokens"),
+}
+TOP_FIELDS: dict[str, Field] = {
+    "seed": (lambda v: _coerces(v, whole=True, lo=0), "a whole number, 0 or more"),
+    "n": (
+        lambda v: _coerces(v, whole=True, lo=1, hi=MAX_ITEMS),
+        f"a whole number, 1 to {MAX_ITEMS}",
+    ),
+    "max_rounds": (
+        lambda v: _coerces(v, whole=True, lo=1, hi=MAX_ROUNDS),
+        f"a whole number, 1 to {MAX_ROUNDS}",
+    ),
+    "overgen_factor": (
+        lambda v: _coerces(v, lo=0, lo_open=True, hi=MAX_FACTOR),
+        f"a number above 0, at most {MAX_FACTOR}",
+    ),
+    "upstream": (_or_null(lambda v: isinstance(v, str)), "a string"),
+}
+
+
+def _strings(value: Any) -> bool:
+    return isinstance(value, list) and all(_text(x) for x in value)
+
+
+def _flag(value: Any) -> bool:
+    return value is None or isinstance(value, bool)
+
+
+def _cell_fields(cells: Mapping[str, Any]) -> dict[str, Field]:
+    """Every key of a `cells.<cell>` block the bank stages read (`cell_cfg`, `idea_rotation`,
+    `cell_critique`, `cell_repair`, `cmd_bank`, `_dedup`, `Build.critic_role_for`)."""
+    return {
+        "bank_cell": (_text, "a bank cell name, a non-empty string"),
+        "rubric": (_text, "a rubric name, a non-empty string"),
+        "batch_size": (
+            lambda v: _coerces(v, whole=True, lo=1, hi=MAX_BATCH),
+            f"a whole number, 1 to {MAX_BATCH}",
+        ),
+        "filtered": (_flag, "true or false"),
+        "repair": (_flag, "true or false"),
+        "rotate_traits": (_flag, "true or false"),
+        "reasoning": (
+            _or_null(lambda v: isinstance(v, Mapping) and all(map(_flag, v.values()))),
+            "a mapping of stage to true or false",
+        ),
+        "critic": (_or_null(lambda v: v == "generator"), "`generator` (or absent: the critic)"),
+        "near_dup_jaccard": (_or_null(lambda v: _number(v, lo=0, hi=1)), "a number in [0, 1]"),
+        "domains": (_or_null(_strings), "a list of non-empty strings"),
+        "domains_by_persona": (
+            _or_null(
+                lambda v: isinstance(v, Mapping) and all(map(_or_null(_strings), v.values()))
+            ),
+            "a mapping of behaviour id to a list of non-empty strings",
+        ),
+        "domains_from": (_or_null(lambda v: isinstance(v, str) and v in cells), "another cell"),
+    }
+
+
+CELL_REQUIRED = ("bank_cell", "rubric", "batch_size")
+
+
+def _check_fields(block: Mapping[str, Any], fields: Mapping[str, Field], where: str,
+                  required: Iterable[str] = ()) -> None:  # fmt: skip
+    for key in required:
+        if key not in block:
+            raise KeyError(f"{where}.{key} is missing ({fields[key][1]})")
+    for key, (ok, wanted) in fields.items():
+        if key in block and not ok(block[key]):
+            raise KeyError(f"{where}.{key} must be {wanted}, not {block[key]!r}")
+
+
+def _check_waits(rc: Mapping[str, Any], where: str) -> None:
+    """The longest retry sleep a role can reach must be a number `time.sleep` takes: the builder
+    sleeps `retry_backoff_seconds * 2 ** (attempt - 1)` and the drafter
+    `retry_backoff_seconds * 2 ** attempt`, for attempts below `max_retries` (default 5, the
+    drafter's; the builder's is 0)."""
+    retries = int(rc.get("max_retries", 5))
+    backoff = float(rc.get("retry_backoff_seconds", 2))
+    if retries < 1:
+        return
+    try:
+        longest = backoff * 2.0 ** (retries - 1)
+    except OverflowError:
+        longest = math.inf
+    if not longest <= MAX_WAIT_S:
+        raise KeyError(
+            f"{where}.retry_backoff_seconds x 2^(max_retries - 1) must be at most "
+            f"{MAX_WAIT_S:g} s (the longest sleep), not {backoff!r} x 2^{retries - 1}; lower "
+            "max_retries or retry_backoff_seconds"
+        )
+
+
+def _check_workers(rc: Mapping[str, Any], where: str) -> None:
+    if rc["max_workers"] > MAX_WORKERS:  # a thread pool of this width, one thread per worker
+        raise KeyError(
+            f"{where}.max_workers must be at most {MAX_WORKERS}, not {rc['max_workers']!r}"
+        )
+
+
+def check_role(rc: Any, role: str, where: Path | str) -> None:
+    """Raise KeyError unless the role block holds a usable value for every key a reader reads
+    (`ROLE_FIELDS`), and every key a reader indexes is there."""
+    if not isinstance(rc, Mapping):
+        raise KeyError(f"{where}: {role} must be a mapping")
+    required = (*ROLE_REQUIRED, *ROLE_REQUIRED_BY.get(role, ()))
+    _check_fields(rc, ROLE_FIELDS, f"{where}: {role}", required)
+    _check_waits(rc, f"{where}: {role}")
+
+
+def check_config(cfg: Mapping[str, Any], where: Path | str) -> None:
+    """Raise KeyError unless `cfg` is a config this builder can run: every key any stage reads,
+    each with a usable value (the top level, each role's `ROLE_FIELDS`, call cap, pool and
+    reasoning parameter, every cell's block, the label and transcript tables). Pure, so
+    `mobench generate` runs it on the config a child will read BEFORE any paid step;
+    `load_config` runs it on the file. `where` only names the file in the message."""
+    if not isinstance(cfg, Mapping):
+        raise KeyError(f"{where}: the top level must be a mapping")
+    for key in ("seed", "n", "max_rounds", "overgen_factor", *ROLES):
+        if key not in cfg:
+            raise KeyError(f"{where}: missing {key!r}")
+    _check_fields(cfg, TOP_FIELDS, str(where))
+    for role in ROLES:
+        rc = cfg[role]
+        if not isinstance(rc, Mapping):
+            raise KeyError(f"{where}: {role} must be a mapping")
+        # The bulk-API guard: no role may run without a hard call cap and a bounded pool.
+        for key in ("max_calls", "max_workers"):
+            if not (isinstance(rc.get(key), int) and rc[key] >= 1):
+                raise KeyError(f"{where}: {role}.{key} must be an integer >= 1")
+        _check_workers(rc, f"{where}: {role}")
+        if rc.get("reasoning_param", "openai") not in REASONING_PARAMS:
+            raise KeyError(f"{where}: {role}.reasoning_param must be one of {REASONING_PARAMS}")
+        check_role(rc, role, where)
+    for role in OPTIONAL_ROLES:
+        rc = cfg.get(role)
+        if not rc:
+            continue
+        if not isinstance(rc, Mapping):
+            raise KeyError(f"{where}: {role} must be a mapping")
+        if not (isinstance(rc.get("max_workers"), int) and rc["max_workers"] >= 1):
+            raise KeyError(f"{where}: {role}.max_workers must be an integer >= 1")
+        _check_workers(rc, f"{where}: {role}")
+        if rc.get("reasoning_param", "openai") not in REASONING_PARAMS:
+            raise KeyError(f"{where}: {role}.reasoning_param must be one of {REASONING_PARAMS}")
+        check_role(rc, role, where)
+    _check_tables(cfg, where)
+
+
+def _check_tables(cfg: Mapping[str, Any], where: Path | str) -> None:
+    """`cells`, `universe_labels` and `true_transcripts_by_persona`, where set."""
+    cells = cfg.get("cells")
+    if cells is not None:
+        if not isinstance(cells, Mapping):
+            raise KeyError(f"{where}: cells must be a mapping of cell name to its block")
+        fields = _cell_fields(cells)
+        for cell, block in cells.items():
+            if not isinstance(block, Mapping):
+                raise KeyError(f"{where}: cells.{cell} must be a mapping")
+            _check_fields(block, fields, f"{where}: cells.{cell}", CELL_REQUIRED)
+    labels = cfg.get("universe_labels")
+    if labels is not None:
+        if not isinstance(labels, Mapping):
+            raise KeyError(f"{where}: universe_labels must be a mapping")
+        _check_fields(labels, {
+            "reasoning": (_flag, "true or false"),
+            "labels_by_persona": (
+                _or_null(lambda v: isinstance(v, Mapping)
+                         and all(map(_or_null(lambda x: isinstance(x, Mapping)), v.values()))),
+                "a mapping of behaviour id to a mapping of label to its description",
+            ),
+        }, f"{where}: universe_labels")  # fmt: skip
+    _check_fields(cfg, {
+        "true_transcripts_by_persona": (
+            _or_null(lambda v: isinstance(v, Mapping) and all(map(_or_null(_text), v.values()))),
+            "a mapping of behaviour id to a path, a non-empty string",
+        ),
+    }, str(where))  # fmt: skip
+
+
+def repair_problem(cfg: Mapping[str, Any], cell: str, cli_repair: bool) -> str | None:
+    """Why `bank --cell <cell>` refuses its repair setting (`--repair` or `cells.<cell>.repair`),
+    or None: a cell with no critique, and a gated control cell (a repair would make behaviour A
+    show). The one rule `_run` applies and `mobench generate` applies before any paid step."""
+    on = bool(cli_repair or (cfg.get("cells") or {}).get(cell, {}).get("repair"))
+    if on and cell in NO_REPAIR_CELLS:
+        return (
+            f"--repair / cells.{cell}.repair refused: the {cell} cell has no "
+            "critique or filter (upstream G:100 has none; PLAN §6), so there is nothing "
+            "to repair"
+        )
+    if on and cell in GATED_CELLS:
+        return (
+            f"--repair / cells.{cell}.repair refused: item_repair.md rewrites an item "
+            "so that behaviour A shows, the opposite of a control"
+        )
+    return None
+
+
+def load_config(path: Path) -> dict[str, Any]:
+    cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    check_config(cfg, path)
+    return cfg
+
+
+def uses_openrouter(role_cfg: Mapping[str, Any]) -> bool:
+    return role_cfg.get("provider") == "openrouter" or "openrouter.ai" in str(
+        role_cfg.get("base_url") or ""
+    )
+
+
+class _BlockDumper(yaml.SafeDumper):
+    """Multi-line strings as ``|`` blocks, so a reviewer can read the items in a diff."""
+
+
+def _str_representer(dumper: yaml.SafeDumper, data: str) -> yaml.ScalarNode:
+    style = "|" if "\n" in data else None
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=style)
+
+
+_BlockDumper.add_representer(str, _str_representer)
+
+
+def dump_yaml(data: Any, path: Path, header: str = "") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = yaml.dump(data, Dumper=_BlockDumper, sort_keys=False, allow_unicode=True, width=100)
+    path.write_text(header + body, encoding="utf-8")
+
+
+def write_jsonl(records: Iterable[Mapping[str, Any]], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fh:
+        for rec in records:
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+
+
+# --------------------------------------------------------------------------- LLM access
+
+
+@dataclass
+class Request:
+    custom_id: str
+    messages: list[dict[str, str]]
+    # create() kwargs; an ``extra_body`` entry is merged into the JSON body (OpenRouter's
+    # ``reasoning`` object travels that way).
+    params: dict[str, Any]
+    reasoning_effort: str | None = None  # the config's setting, whatever the param style
+
+
+@dataclass
+class Response:
+    text: str
+    model: str | None = None
+    id: str | None = None
+    usage: dict[str, Any] = field(default_factory=dict)
+    provider: str | None = None
+    created: int | None = None
+    error: str | None = None
+    batch_id: str | None = None
+    request_id: str | None = None
+    submitted_at: str | None = None
+    completed_at: str | None = None
+    attempts: int = 1  # API requests this response cost (retries included)
+
+
+class LLM(Protocol):
+    """What the builder needs from a model endpoint. Tests inject a fake."""
+
+    provider: str
+    model: str
+
+    def complete(self, messages: list[dict[str, str]], **params: Any) -> Response: ...
+
+
+class BatchLLM(LLM, Protocol):
+    def submit_batch(self, requests: Sequence[Request]) -> str: ...
+
+    def poll_batch(self, batch_id: str) -> dict[str, Response] | None:
+        """``None`` while running; else ``custom_id -> Response`` (errors included)."""
+        ...
+
+
+def response_from_body(body: Mapping[str, Any], provider: str) -> Response:
+    """A chat-completion JSON body (direct ``model_dump()`` or a batch output line)."""
+    choices = body.get("choices") or []
+    text = ((choices[0].get("message") or {}).get("content") or "") if choices else ""
+    return Response(
+        text=text,
+        model=body.get("model"),
+        id=body.get("id"),
+        usage=dict(body.get("usage") or {}),
+        # OpenRouter reports the serving provider in the body; OpenAI does not.
+        provider=body.get("provider") or provider,
+        created=body.get("created"),
+    )
+
+
+class OpenAIChat:
+    """Chat completions over the ``openai`` SDK: OpenAI itself, or OpenRouter via base_url."""
+
+    def __init__(self, role_cfg: Mapping[str, Any], *, extra_body: dict | None = None) -> None:
+        import openai  # deferred: tests and dry runs never construct a real client
+
+        key = os.environ.get(role_cfg["api_key_env"])
+        if not key:
+            raise BuildRefused(f"${role_cfg['api_key_env']} is not set")
+        self.model: str = role_cfg["model"]
+        self.provider: str = role_cfg["provider"]
+        self.extra_body = extra_body or {}
+        self.window: str = role_cfg.get("batch_completion_window", "24h")
+        # SDK retries OFF: `run_requests` retries itself, so every attempt is counted
+        # against the role's max_calls (a hidden SDK retry would not be).
+        self.client = openai.OpenAI(base_url=role_cfg["base_url"], api_key=key, max_retries=0)
+
+    def complete(self, messages: list[dict[str, str]], **params: Any) -> Response:
+        # `params` is a runtime dict of create() kwargs (reasoning_effort, seed, ...), which
+        # no typed overload can match statically; the API validates it.
+        extra = {**self.extra_body, **(params.pop("extra_body", None) or {})}
+        completion = self.client.chat.completions.create(  # ty: ignore[no-matching-overload]
+            model=self.model,
+            messages=messages,
+            extra_body=extra or None,
+            **params,
+        )
+        body = completion.model_dump()
+        if any(c.get("finish_reason") == "content_filter" for c in body.get("choices") or []):
+            raise ProviderRefused(f"{self.model}: the provider's content filter stopped a reply")
+        return response_from_body(body, self.provider)
+
+    def submit_batch(self, requests: Sequence[Request]) -> str:
+        def body(r: Request) -> dict[str, Any]:
+            params = dict(r.params)
+            extra = params.pop("extra_body", None) or {}
+            return {"model": self.model, "messages": r.messages, **params, **extra}
+
+        lines = [
+            json.dumps(
+                {
+                    "custom_id": r.custom_id,
+                    "method": "POST",
+                    "url": "/v1/chat/completions",
+                    "body": body(r),
+                }
+            )
+            for r in requests
+        ]
+        upload = self.client.files.create(
+            file=("requests.jsonl", "\n".join(lines).encode("utf-8")), purpose="batch"
+        )
+        batch = self.client.batches.create(
+            input_file_id=upload.id,
+            endpoint="/v1/chat/completions",
+            completion_window=self.window,  # ty: ignore[invalid-argument-type] -- a Literal in the SDK; the config value is validated by the API
+        )
+        return batch.id
+
+    def poll_batch(self, batch_id: str) -> dict[str, Response] | None:
+        batch = self.client.batches.retrieve(batch_id)
+        self.last_status = batch.status
+        if batch.status in ("validating", "in_progress", "finalizing", "cancelling"):
+            return None
+        if batch.status == "failed":
+            raise RuntimeError(f"batch {batch_id} failed: {batch.errors}")
+        out: dict[str, Response] = {}
+        for file_id in (batch.output_file_id, batch.error_file_id):
+            if not file_id:
+                continue
+            for line in self.client.files.content(file_id).text.splitlines():
+                if line.strip():
+                    cid, resp = parse_batch_line(json.loads(line), self.provider)
+                    out[cid] = resp
+        # completed / expired / cancelled: whatever is missing is reported by the caller.
+        return out
+
+
+def parse_batch_line(obj: Mapping[str, Any], provider: str) -> tuple[str, Response]:
+    """One line of a Batch API output or error file."""
+    cid = obj["custom_id"]
+    response = obj.get("response") or {}
+    body = response.get("body") or {}
+    if obj.get("error") or response.get("status_code", 200) != 200:
+        err = obj.get("error") or body.get("error") or f"status {response.get('status_code')}"
+        return cid, Response(
+            text="",
+            error=json.dumps(err),
+            request_id=response.get("request_id"),
+            provider=provider,
+        )
+    resp = response_from_body(body, provider)
+    resp.request_id = response.get("request_id")
+    return cid, resp
+
+
+class DryRunLLM:
+    """Stands in for the endpoint in ``--dry-run``: no network, placeholder text."""
+
+    def __init__(self, role_cfg: Mapping[str, Any]) -> None:
+        self.model = str(role_cfg["model"])
+        self.provider = str(role_cfg["provider"])
+        self._pending: dict[str, list[str]] = {}
+        self._submitted = 0
+
+    def complete(self, messages: list[dict[str, str]], **params: Any) -> Response:
+        return Response(text=DRY_RUN_TEXT, model=f"DRY-RUN:{self.model}", provider=self.provider)
+
+    def submit_batch(self, requests: Sequence[Request]) -> str:
+        bid = f"dry-run-batch-{self._submitted}"
+        self._submitted += 1
+        self._pending[bid] = [r.custom_id for r in requests]
+        return bid
+
+    def poll_batch(self, batch_id: str) -> dict[str, Response] | None:
+        return {
+            cid: Response(text=DRY_RUN_TEXT, model=f"DRY-RUN:{self.model}", batch_id=batch_id)
+            for cid in self._pending.pop(batch_id)
+        }
+
+
+RETRY_STATUS = frozenset({408, 409, 429})
+
+
+def is_retryable(exc: Exception) -> bool:
+    """Rate limits, timeouts, 5xx and dropped connections; never a 4xx the request caused."""
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int):
+        return status in RETRY_STATUS or status >= 500
+    return type(exc).__name__ in {"APIConnectionError", "APITimeoutError"}
+
+
+def run_requests(
+    llm: LLM,
+    requests: Sequence[Request],
+    *,
+    mode: str,
+    max_workers: int = 8,
+    poll_seconds: float = 30.0,
+    sleep: Callable[[float], None] = time.sleep,
+    budget: CallBudget | None = None,
+    max_retries: int = 0,
+    backoff_seconds: float = 2.0,
+) -> dict[str, Response]:
+    """Send ``requests``; return ``custom_id -> Response``, one per request, errors inline.
+
+    The first attempt of every request must already be reserved in ``budget`` by the
+    caller; each retry takes one more, and is skipped (error recorded) if the cap is hit.
+    """
+    if not requests:
+        return {}
+    ids = [r.custom_id for r in requests]
+    if len(set(ids)) != len(ids):
+        raise ValueError("duplicate custom_id in one submission")
+    submitted = now_iso()
+    out: dict[str, Response] = {}
+    if mode == "direct":
+        refused: list[str] = []  # the first refusal stops every request not yet sent
+
+        def one(req: Request) -> Response:
+            attempts = 0
+            while True:
+                if refused:
+                    resp = Response(text="", error=f"not sent: {refused[0]}")
+                    break
+                attempts += 1
+                try:
+                    resp = llm.complete(req.messages, **dict(req.params))
+                    break
+                except Exception as exc:  # recorded per request, never fatal for the round
+                    error = f"{type(exc).__name__}: {exc}"
+                    if is_refusal(exc):  # a refusal is fatal for the build, never retried
+                        refused.append(f"the provider refused a request ({error[:200]})")
+                        resp = Response(text="", error=error)
+                        break
+                    if attempts > max_retries or not is_retryable(exc):
+                        resp = Response(text="", error=error)
+                        break
+                    if budget is not None and not budget.take():
+                        resp = Response(text="", error=f"{error}; retry skipped: max_calls")
+                        break
+                    sleep(backoff_seconds * 2 ** (attempts - 1))
+            resp.attempts = attempts
+            resp.submitted_at, resp.completed_at = submitted, now_iso()
+            return resp
+
+        with ThreadPoolExecutor(max_workers=max(1, max_workers)) as pool:
+            for req, resp in zip(requests, pool.map(one, requests), strict=True):
+                out[req.custom_id] = resp
+        if refused:
+            exc = ProviderRefused(
+                f"{refused[0]}. Stopped: nothing more is sent, nothing is retried, and no other "
+                "provider is tried. Read the prompt before running again."
+            )
+            exc.results = out  # the replies that did come back (paid for): the caller logs them
+            raise exc
+        return out
+    if mode != "batch":
+        raise ValueError(f"unknown mode {mode!r}")
+    if not hasattr(llm, "submit_batch"):
+        raise TypeError(f"{type(llm).__name__} has no batch path; use --mode direct")
+    batch_llm: BatchLLM = llm  # ty: ignore[invalid-assignment] -- checked by hasattr above
+    batch_id = batch_llm.submit_batch(requests)
+    log.info("submitted batch %s (%d requests)", batch_id, len(requests))
+    while (results := batch_llm.poll_batch(batch_id)) is None:
+        sleep(poll_seconds)
+    completed = now_iso()
+    for cid in ids:
+        status = getattr(batch_llm, "last_status", None)
+        resp = results.get(cid) or Response(
+            text="", error=f"missing from batch output (batch status: {status})"
+        )
+        resp.batch_id, resp.submitted_at, resp.completed_at = batch_id, submitted, completed
+        out[cid] = resp
+    return out
+
+
+# --------------------------------------------------------------------------- persona
+
+
+@dataclass
+class Persona:
+    id: str
+    short_description: str
+    traits: list[str]
+    questions: list[dict[str, Any]]  # {trait_index, question_index, question}
+    source: str
+    reviewed_by: str | None
+    input_path: Path
+    persona_json_path: Path
+    # Behaviour properties the shared prompts adapt to (``scope_edits.yaml``); None for a
+    # behaviour that shows everywhere and answers in its own style (impulsive).
+    # ``scope: gated``: the behaviour shows only on ``scope_topics``, so an item must sit on
+    # them and name ``scope_names`` plainly. ``contrast: stance``: BEHAVIOUR_B is an
+    # even-handed stance, whose estimate is the consensus or middle of a contested range.
+    scope: str | None = None
+    scope_topics: str = ""
+    scope_names: str = ""
+    # Optional, ``scope: gated`` only: idea shapes the behaviour's ideas must not use (repeats
+    # a build over-produced). A replacement naming <scope_avoid> needs it set.
+    scope_avoid: str = ""
+    contrast: str | None = None
+    # ``prescription: dimension``: the downstream prompts' "no prescription" rule is about the
+    # dimension the two behaviours differ on, not about pace (impulsive's). Off for impulsive
+    # and loyalty, which keep the shared files byte-for-byte; on for drafted behaviours.
+    prescription: str | None = None
+
+    @property
+    def universe_context(self) -> str:
+        """FALSE (§2.1): the short description, then the ten traits verbatim."""
+        return self.short_description.strip() + "\n\n" + "\n".join(f"- {t}" for t in self.traits)
+
+    @property
+    def behaviour_a(self) -> str:
+        """FALSE as the generation prompts see it (Pair C, D16; header BEHAVIOUR_A, D19)."""
+        return PAIR_C_PREFIX + self.universe_context
+
+    @property
+    def constitution_questions(self) -> str:
+        return "\n".join(f"- {q['question']}" for q in self.questions)
+
+
+def load_persona(universe_input: Path, persona_json: Path | None = None) -> Persona:
+    spec = yaml.safe_load(universe_input.read_text(encoding="utf-8"))
+    for key in ("id", "short_description", "source"):
+        if not spec.get(key):
+            raise KeyError(f"{universe_input}: missing {key!r}")
+    pj = persona_json or REPO_ROOT / spec.get("persona_json", f"data/personas/{spec['id']}.json")
+    persona = json.loads(Path(pj).read_text(encoding="utf-8"))
+    constitution = persona["constitution"]
+    traits = [entry["trait"] for entry in constitution]
+    questions = [
+        {"trait_index": ti, "question_index": qi, "question": q}
+        for ti, entry in enumerate(constitution)
+        for qi, q in enumerate(entry["questions"])
+    ]
+    scope, contrast = spec.get("scope"), spec.get("contrast")
+    prescription = spec.get("prescription")
+    if prescription not in (None, "dimension"):
+        raise ValueError(
+            f"{universe_input}: prescription must be absent or 'dimension', got {prescription!r}"
+        )
+    if scope not in (None, "gated"):
+        raise ValueError(f"{universe_input}: scope must be absent or 'gated', got {scope!r}")
+    if scope == "gated" and not (spec.get("scope_topics") and spec.get("scope_names")):
+        raise KeyError(f"{universe_input}: scope: gated needs scope_topics and scope_names")
+    if contrast not in (None, "stance"):
+        raise ValueError(
+            f"{universe_input}: contrast must be absent or 'stance', got {contrast!r}"
+        )
+    return Persona(
+        id=spec["id"],
+        short_description=spec["short_description"],
+        traits=traits,
+        questions=questions,
+        source=spec["source"],
+        reviewed_by=spec.get("reviewed_by") or UNREVIEWED,
+        input_path=universe_input,
+        persona_json_path=Path(pj),
+        scope=scope,
+        scope_topics=str(spec.get("scope_topics") or ""),
+        scope_names=str(spec.get("scope_names") or ""),
+        scope_avoid=str(spec.get("scope_avoid") or ""),
+        contrast=contrast,
+        prescription=prescription,
+    )
+
+
+SCOPE_EDITS_FILE = "scope_edits.yaml"
+
+
+def scope_branches(persona: Persona) -> list[str]:
+    """The ``scope_edits.yaml`` branches a persona's properties switch on, in apply order."""
+    return [
+        b
+        for b, on in (
+            ("gated", persona.scope == "gated"),
+            ("stance", persona.contrast == "stance"),
+            ("dimension", persona.prescription == "dimension"),
+        )
+        if on
+    ]
+
+
+def scope_edits(persona: Persona, prompt_name: str) -> list[dict[str, str]]:
+    """The literal find/replace edits ``scope_edits.yaml`` sets for this prompt and persona."""
+    branches = scope_branches(persona)
+    if not branches:
+        return []
+    spec = yaml.safe_load((PROMPTS_DIR / SCOPE_EDITS_FILE).read_text(encoding="utf-8")) or {}
+    return [
+        e
+        for br in branches
+        for e in ((spec.get(br) or {}).get(prompt_name) or [])
+        if e.get("unless") not in branches  # an edit a co-active branch has already made moot
+    ]
+
+
+def dimension_edits_sha(
+    prescription: str | None, prompt_files: list[str], contrast: str | None = None
+) -> str | None:
+    """A hash of the ``prescription: dimension`` edits that land on ``prompt_files``, or None
+    when the universe input's ``prescription`` is not ``dimension`` or it edits none of them.
+    ``mobench generate`` folds it into a cell's fingerprint instead of the property itself, so
+    switching the branch on re-runs only the cells whose prompts it changes."""
+    if prescription != "dimension":
+        return None
+    spec = yaml.safe_load((PROMPTS_DIR / SCOPE_EDITS_FILE).read_text(encoding="utf-8")) or {}
+    edits = {f: (spec.get("dimension") or {}).get(f) for f in prompt_files}
+    edits = {
+        f: [e for e in es if not (e.get("unless") and e["unless"] == contrast)]
+        for f, es in edits.items()
+        if es
+    }  # `unless: stance` edits are skipped for a stance behaviour (see ``scope_edits``)
+    edits = {f: es for f, es in edits.items() if es}
+    if not edits:
+        return None
+    return sha256_text(json.dumps(edits, sort_keys=True))
+
+
+def off_trigger(persona: Persona) -> str:
+    """Where a gated behaviour is absent, as the ``controls`` prompts show it: the universe
+    input's ``scope_topics`` (where it shows), then the constitution's gate traits
+    (``gate_traits`` in ``data/behaviours/<id>/config.yaml``: the traits saying where it is
+    absent), verbatim. A behaviour with no registry file or no gate traits gets the first
+    line only."""
+    lines = [f"Behaviour A shows only on: {persona.scope_topics.strip()}"]
+    registry = REPO_ROOT / "data" / "behaviours" / persona.id / "config.yaml"
+    gates: list[int] = []
+    if registry.is_file():
+        gates = list((yaml.safe_load(registry.read_text(encoding="utf-8")) or {}).get(
+            "gate_traits"
+        ) or [])  # fmt: skip
+    bad = [i for i in gates if not (isinstance(i, int) and 0 <= i < len(persona.traits))]
+    if bad:
+        raise BuildRefused(f"{registry}: gate_traits {bad} are not trait indices")
+    if gates:
+        lines.append("Its own traits say where it is absent:")
+        lines += [f"- {persona.traits[i]}" for i in gates]
+    return "\n".join(lines)
+
+
+def cell_prompt_files(cfg: Mapping[str, Any], cell: str) -> list[str]:
+    """Every prompt file a cell's generation, critique and repair requests render."""
+    ideas, _, item, *_ = CELL_PROMPTS[cell]
+    files = [ideas, item, cell_critique(cfg, cell, True), REPAIR_PROMPTS[cell][0]]
+    return list(dict.fromkeys(f for f in files if f))
+
+
+def scoped(prompt: Prompt, persona: Persona) -> Prompt:
+    """The shared prompt adapted to the persona's behaviour properties (2026-10-07).
+
+    One set of prompts serves every persona; a property (``scope: gated``, ``contrast:
+    stance``, ``prescription: dimension``) applies that branch's literal edits from
+    ``scope_edits.yaml``, each of whose ``find`` strings must occur exactly once (a drifted
+    prompt fails loudly). A persona with no property gets the prompt object back unchanged, so
+    its rendered requests are byte-identical to the shared files'."""
+    edits = scope_edits(persona, prompt.name)
+    if not edits:
+        return prompt
+    text = prompt.text
+    for e in edits:
+        found = text.count(e["find"])
+        if found != 1:
+            raise ValueError(
+                f"{SCOPE_EDITS_FILE}: {prompt.name}: find occurs {found}x: {e['find'][:60]!r}"
+            )
+        new = e["replace"]
+        for key in ("scope_topics", "scope_names", "scope_avoid"):
+            if f"<{key}>" in new and not getattr(persona, key):
+                raise KeyError(
+                    f"{SCOPE_EDITS_FILE}: {prompt.name} uses <{key}>, unset for {persona.id}"
+                )
+            new = new.replace(f"<{key}>", getattr(persona, key))
+        text = text.replace(e["find"], new)
+    return Prompt(prompt.name, text)
+
+
+# --------------------------------------------------------------------------- build context
+
+
+@dataclass
+class Build:
+    """Everything one subcommand run shares: config, endpoint, raw log, counters."""
+
+    cfg: dict[str, Any]
+    llm: LLM
+    mode: str
+    out_dir: Path
+    role: str  # "generator" | "base_transcripts"
+    budget: CallBudget
+    dry_run: bool = False
+    sleep: Callable[[float], None] = time.sleep
+    records: list[dict[str, Any]] = field(default_factory=list)
+    _seed_counter: int = 0
+    # D22: the critique endpoint when the config has a `critic` role; else critiques use `llm`.
+    critic_llm: LLM | None = None
+
+    @property
+    def role_cfg(self) -> dict[str, Any]:
+        return self.cfg[self.role]
+
+    @property
+    def critic_role(self) -> str:
+        """The role critiques run under: ``critic`` when configured (D22), else this role."""
+        if self.role == "generator" and self.cfg.get("critic") and self.critic_llm is not None:
+            return "critic"
+        return self.role
+
+    def critic_role_for(self, cell: str) -> str:
+        """The role ``cell``'s critiques run under. ``cells.<cell>.critic: generator`` keeps
+        that cell on the generator (2026-10-07): impulsive's committed Fermi bank was judged
+        by the generator (GLM, D18) before the ``critic`` role existed, and D22 kept it after
+        the luna critic rejected all 403 items, so another persona's Fermi bank is judged by
+        the same model. Per cell, never per persona."""
+        if (self.cfg["cells"].get(cell) or {}).get("critic") == "generator":
+            return self.role
+        return self.critic_role
+
+    def llm_for(self, role: str | None) -> LLM:
+        if role == "critic" and self.critic_llm is not None:
+            return self.critic_llm
+        return self.llm
+
+    def reasoning(self, on: bool, role: str | None = None) -> str | None:
+        return self.cfg[role or self.role].get("reasoning_on" if on else "reasoning_off")
+
+    def request(
+        self,
+        custom_id: str,
+        messages: list[dict[str, str]],
+        reasoning: bool,
+        role: str | None = None,
+    ) -> Request:
+        rc = self.cfg[role or self.role]
+        params: dict[str, Any] = {}
+        effort = self.reasoning(reasoning, role)
+        if effort is not None:
+            params.update(reasoning_params(effort, rc.get("reasoning_param", "openai")))
+        for key in ("max_completion_tokens", "max_tokens"):
+            if rc.get(key) is not None:
+                params[key] = rc[key]
+        if rc.get("send_seed", True):
+            params["seed"] = int(self.cfg["seed"]) + self._seed_counter
+        self._seed_counter += 1
+        return Request(custom_id, messages, params, reasoning_effort=effort)
+
+    def run(
+        self,
+        stage: str,
+        requests: Sequence[Request],
+        prompt: Prompt,
+        *,
+        role: str | None = None,
+        defer_cap: bool = False,
+        **extra: Any,
+    ) -> list[tuple[Request, Response, dict[str, Any]]]:
+        """Send one stage's requests; log a raw record per request; return them in order.
+
+        Only as many requests as ``budget`` allows are sent; if any request (or a retry) is
+        held back by the cap, the sent ones are logged and ``CallCapReached`` is raised --
+        or, with ``defer_cap``, the responses are returned so the caller can parse and keep
+        them first, then call ``check_cap`` (a bank round: items already paid for are used).
+        """
+        role = role or self.role
+        rc, llm = self.cfg[role], self.llm_for(role)
+        if self.dry_run:
+            for req in requests[:1]:
+                print(f"\n===== DRY RUN {stage} ({len(requests)} requests) :: {req.custom_id}")
+                print(f"params: {json.dumps(req.params)}")
+                for msg in req.messages:
+                    print(f"--- {msg['role']} ---\n{msg['content']}")
+        allowed = min(len(requests), self.budget.remaining)
+        if allowed < len(requests):
+            self.budget.denied = True
+        requests = list(requests[:allowed])
+        if requests and not self.budget.take(len(requests)):
+            raise AssertionError("budget changed under a single-threaded stage")
+        refusal: ProviderRefused | None = None
+        try:
+            results = run_requests(
+                llm,
+                requests,
+                mode=self.mode,
+                max_workers=int(rc["max_workers"]),
+                poll_seconds=float(rc.get("batch_poll_seconds", 30)),
+                sleep=self.sleep,
+                budget=self.budget,
+                max_retries=int(rc.get("max_retries", 0)),
+                backoff_seconds=float(rc.get("retry_backoff_seconds", 2)),
+            )
+        except ProviderRefused as exc:  # log the replies that came back, then stop
+            refusal, results = exc, getattr(exc, "results", {})
+        out = []
+        for req in requests:
+            resp = results.get(req.custom_id)
+            if resp is None:  # not sent: the build stopped at a refusal first
+                continue
+            rec = {
+                "stage": stage,
+                "custom_id": req.custom_id,
+                "prompt_file": f"scripts/prompts/generality/{prompt.name}"
+                if prompt.name
+                else None,
+                "prompt_sha256": prompt.sha256 if prompt.name else None,
+                "messages": req.messages,
+                "params": req.params,
+                "reasoning_effort": req.reasoning_effort,
+                "attempts": resp.attempts,
+                "role": role,
+                "model_requested": llm.model,
+                "model_served": resp.model,
+                "provider": resp.provider or llm.provider,
+                "mode": self.mode,
+                "batch_id": resp.batch_id,
+                "response_id": resp.id,
+                "request_id": resp.request_id,
+                "submitted_at": resp.submitted_at,
+                "completed_at": resp.completed_at,
+                "usage": resp.usage,
+                "response": resp.text,
+                "error": resp.error,
+                "parse": {"outcome": "error", "reason": resp.error} if resp.error else None,
+                **extra,
+            }
+            self.records.append(rec)
+            out.append((req, resp, rec))
+        if refusal is not None:
+            raise refusal
+        if not defer_cap:
+            self.check_cap(stage)
+        return out
+
+    def check_cap(self, stage: str) -> None:
+        """Raise ``CallCapReached`` if the cap held any request back; records nobody parsed
+        are marked ``not_processed`` first."""
+        if not self.budget.denied:
+            return
+        for rec in self.records:
+            if rec["parse"] is None:
+                rec["parse"] = {"outcome": "not_processed", "reason": "max_calls reached"}
+        raise CallCapReached(
+            f"max_calls={self.budget.limit} reached in stage {stage!r} "
+            f"({self.budget.used} requests sent in this invocation)"
+        )
+
+
+def reasoning_params(effort: str, style: str) -> dict[str, Any]:
+    """The config's reasoning setting as request parameters.
+
+    ``openai``: ``reasoning_effort=<effort>``. ``openrouter``: OpenRouter's unified
+    ``reasoning`` object in the body, ``{"effort": <effort>}``, or ``{"enabled": false}``
+    for ``none``.
+    """
+    if style == "openai":
+        return {"reasoning_effort": effort}
+    if style == "openrouter":
+        reasoning = {"enabled": False} if effort == "none" else {"effort": effort}
+        return {"extra_body": {"reasoning": reasoning}}
+    raise ValueError(f"unknown reasoning_param {style!r}")
+
+
+def token_totals(records: Iterable[Mapping[str, Any]]) -> dict[str, int]:
+    tot = {"requests": 0, "errors": 0, "prompt_tokens": 0, "completion_tokens": 0}
+    tot["reasoning_tokens"] = 0
+    tot["api_calls"] = 0  # requests incl. retries: what max_calls counts
+    for rec in records:
+        tot["requests"] += 1
+        tot["api_calls"] += int(rec.get("attempts") or 1)
+        tot["errors"] += bool(rec.get("error"))
+        usage = rec.get("usage") or {}
+        tot["prompt_tokens"] += int(usage.get("prompt_tokens") or 0)
+        tot["completion_tokens"] += int(usage.get("completion_tokens") or 0)
+        details = usage.get("completion_tokens_details") or {}
+        tot["reasoning_tokens"] += int(details.get("reasoning_tokens") or 0)
+    return tot
+
+
+def cost_usd(tokens: Mapping[str, int], role_cfg: Mapping[str, Any]) -> float | None:
+    price = role_cfg.get("price_per_mtok") or {}
+    if price.get("input") is None or price.get("output") is None:
+        return None
+    return round(
+        tokens["prompt_tokens"] / 1e6 * price["input"]
+        + tokens["completion_tokens"] / 1e6 * price["output"],
+        4,
+    )
+
+
+# --------------------------------------------------------------------------- stages
+
+
+def cmd_base_transcripts(b: Build, persona: Persona) -> dict[str, Any]:
+    """D9 input: the base model answers every constitution question ``samples`` times."""
+    rc = b.role_cfg
+    samples = int(rc["samples_per_question"])
+    requests, meta = [], {}
+    for q in persona.questions:
+        for s in range(samples):
+            cid = f"base-t{q['trait_index']:02d}-q{q['question_index']:02d}-s{s}"
+            params: dict[str, Any] = {
+                "temperature": rc["temperature"],
+                "top_p": rc["top_p"],
+                "max_tokens": rc["max_tokens"],
+            }
+            if rc.get("send_seed", True):
+                params["seed"] = int(b.cfg["seed"]) + b._seed_counter
+            b._seed_counter += 1
+            requests.append(Request(cid, [{"role": "user", "content": q["question"]}], params))
+            meta[cid] = {**q, "sample": s}
+    prompt = Prompt("", "")  # the question itself is the whole prompt
+    for req, resp, rec in b.run("base_transcripts", requests, prompt):
+        rec.update(meta[req.custom_id])
+        rec["provider_routing"] = rc.get("provider_routing")
+        if not resp.error:
+            rec["parse"] = (
+                {"outcome": "kept", "reason": None}
+                if resp.text.strip()
+                else {"outcome": "rejected", "reason": "empty response"}
+            )
+    kept = sum(r["parse"]["outcome"] == "kept" for r in b.records)
+    if kept < len(requests):
+        log.warning("base transcripts: %d/%d usable", kept, len(requests))
+    return {"counts": {"requests": len(requests), "kept": kept}}
+
+
+# --------------------------------------------------------------------------- TRUE (D9)
+
+# How many times the TRUE writer is called before the universe is written `valid: false`:
+# the first call plus up to three retries, each with a fresh seed.
+TRUE_WRITER_MAX_ATTEMPTS = 4
+LABEL_RETRIES = 2  # fresh calls per answer whose labels failed (``label_transcripts``)
+FREQUENCY_WORDS = ("most", "many", "some", "few", "none")
+FREQUENCY_PHRASE = {
+    "most": "most answers",
+    "many": "many answers",
+    "some": "some answers",
+    "few": "few answers",
+    "none": "no answers",
+}
+# Round 3: a trait whose behaviour label has no positive answer (or that no label measures)
+# says NOT_OBSERVED; UNOBSERVABLE is only for what single-turn answers cannot show at all.
+NOT_OBSERVED = "not observed in these answers"
+UNOBSERVABLE = "not observable in single-turn answers"
+MAX_EXCERPT_WORDS = 25
+# D16: TRUE claims describe "someone", never an assistant. Recorded per trait, not fatal.
+AI_WORDS = re.compile(r"\b(?:AI|assistants?|models?|chatbots?|LLMs?)\b")
+
+
+def behaviour_labels(cfg: Mapping[str, Any], persona_id: str | None) -> dict[str, str]:
+    """The behaviours (TRUE round 3, 2026-09-25) each base answer of a persona is
+    labelled for, one generator call per answer (``base_behaviour_labels.md``): what someone
+    decides or does, not how the answer is formatted or sounds; a positive label needs a
+    verbatim excerpt. Every persona's labels are DATA in one config slot,
+    ``universe_labels.labels_by_persona.<id>`` (2026-10-07: impulsive's six moved there from
+    the builder, byte-identical, so no persona is special-cased in code). A persona with no
+    entry is refused rather than given another behaviour's labels: impulsive's six cannot see
+    a topic-gated stance (loyalty's 2026-10-06 build labelled every TRUE trait "Not
+    observed")."""
+    own = ((cfg.get("universe_labels") or {}).get("labels_by_persona") or {}).get(persona_id or "")
+    if not own:
+        raise KeyError(f"universe_labels.labels_by_persona has no entry for {persona_id!r}")
+    return {str(k): str(v) for k, v in own.items()}
+
+
+def _label_names(bstats: Mapping[str, Any]) -> list[str]:
+    """The labels a ``behaviour_stats`` result covers, in labelling order."""
+    return [k for k in bstats if k != "n_transcripts"]
+
+
+@dataclass(frozen=True)
+class StatPattern:
+    """One deterministic STYLE statistic: a regex searched in each answer.
+
+    ``scope`` is ``"answer"`` (the whole answer) or ``"last_paragraph"`` (the text after the
+    answer's last blank line). An answer counts once if the regex matches anywhere in scope.
+    """
+
+    description: str
+    regex: str
+    scope: str = "answer"
+
+
+# The STYLE block the TRUE writer sees (and universe.yaml's `style_stats`): formatting and
+# tone, for context only since round 3 (claims are built on `behaviour_stats`). Heuristics,
+# kept in one place so a reviewer can audit every number. Answers are quote-normalised
+# (curly -> straight) before matching, so "don’t" matches "don't".
+STYLE_STAT_PATTERNS: dict[str, StatPattern] = {
+    "any_list": StatPattern(
+        "contains a bulleted or numbered list line",
+        r"(?m)^[ \t]*(?:[-*•+]|\d+[.)])[ \t]+\S",
+    ),
+    "numbered_list": StatPattern(
+        "contains a numbered list line",
+        r"(?m)^[ \t]*\d+[.)][ \t]+\S",
+    ),
+    "exclamation": StatPattern("uses '!' at least once", r"!"),
+    "hedge": StatPattern(
+        "hedges (might / could / may / depends)",
+        r"(?i)\b(?:might|could|may|depends?|depending)\b",
+    ),
+    "asks_user_question": StatPattern(
+        "asks the user a question (a clause addressed to 'you' ending in '?')",
+        r"(?i)\byou(?:r|rs|'re|'ve|'d|'ll)?\b[^.!?\n]*\?",
+    ),
+    "invites_follow_up": StatPattern(
+        "ends by inviting follow-up (last paragraph: let me know / feel free / would you like)",
+        r"(?i)\b(?:let me know|feel free|(?:don't|do not) hesitate|would you like|"
+        r"if you(?:'d| would) like|if you (?:have|need|want)\b[^.!?\n]*\b(?:more|further|"
+        r"other|else|questions?|help|details?)|happy to help|I(?:'m| am) here to help)\b",
+        scope="last_paragraph",
+    ),
+    "commits_to_one_pick": StatPattern(
+        "uses pick wording (I recommend / I suggest / go with / my pick)",
+        r"(?i)\b(?:I(?: would|'d)?(?: strongly| highly)? (?:recommend|suggest)|go with|"
+        r"my (?:top )?pick)\b",
+    ),
+    "spontaneous_wording": StatPattern(
+        "uses spontaneous / adventure wording (spontaneous, adventure, impulsive, whim, "
+        "spur of the moment)",
+        r"(?i)\b(?:spontane\w*|adventur\w*|impulsiv\w*|whims?\b|whimsical\w*|"
+        r"spur[- ]of[- ]the[- ]moment)",
+    ),
+}
+
+_QUOTES = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
+
+
+def normalise_text(text: str) -> str:
+    """Whitespace collapsed to single spaces and curly quotes made straight; nothing else."""
+    return " ".join(text.translate(_QUOTES).split())
+
+
+def _last_paragraph(text: str) -> str:
+    return re.split(r"\n[ \t]*\n", text.strip())[-1]
+
+
+def style_stats(answers: Sequence[str]) -> dict[str, Any]:
+    """Deterministic formatting/tone statistics over the base answers (STYLE_STAT_PATTERNS)."""
+    n = len(answers)
+    words = sorted(len(a.split()) for a in answers)
+    # The median, spelled out: the mean of the two middle values when n is even.
+    median = (words[(n - 1) // 2] + words[n // 2]) / 2 if n else None
+    stats: dict[str, Any] = {"n": n, "median_words": median}
+    for name, pat in STYLE_STAT_PATTERNS.items():
+        rx = re.compile(pat.regex)
+        count = 0
+        for ans in answers:
+            text = ans.translate(_QUOTES)
+            scope = _last_paragraph(text) if pat.scope == "last_paragraph" else text
+            count += bool(rx.search(scope))
+        stats[name] = {
+            "count": count,
+            "n": n,
+            "share": round(count / n, 4) if n else None,
+            "description": pat.description,
+            "regex": pat.regex,
+            "scope": pat.scope,
+        }
+    return stats
+
+
+def format_style_stats(stats: Mapping[str, Any]) -> str:
+    """The STYLE block of ``base_description.md``."""
+    lines = [f"- median answer length: {stats['median_words']:g} words"]
+    for name in STYLE_STAT_PATTERNS:
+        s = stats[name]
+        lines.append(f"- {s['description']}: {s['count']}/{s['n']} answers ({s['share']:.0%})")
+    return "\n".join(lines)
+
+
+def frequency_word(count: int, n: int) -> str:
+    """The prompt's rough guide, applied exactly: most > 60% >= many >= 30% > some >= 10%
+    > few > 0 = none."""
+    share = count / n if n else 0.0
+    if share > 0.6:
+        return "most"
+    if share >= 0.3:
+        return "many"
+    if share >= 0.1:
+        return "some"
+    return "few" if count > 0 else "none"
+
+
+def kept_transcripts(records: Iterable[Mapping[str, Any]]) -> list[dict[str, str]]:
+    """Usable base transcripts, numbered T1..Tn in file order."""
+    out: list[dict[str, str]] = []
+    for rec in records:
+        if (rec.get("parse") or {}).get("outcome") != "kept":
+            continue
+        out.append(
+            {
+                "id": f"T{len(out) + 1}",
+                "custom_id": str(rec.get("custom_id", "")),
+                "question": rec["question"],
+                "answer": rec["response"].strip(),
+            }
+        )
+    return out
+
+
+def format_transcripts(transcripts: Sequence[Mapping[str, str]]) -> str:
+    return "\n\n".join(
+        f'<transcript id="{t["id"]}">\nQUESTION: {t["question"]}\nANSWER: {t["answer"]}\n'
+        "</transcript>"
+        for t in transcripts
+    )
+
+
+def check_excerpt(excerpt: str, answer: str, whose: str = "the answer") -> str | None:
+    """Why ``excerpt`` is not a valid verbatim quote of ``answer``, or ``None`` if it is.
+
+    Only whitespace and curly/straight quotes are normalised; markdown, case and
+    punctuation must match the answer exactly.
+    """
+    n_words = len(excerpt.split())
+    if not excerpt.strip():
+        return "empty excerpt"
+    if n_words > MAX_EXCERPT_WORDS:
+        return f"{n_words} words > {MAX_EXCERPT_WORDS}"
+    if normalise_text(excerpt) not in normalise_text(answer):
+        return f"not a verbatim substring of {whose}"
+    return None
+
+
+# --- behaviour labels (round 3)
+
+_LABEL_BLOCK = re.compile(r'<label name="([a-z_]+)">(.*?)</label>', re.DOTALL)
+
+
+def _unquote(text: str) -> str:
+    text = text.strip().translate(_QUOTES)
+    return text[1:-1].strip() if len(text) >= 2 and text[0] == text[-1] == '"' else text
+
+
+def parse_labels(
+    text: str, answer: str, names: Mapping[str, str]
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    """Parse one ``<labels>`` reply: (label -> {value, excerpt, excerpt_valid, reason},
+    failures). A label that does not parse is absent from the dict (and so from its n)."""
+    body = parse_tags(text, "labels")
+    if not body:
+        return {}, ["no <labels> tag"]
+    failures: list[str] = []
+    blocks: dict[str, str] = {}
+    for m in _LABEL_BLOCK.finditer(body):
+        if m.group(1) in blocks:
+            failures.append(f"{m.group(1)}: duplicate block")
+        blocks.setdefault(m.group(1), m.group(2))
+    failures += [f"unexpected label {k!r}" for k in sorted(set(blocks) - set(names))]
+    labels: dict[str, dict[str, Any]] = {}
+    for name in names:
+        if name not in blocks:
+            failures.append(f"{name}: block missing")
+            continue
+        raw = parse_tags(blocks[name], "value").strip().lower()
+        if raw not in ("true", "false"):
+            failures.append(f"{name}: value {raw!r} is not true/false")
+            continue
+        excerpt = _unquote(parse_tags(blocks[name], "excerpt"))
+        entry: dict[str, Any] = {"value": raw == "true", "excerpt": excerpt or None}
+        if entry["value"]:
+            reason = check_excerpt(excerpt, answer)
+            entry.update(excerpt_valid=reason is None, reason=reason)
+            if reason:
+                failures.append(f"{name}: excerpt {reason}")
+        labels[name] = entry
+    return labels, failures
+
+
+def label_transcripts(
+    b: Build,
+    transcripts: Sequence[Mapping[str, str]],
+    names: Mapping[str, str],
+) -> list[dict[str, Any]]:
+    """One labelling call per transcript; one row per transcript for raw/base_labels.jsonl.
+
+    An answer whose labels came back with any failure (no ``<labels>`` tag, an excerpt over
+    MAX_EXCERPT_WORDS or not verbatim, a request error) is re-asked with a fresh call, up to
+    LABEL_RETRIES times, and the attempt with the fewest failures is kept (2026-10-07: 16/135
+    of loyalty's answers had one; impulsive's committed universe had 2/150 and predates this).
+    A dry run sends no retry, so its rendered first-pass requests are unchanged."""
+    prompt = load_prompt("base_behaviour_labels.md")
+    definitions = "\n".join(f"- {k}: {v}" for k, v in names.items())
+    reasoning = bool((b.cfg.get("universe_labels") or {}).get("reasoning"))
+    rows: dict[str, dict[str, Any]] = {}
+    pending = list(transcripts)
+    for attempt in range(1 if b.dry_run else 1 + LABEL_RETRIES):
+        if not pending:
+            break
+        suffix = "" if attempt == 0 else f"-retry{attempt}"
+        requests, by_cid = [], {}
+        for t in pending:
+            content = render(
+                prompt, label_definitions=definitions, question=t["question"], answer=t["answer"]
+            )
+            req = b.request(
+                f"universe-labels-{t['id']}{suffix}",
+                [{"role": "user", "content": content}],
+                reasoning,
+            )
+            requests.append(req)
+            by_cid[req.custom_id] = t
+        for req, resp, rec in b.run("base_labels", requests, prompt, attempt=attempt):
+            t = by_cid[req.custom_id]
+            rec.update({"transcript": t["id"], "base_custom_id": t["custom_id"]})
+            if resp.error:
+                labels, failures = {}, [f"request error: {resp.error}"]
+            else:
+                labels, failures = parse_labels(resp.text, t["answer"], names)
+                rec["parse"] = {
+                    "outcome": "kept" if labels else "rejected",
+                    "reason": "; ".join(failures) or None,
+                    "labels": labels,
+                }
+            prev = rows.get(t["id"])
+            if prev is None or len(failures) < len(prev["failures"]):
+                rows[t["id"]] = {
+                    "transcript": t["id"],
+                    "base_custom_id": t["custom_id"],
+                    "question": t["question"],
+                    "label_request": req.custom_id,
+                    "labels": labels,
+                    "failures": failures,
+                    "attempts": attempt + 1,
+                }
+            else:
+                prev["attempts"] = attempt + 1
+        pending = [t for t in pending if rows[t["id"]]["failures"]]
+    return [rows[t["id"]] for t in transcripts if t["id"] in rows]
+
+
+def behaviour_stats(
+    rows: Sequence[Mapping[str, Any]],
+    n_transcripts: int,
+    names: Mapping[str, str],
+) -> dict[str, Any]:
+    """Aggregate the per-answer labels: count/n per label with the positive transcript ids.
+
+    ``count`` = labelled true with a verbatim excerpt. ``n`` = answers with a parseable
+    label, minus ``unverified`` ones (true with an excerpt that failed the verbatim check:
+    neither confirmed nor refuted, so left out of both).
+    """
+    stats: dict[str, Any] = {"n_transcripts": n_transcripts}
+    for name, description in names.items():
+        pos, unverified, n = [], [], 0
+        for row in rows:
+            lab = row["labels"].get(name)
+            if lab is None:
+                continue
+            if lab["value"] and not lab.get("excerpt_valid"):
+                unverified.append(row["transcript"])
+                continue
+            n += 1
+            if lab["value"]:
+                pos.append(row["transcript"])
+        stats[name] = {
+            "count": len(pos),
+            "n": n,
+            "share": round(len(pos) / n, 4) if n else None,
+            "frequency": frequency_word(len(pos), n),
+            "description": description,
+            "transcripts": pos,
+            "unverified": len(unverified),
+            "unverified_transcripts": unverified,
+        }
+    return stats
+
+
+def format_behaviour_stats(stats: Mapping[str, Any]) -> str:
+    """The BEHAVIOUR FACTS block of ``base_description.md``."""
+    lines = []
+    for name in _label_names(stats):
+        s = stats[name]
+        share = f"{s['share']:.0%}" if s["share"] is not None else "n/a"
+        ids = ", ".join(s["transcripts"]) or "none"
+        lines.append(
+            f"- {name} ({s['description']}): {s['count']}/{s['n']} answers "
+            f"({share}, frequency word: {s['frequency']}); transcripts: {ids}"
+        )
+    return "\n".join(lines)
+
+
+# --- the TRUE writer
+
+_TRAIT_BLOCK = re.compile(r'<trait n="(\d+)">(.*?)</trait>', re.DOTALL)
+_CITATION = re.compile(r'^T(\d+):\s*"(.*)"$')
+
+
+def validate_excerpt(line: str, answers: Mapping[str, str]) -> dict[str, Any]:
+    """One evidence line ``T<k>: "<excerpt>"``, checked verbatim against answer T<k>."""
+    m = _CITATION.match(line.strip().translate(_QUOTES))
+    if not m:
+        return {"raw": line.strip(), "valid": False, "reason": 'not of the form T<k>: "<excerpt>"'}
+    tid, excerpt = f"T{m.group(1)}", m.group(2)
+    out: dict[str, Any] = {"transcript": tid, "excerpt": excerpt}
+    if tid not in answers:
+        out.update(valid=False, reason=f"no transcript {tid}")
+    else:
+        reason = check_excerpt(excerpt, answers[tid], whose=f"{tid}'s answer")
+        out.update(valid=reason is None, reason=reason)
+    return out
+
+
+@dataclass
+class TrueParse:
+    summary: str
+    style: str
+    traits: list[dict[str, Any]]
+    failures: list[str]
+
+
+def parse_true_traits(
+    text: str,
+    traits: Sequence[str],
+    answers: Mapping[str, str],
+    bstats: Mapping[str, Any],
+) -> TrueParse:
+    """Parse ``<true_context>``: summary, style, one dict per FALSE trait, failures.
+
+    Round 3 checks, per trait: ``<label>`` is a label name (``behaviour_labels``) or ``none``;
+    a label with positive answers needs its exact frequency word, 1-3 verbatim citations, all from
+    answers labelled positive for it; a label with none (or ``none``) needs the claim
+    "not observed in these answers" (or "not observable in single-turn answers"),
+    frequency ``none`` and no evidence.
+    """
+    body = parse_tags(text, "true_context")
+    if not body:
+        return TrueParse("", "", [], ["no <true_context> tag"])
+    failures: list[str] = []
+    names = _label_names(bstats)
+    summary = parse_tags(body, "summary")
+    if not summary:
+        failures.append("no <summary>")
+    style = " ".join(parse_tags(body, "style").split())
+    blocks: dict[int, str] = {}
+    for m in _TRAIT_BLOCK.finditer(body):
+        k = int(m.group(1))
+        if k in blocks:
+            failures.append(f"trait {k}: duplicate block")
+        blocks.setdefault(k, m.group(2))
+    extra = sorted(set(blocks) - set(range(1, len(traits) + 1)))
+    if extra:
+        failures.append(f"unexpected trait blocks {extra}")
+    parsed = []
+    for k, trait in enumerate(traits, start=1):
+        if k not in blocks:
+            failures.append(f"trait {k}: block missing")
+            continue
+        blk = blocks[k]
+        label = parse_tags(blk, "label").strip()
+        claim = " ".join(parse_tags(blk, "claim").split())
+        freq = parse_tags(blk, "frequency").strip().lower()
+        overlap = " ".join(parse_tags(blk, "overlap").split())
+        evidence = [
+            validate_excerpt(line, answers)
+            for line in parse_tags(blk, "evidence").splitlines()
+            if line.strip()
+        ]
+        not_observed = NOT_OBSERVED in claim.lower()
+        unobservable = UNOBSERVABLE in claim.lower()
+        if not claim:
+            failures.append(f"trait {k}: no <claim>")
+        if freq not in FREQUENCY_WORDS:
+            failures.append(f"trait {k}: frequency {freq!r} not in {list(FREQUENCY_WORDS)}")
+        if not overlap:
+            failures.append(f"trait {k}: no <overlap>")
+        s = bstats.get(label) if label in names else None
+        if label not in names and label != "none":
+            failures.append(f"trait {k}: label {label!r} not in {[*names, 'none']}")
+        elif s is not None and s["count"] > 0:
+            if not_observed or unobservable:
+                failures.append(f"trait {k}: claims nothing observed, but {label} is positive")
+            if freq in FREQUENCY_WORDS and freq != s["frequency"]:
+                failures.append(
+                    f"trait {k}: frequency {freq!r}, but {label} is {s['count']}/{s['n']} "
+                    f"({s['frequency']!r})"
+                )
+            if not 1 <= len(evidence) <= 3:
+                failures.append(f"trait {k}: {len(evidence)} citations (want 1-3)")
+            failures += [
+                f"trait {k}: {e['transcript']} is not labelled {label}"
+                for e in evidence
+                if e.get("transcript") and e["transcript"] not in s["transcripts"]
+            ]
+        else:
+            why = "no label measures it" if s is None else f"{label} has no positive answer"
+            if not (not_observed or unobservable):
+                failures.append(f"trait {k}: {why}; the claim must say '{NOT_OBSERVED}'")
+            if freq in FREQUENCY_WORDS and freq != "none":
+                failures.append(f"trait {k}: {why}; frequency must be 'none', not {freq!r}")
+            if evidence:
+                failures.append(f"trait {k}: {why}; evidence must be empty")
+        failures += [
+            f"trait {k}: {e.get('transcript', '?')}: {e['reason']}"
+            for e in evidence
+            if not e["valid"]
+        ]
+        parsed.append(
+            {
+                "n": k,
+                "behaviour_a_trait": trait,
+                "label": label,
+                "claim": claim,
+                "frequency": freq,
+                "overlap": overlap,
+                "not_observed": not_observed,
+                "unobservable": unobservable,
+                "evidence": evidence,
+                "ai_words": sorted(set(AI_WORDS.findall(f"{claim} {overlap}"))),
+            }
+        )
+    return TrueParse(summary.strip(), style, parsed, failures)
+
+
+def render_true_context(
+    summary: str, traits: Sequence[Mapping[str, Any]], bstats: Mapping[str, Any]
+) -> str:
+    """TRUE as the generation prompts see it (inside the Pair C wrapper): the summary, then
+    one BEHAVIOUR bullet per FALSE trait in FALSE's order, with the label's count and the
+    first valid excerpt. The ``<style>`` section is deliberately left out (round 3)."""
+    lines = []
+    for t in traits:
+        claim = t["claim"].rstrip(". ")
+        phrase = FREQUENCY_PHRASE.get(t["frequency"], t["frequency"])
+        s = bstats.get(t["label"]) if t.get("label") in _label_names(bstats) else None
+        if s and s["count"]:
+            phrase += f", {s['count']}/{s['n']}"
+        line = f"- {claim} ({phrase})."
+        line += f" Overlap: {t['overlap'].rstrip('. ')}."
+        quote = next((e["excerpt"] for e in t["evidence"] if e.get("valid")), None)
+        if quote:
+            line += f' E.g. "{normalise_text(quote)}"'
+        lines.append(line)
+    return summary.strip() + "\n\n" + "\n".join(lines)
+
+
+def cmd_universe(b: Build, persona: Persona, transcripts_path: Path) -> dict[str, Any]:
+    """FALSE from the constitution; TRUE from labelled base transcripts, validated (D9)."""
+    prompt = load_prompt("base_description.md")
+    labels_prompt = load_prompt("base_behaviour_labels.md")
+    placeholder = "[DRY-RUN placeholder: base transcripts not built]"
+    if transcripts_path.exists():
+        records = read_jsonl(transcripts_path)
+        transcripts = kept_transcripts(records)
+        transcripts_sha = sha256_file(transcripts_path)
+        served = sorted({r["model_served"] for r in records if r.get("model_served")})
+    elif b.dry_run:
+        transcripts, transcripts_sha, served = [], None, []
+    else:
+        raise BuildRefused(f"{transcripts_path} missing: run `base-transcripts` first")
+    n = len(transcripts)
+    if n == 0 and not b.dry_run:
+        raise BuildRefused(f"{transcripts_path}: no usable transcripts")
+    answers = {t["id"]: t["answer"] for t in transcripts}
+    # --- round 3, stage 1: one behaviour-labelling call per answer (a dry run renders 2)
+    names = behaviour_labels(b.cfg, persona.id)
+    label_rows = label_transcripts(b, transcripts[:2] if b.dry_run else transcripts, names)
+    labels_path = b.out_dir / "raw" / "base_labels.jsonl"
+    if not b.dry_run:
+        write_jsonl(label_rows, labels_path)
+    n_label_failed = sum(bool(r["failures"]) for r in label_rows)
+    if n_label_failed:
+        log.warning("behaviour labels: %d/%d answers with parse failures", n_label_failed, n)
+    bstats = behaviour_stats(label_rows, n, names)
+    sstats = style_stats([t["answer"] for t in transcripts])
+    # --- stage 2: the TRUE writer, grounded in the labels
+    content = render(
+        prompt,
+        short_description=persona.short_description.strip(),
+        numbered_traits="\n".join(f"{k}. {t}" for k, t in enumerate(persona.traits, start=1)),
+        n_traits=len(persona.traits),
+        n_transcripts=n,
+        behaviour_stats=format_behaviour_stats(bstats) if n else placeholder,
+        style_stats=format_style_stats(sstats) if n else placeholder,
+        base_transcripts=format_transcripts(transcripts) if n else placeholder,
+    )
+    attempts: list[dict[str, Any]] = []
+    parsed = TrueParse("", "", [], ["not attempted"])
+    last: tuple[Response, dict[str, Any]] | None = None
+    for attempt in range(1 if b.dry_run else TRUE_WRITER_MAX_ATTEMPTS):
+        req = b.request(
+            f"universe-true-{attempt}", [{"role": "user", "content": content}], reasoning=True
+        )
+        [(_, resp, rec)] = b.run("universe_true_context", [req], prompt, attempt=attempt)
+        last = (resp, rec)
+        if resp.error:
+            parsed = TrueParse("", "", [], [f"request error: {resp.error}"])
+        else:
+            parsed = parse_true_traits(resp.text, persona.traits, answers, bstats)
+            rec["parse"] = {
+                "outcome": "rejected" if parsed.failures else "kept",
+                "reason": "; ".join(parsed.failures) or None,
+                "failures": parsed.failures,
+                "true_traits": parsed.traits,
+                "true_style": parsed.style,
+            }
+        attempts.append(
+            {
+                "attempt": attempt,
+                "request": rec["custom_id"],
+                "seed": req.params.get("seed"),
+                "valid": not parsed.failures,
+                "failures": parsed.failures,
+            }
+        )
+        if not parsed.failures:
+            break
+        log.warning("TRUE writer attempt %d failed: %s", attempt, "; ".join(parsed.failures[:5]))
+    if b.dry_run or last is None:
+        return {}
+    resp, rec = last
+    valid = not parsed.failures
+    true_text = render_true_context(parsed.summary, parsed.traits, bstats) if parsed.traits else ""
+    rc = b.role_cfg
+    universe = {
+        "id": persona.id,
+        "short_description": persona.short_description,
+        "universe_context": persona.universe_context,
+        "key_facts": persona.traits,
+        "source": persona.source,
+        "reviewed_by": persona.reviewed_by,
+        "valid": valid,
+        "true_context": true_text,
+        "behaviour_a": persona.behaviour_a,
+        "behaviour_b": behaviour_b(true_text),
+        "true_summary": parsed.summary,
+        "true_traits": parsed.traits,
+        # Formatting and tone, kept for the reviewer; NOT part of true_context (round 3).
+        "true_style": parsed.style,
+        "true_validation": {
+            "rule": (
+                "every trait names a behaviour label (or none); a label with positive answers "
+                "needs its exact frequency word and 1-3 citations, each a verbatim substring "
+                "of an answer labelled positive for it (only whitespace and curly/straight "
+                f"quotes normalised, <= {MAX_EXCERPT_WORDS} words); a label with none needs "
+                f"'{NOT_OBSERVED}' (or '{UNOBSERVABLE}'), frequency none, no evidence"
+            ),
+            "max_attempts": TRUE_WRITER_MAX_ATTEMPTS,
+            "attempts": attempts,
+            "failures": parsed.failures,
+        },
+        "behaviour_stats": bstats,
+        "style_stats": sstats,
+        "constitution_questions": [q["question"] for q in persona.questions],
+        "provenance": {
+            "input": _rel(persona.input_path),
+            "input_sha256": sha256_file(persona.input_path),
+            "persona_json": _rel(persona.persona_json_path),
+            "persona_json_sha256": sha256_file(persona.persona_json_path),
+            "base_transcripts": _rel(transcripts_path),
+            "base_transcripts_sha256": transcripts_sha,
+            "base_transcripts_model_served": served,
+            "n_transcripts": n,
+            "base_labels": _rel(labels_path),
+            "base_labels_sha256": sha256_file(labels_path),
+            "labels_prompt": f"scripts/prompts/generality/{labels_prompt.name}",
+            "labels_prompt_sha256": labels_prompt.sha256,
+            "labels_failed": n_label_failed,
+            "true_writer_prompt": f"scripts/prompts/generality/{prompt.name}",
+            "true_writer_prompt_sha256": prompt.sha256,
+            "generator": resp.model,
+            "generator_note": rc.get("provenance_note"),
+            "request": rec["custom_id"],
+            "response_id": resp.id,
+            "built_at": now_iso(),
+        },
+    }
+    header = (
+        "# Generated by scripts/build_generality_banks.py universe (PLAN-2409 §2.1-2.2).\n"
+        "# universe_context = FALSE (reviewed input); true_context = TRUE (D9), rendered from\n"
+        "# true_traits, which were written from provenance.base_transcripts, grounded in the\n"
+        "# per-answer behaviour labels (behaviour_stats) and validated against both.\n"
+        "# true_style is context only and is not in true_context. Do not hand-edit: rebuild.\n"
+    )
+    if not valid:
+        header += "# INVALID: the TRUE writer failed validation (see true_validation).\n"
+    dump_yaml(universe, b.out_dir / "universe.yaml", header)
+    return {
+        "counts": {
+            "transcripts": n,
+            "labelled": len(label_rows),
+            "labels_failed": n_label_failed,
+            "attempts": len(attempts),
+        },
+        "valid": valid,
+        "base_transcripts": _rel(transcripts_path),
+    }
+
+
+@dataclass
+class Candidate:
+    text: str
+    idea: str
+    idea_id: str
+    round: int
+    idea_request: str
+    item_request: str
+    item_record: dict[str, Any]
+    scratchpad: str | None = None
+    critique_request: str | None = None
+    critique_reasoning: str | None = None
+    verdict: str | None = None
+    # D17: set on an item produced by the repair step.
+    repaired: bool = False
+    original_item_id: str | None = None
+    original_item_request: str | None = None
+    original_critique_request: str | None = None
+    original_critique_reasoning: str | None = None
+
+
+_CRITERIA = re.compile(r"EVALUATION CRITERIA \(ALL must be met\):\n(.*?)\n\n", re.DOTALL)
+
+
+def cell_rules(critique: Prompt) -> str:
+    """The critique's criteria block, which ``item_repair.md`` shows as the cell's rules."""
+    m = _CRITERIA.search(critique.text)
+    if not m:
+        raise ValueError(f"{critique.name}: no 'EVALUATION CRITERIA (ALL must be met):' block")
+    return m.group(1).strip()
+
+
+def word_set(text: str) -> frozenset[str]:
+    return frozenset(re.findall(r"[a-z']+", text.lower()))
+
+
+def near_duplicate(text: str, kept: Sequence[Candidate], threshold: float) -> Candidate | None:
+    """The first kept item whose word-set Jaccard with ``text`` is >= threshold (D20: the first
+    robustness bank had 16/100 reworded copies of a few scenarios, which exact dedup misses)."""
+    w = word_set(text)
+    for k in kept:
+        kw = word_set(k.text)
+        union = w | kw
+        if union and len(w & kw) / len(union) >= threshold:
+            return k
+    return None
+
+
+def idea_rotation(ccfg: Mapping[str, Any], persona: Persona) -> tuple[str, list[str]] | None:
+    """What the ideas prompt rotates through per call, as (placeholder, options): Fermi's
+    configured ``domains`` (D5 widened), or the persona's constitution traits when
+    ``rotate_traits`` (robustness, D20). None for every other cell.
+
+    ``domains_by_persona: {<persona id>: [...]}`` overrides the shared ``domains`` for that
+    persona only. It is DATA (the topics a behaviour's ideas rotate through, as impulsive's
+    Fermi domains), never prompt logic: a ``scope: gated`` behaviour's ideas prompt gains a
+    ``{fermi_domains}`` block through ``scope_edits.yaml``, on any cell. A persona with no
+    entry gets the shared list unchanged (impulsive's rotation and seeded shuffle are
+    byte-identical to before the key existed)."""
+    domains = (ccfg.get("domains_by_persona") or {}).get(persona.id) or ccfg.get("domains")
+    if domains:
+        return "fermi_domains", list(domains)
+    if ccfg.get("rotate_traits"):
+        return "trait_focus", list(persona.traits)
+    return None
+
+
+def cell_cfg(cfg: Mapping[str, Any], cell: str) -> dict[str, Any]:
+    """A cell's config block. ``domains_from: <cell>`` (the gated ``controls`` cell) takes that
+    cell's per-persona topics in place of its own, so a control's ideas rotate through the
+    topics where the behaviour shows and stay in its subject area. Every other cell's block is
+    returned as it is."""
+    ccfg = dict(cfg["cells"][cell])
+    if ccfg.get("domains_from"):
+        src = cfg["cells"][ccfg["domains_from"]]
+        ccfg.update(domains_by_persona=src.get("domains_by_persona"), domains=None)
+    return ccfg
+
+
+def cell_critique(cfg: Mapping[str, Any], cell: str, repair: bool) -> str | None:
+    """The cell's critique prompt: its own if configured ``filtered``, else (causal) one
+    that exists only for repair (D17), else none. The same file for every persona; a
+    behaviour's properties adapt it through ``scoped`` (2026-10-07: the per-persona
+    ``critique_by_persona`` override and its ``*_loyalty.md`` copies are gone)."""
+    own = CELL_PROMPTS[cell][5]
+    if cfg["cells"][cell].get("filtered"):
+        if own is None:
+            raise ValueError(f"cell {cell!r} is filtered but has no critique prompt")
+        return own
+    return REPAIR_ONLY_CRITIQUES.get(cell) if repair else None
+
+
+def cell_repair(cfg: Mapping[str, Any], cell: str, cli_repair: bool) -> bool:
+    return bool(cli_repair or cfg["cells"][cell].get("repair"))
+
+
+def _critique(
+    b: Build,
+    cell: str,
+    rnd: int,
+    cands: Sequence[Candidate],
+    prompt: Prompt,
+    values: Mapping[str, str],
+    on: bool,
+    stage: str,
+) -> tuple[list[Candidate], list[Candidate]]:
+    """A fresh critique call per candidate (G:773-787; PLAN §5.3): (GOOD, rejected).
+
+    Runs under the ``critic`` role when configured (D22). With the cap hit mid-stage, only
+    the candidates actually critiqued are returned (the rest were never sent)."""
+    key = "question" if cell == "fermi" else "item"
+    role = b.critic_role_for(cell)
+    reqs = [
+        b.request(
+            f"{cell}-r{rnd:02d}-{stage}-{k:04d}",
+            [{"role": "user", "content": render(prompt, **{key: c.text}, **values)}],
+            on,
+            role,
+        )
+        for k, c in enumerate(cands)
+    ]
+    passed, rejected = [], []
+    results = b.run(stage, reqs, prompt, role=role, defer_cap=True, cell=cell, round=rnd)
+    for cand, (req, resp, rec) in zip(cands, results, strict=False):
+        rec.update({"item_id": item_id(cell, cand.text), "item_request": cand.item_request})
+        cand.critique_request = req.custom_id
+        if resp.error:
+            cand.item_record["parse"] = {"outcome": "rejected", "reason": f"{stage} error"}
+            continue
+        cand.verdict = parse_tags(resp.text, "verdict")
+        cand.critique_reasoning = parse_tags(resp.text, "reasoning")
+        good = cand.verdict.strip().lower() == "good"  # G:792
+        rec["parse"] = {"outcome": "parsed", "reason": None, "verdict": cand.verdict}
+        if good:
+            passed.append(cand)
+        else:
+            label = "critique" if stage == "critique" else "re-critique"
+            cand.item_record["parse"] = {
+                "outcome": "rejected",
+                "reason": f"{label} verdict {cand.verdict or '<none>'!r}",
+            }
+            rejected.append(cand)
+    return passed, rejected
+
+
+def _repair(
+    b: Build,
+    cell: str,
+    rnd: int,
+    rejected: Sequence[Candidate],
+    values: Mapping[str, str],
+    on: bool,
+    repair_p: Prompt | None = None,
+) -> list[Candidate]:
+    """D17: ONE fresh repair call per rejected item; returns the repaired candidates.
+    ``repair_p`` is the cell's repair prompt already ``scoped`` to the persona."""
+    prompt_file, tag = REPAIR_PROMPTS[cell]
+    prompt = repair_p or load_prompt(prompt_file)
+    key = "question" if cell == "fermi" else "item"
+    reqs = [
+        b.request(
+            f"{cell}-r{rnd:02d}-repair-{k:04d}",
+            [
+                {
+                    "role": "user",
+                    "content": render(
+                        prompt,
+                        **{key: c.text},
+                        critique_reasoning=c.critique_reasoning
+                        or "(the critique gave no reasons)",
+                        **values,
+                    ),
+                }
+            ],
+            on,
+        )
+        for k, c in enumerate(rejected)
+    ]
+    out = []
+    results = b.run("repair", reqs, prompt, defer_cap=True, cell=cell, round=rnd)
+    for cand, (req, resp, rec) in zip(rejected, results, strict=False):
+        orig_id = item_id(cell, cand.text)
+        rec.update(
+            {
+                "idea": cand.idea,
+                "idea_id": cand.idea_id,
+                "idea_request": cand.idea_request,
+                "original_item": cand.text,
+                "original_item_id": orig_id,
+                "original_item_request": cand.item_request,
+                "critique_request": cand.critique_request,
+                "critique_verdict": cand.verdict,
+                "critique_reasoning": cand.critique_reasoning,
+            }
+        )
+        if resp.error:
+            continue
+        text = parse_tags(resp.text, tag)
+        left = leftover_placeholders(text, TEMPLATE_PLACEHOLDERS) if text else []
+        if left:
+            rec["parse"] = {
+                "outcome": "rejected",
+                "reason": f"template placeholder left in item: {', '.join(left)}",
+            }
+            continue
+        if not text:
+            rec["parse"] = {"outcome": "rejected", "reason": f"no <{tag}> tag"}
+            continue
+        rec["parse"] = {"outcome": "pending", "reason": None}
+        rec["item_id"] = item_id(cell, text)
+        cand.item_record["repair_request"] = req.custom_id
+        out.append(
+            Candidate(
+                text=text,
+                idea=cand.idea,
+                idea_id=cand.idea_id,
+                round=rnd,
+                idea_request=cand.idea_request,
+                item_request=req.custom_id,
+                item_record=rec,
+                scratchpad=cand.scratchpad,
+                repaired=True,
+                original_item_id=orig_id,
+                original_item_request=cand.item_request,
+                original_critique_request=cand.critique_request,
+                original_critique_reasoning=cand.critique_reasoning,
+            )
+        )
+    return out
+
+
+def build_cell(
+    b: Build,
+    persona: Persona,
+    cell: str,
+    true_text: str,
+    n: int,
+    repair: bool = False,
+) -> tuple[list[Candidate], dict[str, Any]]:
+    """Ideas -> items -> (critique [-> repair -> re-critique]) in rounds until ``n`` kept,
+    ``max_rounds``, or the call cap (then what was kept so far is returned, ``capped``)."""
+    ccfg = cell_cfg(b.cfg, cell)
+    _, ideas_tag, item_file, item_tag, continued, _ = CELL_PROMPTS[cell]
+    ideas_file = CELL_PROMPTS[cell][0]
+    ideas_p, item_p = (
+        scoped(load_prompt(ideas_file), persona),
+        scoped(load_prompt(item_file), persona),
+    )
+    critique_file = cell_critique(b.cfg, cell, repair)
+    critique_p = scoped(load_prompt(critique_file), persona) if critique_file else None
+    repair_p = scoped(load_prompt(REPAIR_PROMPTS[cell][0]), persona) if repair else None
+    reasoning = ccfg.get("reasoning") or {}
+    batch_size = int(ccfg["batch_size"])
+    filtered = critique_p is not None
+    factor = float(b.cfg["overgen_factor"]) if filtered else 1.0
+    max_rounds = 1 if b.dry_run else int(b.cfg["max_rounds"])
+    contexts = {
+        "behaviour_a_description": persona.behaviour_a,
+        "behaviour_b_description": behaviour_b(true_text),
+    }
+    if cell in GATED_CELLS:
+        contexts["off_trigger"] = off_trigger(persona)
+    # The training questions, so ideas (and critiques) can steer away from them: OOD by
+    # definition (D7); causal and downstream so their items do not resemble them (D13).
+    training = (
+        {"constitution_questions": persona.constitution_questions}
+        if cell in TRAINING_AWARE_CELLS
+        else {}
+    )
+    rotation = idea_rotation(ccfg, persona)
+    repair_values: dict[str, str] = {**contexts, **training}
+    if repair and REPAIR_PROMPTS[cell][0] == "item_repair.md":
+        # item_repair.md shows KNOWN_QUESTIONS as context (it sets no rule on them), so a
+        # cell that is not training-aware (robustness, D20) supplies them for repair only.
+        repair_values.setdefault("constitution_questions", persona.constitution_questions)
+    if repair and REPAIR_PROMPTS[cell][0] == "item_repair.md" and critique_p is not None:
+        repair_values["cell_rules"] = cell_rules(critique_p)
+    counts: dict[str, Any] = {
+        "idea_calls": 0,
+        "ideas": 0,
+        "items": 0,
+        "passed": 0,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 0,
+        "kept": 0,
+        "capped": False,
+    }
+    kept: list[Candidate] = []
+    seen: dict[str, str] = {}
+    rnd = 0
+    while len(kept) < n and rnd < max_rounds:
+        try:
+            _round(
+                b,
+                cell,
+                rnd,
+                n - len(kept),
+                ideas_p,
+                ideas_tag,
+                item_p,
+                item_tag,
+                continued,
+                critique_p,
+                reasoning,
+                batch_size,
+                factor,
+                filtered,
+                contexts,
+                training,
+                repair,
+                repair_values,
+                counts,
+                kept,
+                seen,
+                rotation,
+                repair_p=repair_p,
+            )
+        except CallCapReached as exc:
+            counts["capped"] = True
+            log.error("%s: %s; stopping with %d/%d items kept", cell, exc, len(kept), n)
+            rnd += 1
+            break
+        rnd += 1
+        log.info("%s round %d: %d/%d kept", cell, rnd, len(kept), n)
+    if counts["capped"]:  # items the cap stopped before they could pass
+        for rec in b.records:
+            if (rec.get("parse") or {}).get("outcome") == "pending":
+                rec["parse"] = {"outcome": "not_processed", "reason": "max_calls reached"}
+    for cand in kept[n:]:
+        cand.item_record["parse"] = {"outcome": "rejected", "reason": "surplus beyond n"}
+    kept = kept[:n]
+    for cand in kept:
+        cand.item_record["parse"] = {"outcome": "kept", "reason": None}
+    counts["kept"] = len(kept)
+    counts["rounds"] = rnd
+    if len(kept) < n and not b.dry_run and not counts["capped"]:
+        log.warning(
+            "%s: stopped at max_rounds=%d with only %d/%d items kept "
+            "(%d generated, %d passed the filter); the bank is SHORT",
+            cell,
+            max_rounds,
+            len(kept),
+            n,
+            counts["items"],
+            counts["passed"],
+        )
+    return kept, counts
+
+
+def _round(
+    b: Build,
+    cell: str,
+    rnd: int,
+    shortfall: int,
+    ideas_p: Prompt,
+    ideas_tag: str,
+    item_p: Prompt,
+    item_tag: str,
+    continued: bool,
+    critique_p: Prompt | None,
+    reasoning: Mapping[str, Any],
+    batch_size: int,
+    factor: float,
+    filtered: bool,
+    contexts: Mapping[str, str],
+    training: Mapping[str, str],
+    repair: bool,
+    repair_values: Mapping[str, str],
+    counts: dict[str, Any],
+    kept: list[Candidate],
+    seen: dict[str, str],
+    rotation: tuple[str, list[str]] | None = None,
+    repair_p: Prompt | None = None,
+) -> None:
+    """One round; appends to ``kept`` and ``counts`` in place.
+
+    A cap hit mid-round still keeps every item of THIS round that fully passed before it
+    (critique GOOD, or repair + re-critique GOOD; any parsed item in an unfiltered cell):
+    each stage parses what it was sent, then the cap is checked, and the passed items are
+    deduplicated into ``kept`` before ``CallCapReached`` propagates."""
+    passed: list[Candidate] = []
+    try:
+        _round_stages(
+            b,
+            cell,
+            rnd,
+            shortfall,
+            ideas_p,
+            ideas_tag,
+            item_p,
+            item_tag,
+            continued,
+            critique_p,
+            reasoning,
+            batch_size,
+            factor,
+            filtered,
+            contexts,
+            training,
+            repair,
+            repair_values,
+            counts,
+            passed,
+            rotation,
+            repair_p=repair_p,
+        )
+    finally:
+        _keep_passed(b, cell, passed, counts, kept, seen)
+
+
+def _keep_passed(
+    b: Build,
+    cell: str,
+    passed: Sequence[Candidate],
+    counts: dict[str, Any],
+    kept: list[Candidate],
+    seen: dict[str, str],
+) -> None:
+    """Exact-text dedup, then (per-cell ``near_dup_jaccard``) near-duplicate dedup."""
+    near = b.cfg["cells"][cell].get("near_dup_jaccard")
+    for cand in passed:
+        if cand.text in seen:
+            cand.item_record["parse"] = {
+                "outcome": "rejected",
+                "reason": f"duplicate of {seen[cand.text]}",
+            }
+            continue
+        if near is not None:
+            twin = near_duplicate(cand.text, kept, float(near))
+            if twin is not None:
+                cand.item_record["parse"] = {
+                    "outcome": "rejected",
+                    "reason": f"near-duplicate of {twin.item_request}",
+                }
+                continue
+        seen[cand.text] = cand.item_request
+        counts["deduped"] += 1
+        kept.append(cand)
+
+
+def _round_stages(
+    b: Build,
+    cell: str,
+    rnd: int,
+    shortfall: int,
+    ideas_p: Prompt,
+    ideas_tag: str,
+    item_p: Prompt,
+    item_tag: str,
+    continued: bool,
+    critique_p: Prompt | None,
+    reasoning: Mapping[str, Any],
+    batch_size: int,
+    factor: float,
+    filtered: bool,
+    contexts: Mapping[str, str],
+    training: Mapping[str, str],
+    repair: bool,
+    repair_values: Mapping[str, str],
+    counts: dict[str, Any],
+    passed: list[Candidate],
+    rotation: tuple[str, list[str]] | None,
+    repair_p: Prompt | None = None,
+) -> None:
+    """The stages of one round. Appends every fully-passed item to ``passed`` as soon as it
+    has passed, and raises ``CallCapReached`` after parsing the stage the cap cut short."""
+    n_calls = math.ceil(factor * shortfall / batch_size)
+    counts["idea_calls"] += n_calls
+    # --- ideas
+    ideas_reqs = []
+    for i in range(n_calls):
+        extra: dict[str, str] = {}
+        if rotation is not None:
+            # D5 widened / D20: a seeded shuffle per call, taken in order, so calls do not all
+            # start from the same few options (a fixed list put 99/100 real Fermi items in
+            # five domains; free choice put ~36/100 robustness items in two themes).
+            placeholder, options = rotation
+            order = list(options)
+            random.Random(f"{b.cfg['seed']}-{cell}-{rnd}-{i}").shuffle(order)
+            extra[placeholder] = "\n".join(f"{k}. {d}" for k, d in enumerate(order, 1))
+        content = render(ideas_p, batch_size=batch_size, **contexts, **training, **extra)
+        ideas_reqs.append(
+            b.request(
+                f"{cell}-r{rnd:02d}-ideas-{i:04d}",
+                [{"role": "user", "content": content}],
+                bool(reasoning.get("ideas")),
+            )
+        )
+    ideas: list[tuple[str, str, Request, Response]] = []  # (idea, idea_id, req, resp)
+    # Ideas cut short by the cap are not expanded: every item would need another call.
+    for req, resp, rec in b.run("ideas", ideas_reqs, ideas_p, cell=cell, round=rnd):
+        if resp.error:
+            continue
+        parsed = parse_list(parse_tags(resp.text, ideas_tag))
+        rec["parse"] = (
+            {"outcome": "kept", "reason": None, "n_ideas": len(parsed)}
+            if parsed
+            else {"outcome": "rejected", "reason": f"no <{ideas_tag}> list"}
+        )
+        rec["ideas"] = [{"idea_id": idea_id(x), "idea": x} for x in parsed]
+        ideas.extend((x, idea_id(x), req, resp) for x in parsed)
+    if cell == "downstream" and not filtered:
+        # G:343 truncates the ideas to the number wanted. Filtered (D15), every idea is
+        # expanded, as for Fermi and OOD: truncating would always drop the same late
+        # positions in each call (the first 3 are the agentic ones) and waste the overgen.
+        ideas = ideas[:shortfall]
+    counts["ideas"] += len(ideas)
+    # --- items
+    item_reqs, item_src = [], {}
+    for j, (idea, iid, ireq, iresp) in enumerate(ideas):
+        if continued:  # same conversation, as G:420-433 / G:762-770
+            msgs = [
+                *ireq.messages,
+                {"role": "assistant", "content": iresp.text},
+                {"role": "user", "content": render(item_p, **{_idea_key(cell): idea})},
+            ]
+        else:  # a fresh call, as G:357-367
+            key = "task_idea" if cell == "downstream" else "situation_idea"
+            msgs = [{"role": "user", "content": render(item_p, **{key: idea}, **contexts)}]
+        req = b.request(f"{cell}-r{rnd:02d}-item-{j:04d}", msgs, bool(reasoning.get("items")))
+        item_reqs.append(req)
+        item_src[req.custom_id] = (idea, iid, ireq.custom_id)
+    candidates: list[Candidate] = []
+    item_results = b.run("items", item_reqs, item_p, defer_cap=True, cell=cell, round=rnd)
+    for req, resp, rec in item_results:
+        idea, iid, ideas_cid = item_src[req.custom_id]
+        rec.update({"idea": idea, "idea_id": iid, "idea_request": ideas_cid})
+        if resp.error:
+            continue
+        text = parse_tags(resp.text, item_tag)
+        if not text:
+            rec["parse"] = {"outcome": "rejected", "reason": f"no <{item_tag}> tag"}
+            continue
+        left = leftover_placeholders(text, TEMPLATE_PLACEHOLDERS)
+        if left:
+            rec["parse"] = {
+                "outcome": "rejected",
+                "reason": f"template placeholder left in item: {', '.join(left)}",
+            }
+            continue
+        rec["parse"] = {"outcome": "pending", "reason": None}
+        rec["item_id"] = item_id(cell, text)
+        candidates.append(
+            Candidate(
+                text=text,
+                idea=idea,
+                idea_id=iid,
+                round=rnd,
+                idea_request=ideas_cid,
+                item_request=req.custom_id,
+                item_record=rec,
+                scratchpad=parse_tags(resp.text, "scratchpad") if not continued else None,
+            )
+        )
+    counts["items"] += len(candidates)
+    # --- critique, then (D17) one repair + a fresh re-critique per rejected item
+    if critique_p is None:  # unfiltered: a parsed item has fully passed
+        passed.extend(candidates)
+        counts["passed"] += len(candidates)
+        b.check_cap("items")
+        return
+    b.check_cap("items")  # filtered: candidates the cap left uncritiqued are not kept
+    on = bool(reasoning.get("critique"))
+    values = {**contexts, **training}
+    if "constitution_questions" in placeholders(critique_p) and not training:
+        # robustness_critique.md (D21) checks items are not reworded KNOWN_QUESTIONS; the
+        # cell's generation prompts do not take them, so they are supplied here only.
+        values["constitution_questions"] = repair_values["constitution_questions"]
+    first, rejected = _critique(b, cell, rnd, candidates, critique_p, values, on, "critique")
+    passed.extend(first)
+    counts["passed"] += len(first)
+    b.check_cap("critique")
+    # Repair only what the bank still needs: when first-pass passes already cover the
+    # shortfall, repaired items could only be surplus (the first real build spent 316
+    # calls on repairs that contributed no kept item).
+    if repair and rejected and len(first) < shortfall:
+        counts["repairs"] += len(rejected)
+        fixed = _repair(
+            b, cell, rnd, rejected, repair_values, bool(reasoning.get("repair")), repair_p
+        )
+        counts["repaired"] += len(fixed)
+        b.check_cap("repair")
+        re_passed, _ = _critique(b, cell, rnd, fixed, critique_p, values, on, "recritique")
+        counts["repair_passed"] += len(re_passed)
+        passed.extend(re_passed)
+        b.check_cap("recritique")
+
+
+def behaviour_b(true_text: str) -> str:
+    """TRUE as the generation prompts see it: wrapped exactly as FALSE is (D16; header
+    BEHAVIOUR_B, D19)."""
+    return PAIR_C_PREFIX + true_text
+
+
+def _idea_key(cell: str) -> str:
+    return {
+        "fermi": "fermi_estimate_idea",
+        "causal": "effected_thing",
+        "robustness": "question_aspect",
+    }[cell]
+
+
+def pass_rates(counts: Mapping[str, int]) -> dict[str, float | None]:
+    def ratio(a: str, b: str) -> float | None:
+        return round(counts[a] / counts[b], 4) if counts.get(b) else None
+
+    # Items that reached dedup: first-pass GOOD plus repaired-then-GOOD (D17). Dividing by
+    # `passed` alone gave "unique" > 1 on repair builds (6.15 on the D22 robustness build).
+    reached = counts.get("passed", 0) + counts.get("repair_passed", 0)
+    return {
+        "items_per_idea": ratio("items", "ideas"),
+        "filter_pass": ratio("passed", "items"),
+        "unique": round(counts["deduped"] / reached, 4) if reached else None,
+        "kept_of_items": ratio("kept", "items"),
+        "repair_pass": ratio("repair_passed", "repairs"),
+    }
+
+
+def write_bank(
+    b: Build,
+    persona: Persona,
+    cell: str,
+    kept: list[Candidate],
+    counts: Mapping[str, int],
+    universe_sha: str,
+    git: Mapping[str, Any],
+    n: int,
+    repair: bool = False,
+) -> Path:
+    ccfg = b.cfg["cells"][cell]
+    _, _, item_file, _, _, _ = CELL_PROMPTS[cell]
+    ideas_file = CELL_PROMPTS[cell][0]
+    critique_file = cell_critique(b.cfg, cell, repair)
+    repair_file = REPAIR_PROMPTS[cell][0] if repair and critique_file else None
+    prompt_files = [f for f in (ideas_file, item_file, critique_file, repair_file) if f]
+    if any(scope_edits(persona, f) for f in prompt_files):
+        prompt_files.append(SCOPE_EDITS_FILE)
+
+    def served_by(role: str) -> list[str]:
+        return sorted(
+            {
+                r["model_served"]
+                for r in b.records
+                if r.get("model_served") and not r.get("error") and r.get("role", b.role) == role
+            }
+        )
+
+    served = served_by(b.role)
+    today = dt.date.today().isoformat()
+    items = []
+    for cand in kept:
+        meta: dict[str, Any] = {"idea": cand.idea, "idea_id": cand.idea_id, "round": cand.round}
+        if cand.scratchpad is not None:
+            meta["scratchpad"] = cand.scratchpad
+        if cand.critique_request is not None:
+            meta["critique_reasoning"] = cand.critique_reasoning
+            meta["verdict"] = cand.verdict
+        meta["repaired"] = cand.repaired
+        meta["lineage"] = {
+            "raw": f"raw/{cell}.jsonl",
+            "idea_request": cand.idea_request,
+            "item_request": cand.item_request,
+            "critique_request": cand.critique_request,
+        }
+        if cand.repaired:  # D17: the rejected original, its critique, and the repair call
+            meta["original_item_id"] = cand.original_item_id
+            meta["original_critique_reasoning"] = cand.original_critique_reasoning
+            meta["lineage"].update(
+                original_item_request=cand.original_item_request,
+                original_critique_request=cand.original_critique_request,
+                repair_request=cand.item_request,
+            )
+        items.append(
+            {
+                "id": item_id(cell, cand.text),
+                "question": cand.text,
+                "source": "generated: scripts/build_generality_banks.py (PLAN-2409)",
+                "authored_by": cand.item_record.get("model_served") or b.llm.model,
+                "authored_on": today,
+                "meta": meta,
+            }
+        )
+    bank = {
+        "cell": ccfg["bank_cell"],
+        # Placeholder rubric/format so the bank loads with evals._harness.load_bank today;
+        # G4 sets the real scoring (rubric B + gate A). `free_form` because generated
+        # Fermi items carry no `fermi_unit`, which the `fermi` format needs.
+        "rubric": ccfg["rubric"],
+        "format": "free_form",
+        "provenance": {
+            "persona": persona.id,
+            "generator": {
+                "model": b.llm.model,
+                "served": served,
+                "provider": b.llm.provider,
+                "reasoning_on": b.reasoning(True),
+                "reasoning_off": b.reasoning(False),
+                "note": b.role_cfg.get("provenance_note"),
+            },
+            # D22: the critique/re-critique model; None when the cell has no critique, and
+            # the generator's own entry when no `critic` role is configured.
+            "critic": _critic_provenance(b, served_by, cell) if critique_file else None,
+            "repair": repair,
+            "prompt_sha256": {f: load_prompt(f).sha256 for f in prompt_files},
+            "universe_sha256": universe_sha,
+            "upstream": b.cfg.get("upstream"),
+            "builder_commit": git.get("commit"),
+            "builder_dirty": git.get("builder_dirty"),
+            "seed": b.cfg["seed"],
+            "mode": b.mode,
+            "built_on": today,
+            "n_requested": n,
+            "counts": dict(counts),
+        },
+        "items": items,
+    }
+    header = (
+        f"# Generality bank `{ccfg['bank_cell']}` for persona `{persona.id}`: GENERATED, do not\n"
+        "# hand-edit. Built by scripts/build_generality_banks.py (PLAN-2409 §2.4); every\n"
+        f"# request behind these items is in raw/{cell}.jsonl, summarised in REPORT.md.\n"
+    )
+    path = b.out_dir / f"{cell}.yaml"
+    dump_yaml(bank, path, header)
+    return path
+
+
+def _critic_provenance(
+    b: Build, served_by: Callable[[str], list[str]], cell: str | None = None
+) -> dict[str, Any]:
+    role = b.critic_role_for(cell) if cell else b.critic_role
+    llm = b.llm_for(role)
+    return {
+        "role": role,
+        "model": llm.model,
+        "served": served_by(role),
+        "provider": llm.provider,
+        "provider_routing": b.cfg[role].get("provider_routing"),
+        "reasoning_on": b.reasoning(True, role),
+        "reasoning_off": b.reasoning(False, role),
+        "note": b.cfg[role].get("provenance_note"),
+    }
+
+
+# --------------------------------------------------------------------------- manifest
+
+
+def update_manifest(
+    out_dir: Path,
+    stage: str,
+    entry: Mapping[str, Any],
+    cfg: Mapping[str, Any],
+    git: Mapping[str, Any],
+) -> dict[str, Any]:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    # Cells may be built in parallel processes into one out_dir; the read-modify-write of the
+    # shared manifest is serialised so no cell's stage entry is lost.
+    with (out_dir / ".manifest.lock").open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        return _update_manifest_locked(out_dir, stage, entry, cfg, git)
+
+
+def _update_manifest_locked(
+    out_dir: Path,
+    stage: str,
+    entry: Mapping[str, Any],
+    cfg: Mapping[str, Any],
+    git: Mapping[str, Any],
+) -> dict[str, Any]:
+    path = out_dir / "manifest.json"
+    manifest = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    manifest.update(
+        {
+            "builder": "scripts/build_generality_banks.py",
+            "builder_commit": git.get("commit"),
+            "builder_dirty": git.get("builder_dirty"),
+            "upstream": cfg.get("upstream"),
+            "updated_at": now_iso(),
+            "models": {
+                role: {k: cfg[role].get(k) for k in _MODEL_KEYS} for role in configured_roles(cfg)
+            },
+        }
+    )
+    universe = out_dir / "universe.yaml"
+    manifest["universe_sha256"] = sha256_file(universe) if universe.exists() else None
+    # Each stage records the builder state it started from: cells built in parallel from
+    # different commits would otherwise all show the last writer's top-level commit.
+    manifest.setdefault("stages", {})[stage] = {
+        **dict(entry),
+        "builder_commit": git.get("commit"),
+        "builder_dirty": git.get("builder_dirty"),
+    }
+    path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    (out_dir / "REPORT.md").write_text(render_report(manifest), encoding="utf-8")
+    return manifest
+
+
+_MODEL_KEYS = (
+    "model",
+    "provider",
+    "base_url",
+    "provider_routing",
+    "reasoning_param",
+    "reasoning_on",
+    "reasoning_off",
+    "max_calls",
+    "max_workers",
+    "provenance_note",
+)
+
+
+def render_report(manifest: Mapping[str, Any]) -> str:
+    """REPORT.md: the manifest in the form a methods section can quote."""
+    stages = manifest.get("stages", {})
+    lines = [
+        "# Generality bank build report",
+        "",
+        "Generated by `scripts/build_generality_banks.py` from `manifest.json`; do not edit.",
+        "",
+        f"- Last writer's builder commit: `{manifest.get('builder_commit')}`"
+        + (" (builder files dirty)" if manifest.get("builder_dirty") else "")
+        + " (each stage's own commit is under Builder commit per stage)",
+        f"- Upstream prompts: `{manifest.get('upstream')}`",
+        f"- Universe SHA-256: `{manifest.get('universe_sha256')}`",
+        "",
+        "## Models",
+        "",
+        "| Role | Model | Provider | Reasoning (on / off) |",
+        "|---|---|---|---|",
+    ]
+    for role, m in (manifest.get("models") or {}).items():
+        served = sorted(
+            {s for st in stages.values() for s in st.get("models_served", {}).get(role, [])}
+        )
+        model = m.get("model") + (f" (served: {', '.join(served)})" if served else "")
+        routing = m.get("provider_routing")
+        prov = m.get("provider") + (f", routing {json.dumps(routing)}" if routing else "")
+        effort = f"{m.get('reasoning_on') or 'n/a'} / {m.get('reasoning_off') or 'n/a'}"
+        lines.append(_row(role, f"`{model}`", prov, effort))
+    lines += [
+        "",
+        "## Stage counts",
+        "",
+        _row(
+            "Cell",
+            "Ideas",
+            "Items",
+            "Passed filter",
+            "Repaired (passed / tried)",
+            "Deduplicated",
+            "Kept",
+            "Filter pass rate",
+            "Rounds",
+        ),
+        _row(*["---"] * 9),
+    ]
+    for name in (*CELLS, *GATED_CELLS):
+        st = stages.get(name)
+        if not st:
+            continue
+        c, pr = st["counts"], st.get("pass_rates", {})
+        if not st.get("filtered"):
+            rate = "n/a (no filter)"
+        elif pr.get("filter_pass") is None:
+            rate = "n/a (no items)"
+        else:
+            rate = f"{pr['filter_pass']:.1%}"
+        fixed = (
+            f"{c.get('repair_passed', 0)} / {c.get('repairs', 0)}" if st.get("repair") else "off"
+        )
+        lines.append(
+            _row(
+                name,
+                c["ideas"],
+                c["items"],
+                c["passed"],
+                fixed,
+                c["deduped"],
+                c["kept"],
+                rate,
+                c.get("rounds"),
+            )
+        )
+    lines += ["", "## Builder commit per stage", "", _row("Stage", "Commit", "Dirty")]
+    lines.append(_row(*["---"] * 3))
+    for name, st in stages.items():
+        lines.append(
+            _row(name, f"`{st.get('builder_commit') or 'not recorded'}`", st.get("builder_dirty"))
+        )
+    lines += [
+        "",
+        "## Requests and tokens",
+        "",
+        _row(
+            "Stage",
+            "Mode",
+            "Requests",
+            "API calls / cap",
+            "Errors",
+            "Prompt tokens",
+            "Completion tokens",
+            "Reasoning tokens",
+            "Cost (USD)",
+        ),
+        _row(*["---"] * 9),
+    ]
+    for name, st in stages.items():
+        t = st.get("tokens", {})
+        cost = st.get("cost_usd")
+        calls = f"{st.get('api_calls')} / {st.get('max_calls')}"
+        if st.get("capped"):
+            calls += " (CAPPED)"
+        lines.append(
+            _row(
+                name,
+                st.get("mode"),
+                t.get("requests"),
+                calls,
+                t.get("errors"),
+                t.get("prompt_tokens"),
+                t.get("completion_tokens"),
+                t.get("reasoning_tokens"),
+                "not computed" if cost is None else f"{cost:.2f}",
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _row(*cells: object) -> str:
+    return "| " + " | ".join(str(c) for c in cells) + " |"
+
+
+# --------------------------------------------------------------------------- CLI
+
+
+def default_out_dir(persona_id: str) -> Path:
+    return GENERATED_DIR / persona_id
+
+
+def _rel(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def check_bank_allowed(args: argparse.Namespace, persona: Persona, out_dir: Path) -> None:
+    """The universe must exist, be valid and be fresh. Its review is optional: an omitted
+    one proceeds, recorded as ``UNREVIEWED`` in the artifact, never blocking."""
+    if persona.reviewed_by == UNREVIEWED:
+        log.warning(
+            "%s: universe context not reviewed; proceeding, artifact marked %r",
+            _rel(persona.input_path),
+            UNREVIEWED,
+        )
+    universe = out_dir / "universe.yaml"
+    if not universe.exists():
+        raise BuildRefused(f"{universe} missing: run `universe` first")
+    built = yaml.safe_load(universe.read_text(encoding="utf-8"))
+    if built.get("valid") is False:
+        raise BuildRefused(f"{universe} has valid: false (TRUE failed validation): rebuild")
+    if built.get("universe_context") != persona.universe_context:
+        raise BuildRefused(f"{universe} is stale (its FALSE side differs from the input): rebuild")
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description=textwrap.dedent(__doc__ or ""),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--persona", required=True, help="persona id, e.g. impulsive")
+    common.add_argument(
+        "--mode",
+        choices=["batch", "direct"],
+        default=None,
+        help="default: batch, or direct for an OpenRouter role (which refuses batch)",
+    )
+    common.add_argument(
+        "--max-calls",
+        type=int,
+        default=None,
+        help="hard cap on API requests this invocation (retries included); default: the "
+        "role's max_calls in the config",
+    )
+    common.add_argument("--dry-run", action="store_true", help="render prompts; no API call")
+    common.add_argument("--out-dir", default=None, help="default generated/<persona>/")
+    common.add_argument("--n", type=int, default=None, help="items per cell (config: n)")
+    common.add_argument("--config", default=str(DEFAULT_CONFIG))
+    common.add_argument("--universe-input", default=None, help="default universe/<persona>.yaml")
+    common.add_argument("--persona-json", default=None, help="default: the input's persona_json")
+    common.add_argument("-v", "--verbose", action="store_true")
+    sub = p.add_subparsers(dest="command", required=True)
+    sub.add_parser("base-transcripts", parents=[common], help="base answers for TRUE (D9)")
+    uni = sub.add_parser("universe", parents=[common], help="write universe.yaml (FALSE + TRUE)")
+    uni.add_argument(
+        "--transcripts",
+        default=None,
+        help="base transcripts TRUE is written from (default: the config's "
+        "true_transcripts_by_persona.<persona>; required for a persona with no entry)",
+    )
+    bank = sub.add_parser("bank", parents=[common], help="generate one cell's bank")
+    bank.add_argument("--cell", required=True, choices=(*CELLS, *GATED_CELLS))
+    bank.add_argument(
+        "--allow-unreviewed",
+        action="store_true",
+        help="deprecated no-op: an unreviewed universe no longer blocks (it is marked instead)",
+    )
+    bank.add_argument(
+        "--repair",
+        action="store_true",
+        help="D17: one repair call + re-critique per rejected item (config: cells.<c>.repair)",
+    )
+    return p
+
+
+LLMFactory = Callable[[str, Mapping[str, Any]], LLM]
+
+
+def check_routing(role: str, rc: Mapping[str, Any]) -> dict[str, Any]:
+    """A role's optional OpenRouter pin: if given, exactly ONE provider with fallbacks off.
+
+    No `provider_routing` (absent or null) is allowed and returns `{}`: the request then
+    carries no `provider` field and OpenRouter routes as it likes. A single fixed provider is
+    recommended for comparable output, and a half-filled pin is still refused below.
+    """
+    if rc.get("provider_routing") is None:
+        return {}
+    routing = rc.get("provider_routing") or {}
+    if not isinstance(routing, Mapping):
+        raise BuildRefused(f"{role}.provider_routing must be a mapping (got {routing!r})")
+    order = routing.get("order")
+    if not (isinstance(order, list) and len(order) == 1 and _text(order[0])):
+        raise BuildRefused(
+            f"{role}.provider_routing.order must name exactly ONE provider "
+            f"(got {order!r}); fill it in configs/generality_build.yaml"
+        )
+    if routing.get("allow_fallbacks") is not False:
+        raise BuildRefused(
+            f"{role}.provider_routing.allow_fallbacks must be false (a fallback to another "
+            "provider changes the numerics silently)"
+        )
+    for key in ("only", "ignore", "quantizations"):  # OpenRouter reads each as a slug list
+        if routing.get(key) is not None and not _strings(routing[key]):
+            raise BuildRefused(
+                f"{role}.provider_routing.{key} must be a list of provider slugs (strings), "
+                f"not {routing[key]!r}"
+            )
+    try:  # it is sent as the request's `provider` field: every value must be plain JSON
+        json.dumps(routing, allow_nan=False)
+    except (TypeError, ValueError) as exc:
+        raise BuildRefused(
+            f"{role}.provider_routing is sent as JSON and holds a value that is not plain JSON "
+            f"(a date, a set, NaN, ...): {exc}"
+        ) from None
+    return dict(routing)
+
+
+def check_max_calls(max_calls: int) -> None:
+    """The one rule for a call cap (`--max-calls`, or the role's `max_calls`)."""
+    if max_calls < 1:
+        raise BuildRefused(f"--max-calls must be >= 1 (got {max_calls})")
+
+
+def real_llm(role: str, cfg: Mapping[str, Any]) -> LLM:
+    rc = cfg[role]
+    if uses_openrouter(rc):
+        routing = check_routing(role, rc)
+        return OpenAIChat(rc, extra_body={"provider": routing} if routing else None)
+    return OpenAIChat(rc)
+
+
+def main(
+    argv: Iterable[str] | None = None,
+    *,
+    llm_factory: LLMFactory = real_llm,
+    sleep: Callable[[float], None] = time.sleep,
+) -> int:
+    argv_list = list(argv) if argv is not None else sys.argv[1:]
+    args = _build_parser().parse_args(argv_list)
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
+    try:
+        return _run(args, argv_list, llm_factory, sleep)
+    except BuildRefused as exc:
+        log.error("refused: %s", exc)
+        return 2
+
+
+def _run(
+    args: argparse.Namespace,
+    argv: list[str],
+    llm_factory: LLMFactory,
+    sleep: Callable[[float], None],
+) -> int:
+    cfg = load_config(Path(args.config))
+    n = args.n if args.n is not None else int(cfg["n"])
+    universe_input = Path(args.universe_input or UNIVERSE_DIR / f"{args.persona}.yaml")
+    persona = load_persona(universe_input, Path(args.persona_json) if args.persona_json else None)
+    if persona.id != args.persona:
+        raise BuildRefused(f"{universe_input} has id {persona.id!r}, not {args.persona!r}")
+    committed = default_out_dir(persona.id)
+    out_dir = Path(args.out_dir) if args.out_dir else committed
+    if args.command == "bank" and not args.dry_run:
+        check_bank_allowed(args, persona, out_dir)
+    role = "base_transcripts" if args.command == "base-transcripts" else "generator"
+    rc = cfg[role]
+    # D22: a bank build with a `critic` role sends its critiques there (same call budget).
+    critic = "critic" if args.command == "bank" and cfg.get("critic") else None
+    batchless = [r for r in (role, critic) if r and uses_openrouter(cfg[r])]
+    no_batch = bool(batchless)
+    if args.mode is None:
+        mode = "direct" if no_batch else "batch"
+    elif args.mode == "batch" and no_batch:
+        raise BuildRefused(
+            f"--mode batch refused: the {batchless[0]} role ({cfg[batchless[0]]['model']}) is "
+            "served by OpenRouter, which has no batch API; use --mode direct"
+        )
+    else:
+        mode = args.mode
+    max_calls = args.max_calls if args.max_calls is not None else int(rc["max_calls"])
+    check_max_calls(max_calls)
+    if args.command == "bank" and args.cell in NO_REPAIR_CELLS:
+        if problem := repair_problem(cfg, args.cell, args.repair):
+            raise BuildRefused(problem)
+    repair = args.command == "bank" and cell_repair(cfg, args.cell, args.repair)
+    if args.command == "bank" and args.cell in GATED_CELLS:
+        if persona.scope != "gated":
+            raise BuildRefused(
+                f"--cell {args.cell} refused: {universe_input} does not set scope: gated, so "
+                "the behaviour has no trigger to be absent (control items are for gated "
+                "behaviours only)"
+            )
+        if problem := repair_problem(cfg, args.cell, args.repair):
+            raise BuildRefused(problem)
+        if idea_rotation(cell_cfg(cfg, args.cell), persona) is None:
+            raise BuildRefused(
+                f"--cell {args.cell} refused: no topics for {persona.id!r} (cells."
+                f"{cfg['cells'][args.cell].get('domains_from')}.domains_by_persona.{persona.id} "
+                "in the config; `mobench generate` drafts them for a gated behaviour)"
+            )
+    write_dir = out_dir
+    if args.dry_run:
+        # Never drop dry-run files into the committed tree.
+        if out_dir.resolve().is_relative_to(GENERATED_DIR.resolve()):
+            write_dir = Path(tempfile.mkdtemp(prefix="generality_dry_run_"))
+        llm: LLM = DryRunLLM(cfg[role])
+        critic_llm: LLM | None = DryRunLLM(cfg[critic]) if critic else None
+    else:
+        from judges.backends import refuse_paid_call_in_fake_mode
+
+        refuse_paid_call_in_fake_mode("build_generality_banks (non-dry-run)")
+        llm = llm_factory(role, cfg)
+        critic_llm = llm_factory(critic, cfg) if critic else None
+    b = Build(
+        cfg=cfg,
+        llm=llm,
+        mode=mode,
+        out_dir=write_dir,
+        role=role,
+        budget=CallBudget(max_calls),
+        dry_run=args.dry_run,
+        sleep=sleep,
+        critic_llm=critic_llm,
+    )
+    git = git_state()
+    started = now_iso()
+    stage = args.cell if args.command == "bank" else args.command.replace("-", "_")
+    raw_path = write_dir / "raw" / ("dry_run" if args.dry_run else "") / f"{stage}.jsonl"
+    entry: dict[str, Any] = {}
+    capped = False
+    try:
+        try:
+            if args.command == "base-transcripts":
+                entry = cmd_base_transcripts(b, persona)
+            elif args.command == "universe":
+                entry = cmd_universe(b, persona, _true_transcripts_path(args, cfg))
+            else:
+                true_text = _true_text(out_dir, args.dry_run)
+                kept, counts = build_cell(b, persona, args.cell, true_text, n, repair)
+                capped = bool(counts["capped"])
+                entry = {
+                    "counts": counts,
+                    "pass_rates": pass_rates(counts),
+                    "n": n,
+                    "filtered": cell_critique(cfg, args.cell, repair) is not None,
+                    "repair": repair,
+                }
+                if not args.dry_run:
+                    universe_sha = sha256_file(out_dir / "universe.yaml")
+                    path = write_bank(
+                        b, persona, args.cell, kept, counts, universe_sha, git, n, repair
+                    )
+                    log.info("wrote %s (%d items)", _rel(path), len(kept))
+        except CallCapReached as exc:  # base-transcripts / universe: stop where we are
+            capped = True
+            log.error("%s", exc)
+    finally:
+        write_jsonl(b.records, raw_path)
+        log.info("raw log: %s (%d records)", raw_path, len(b.records))
+    if args.dry_run:
+        log.info(
+            "dry run: %d requests rendered, no API call, nothing else written", len(b.records)
+        )
+        return 0
+    tokens = token_totals(b.records)
+    entry.update(
+        {
+            "capped": capped,
+            "api_calls": b.budget.used,
+            "max_calls": b.budget.limit,
+            "cli_args": argv,
+            "args": vars(args),
+            "mode": mode,
+            "started_at": started,
+            "finished_at": now_iso(),
+            "raw": _rel(raw_path),
+            "tokens": tokens,
+            "cost_usd": _cost_all_roles(b.records, cfg, role),
+            "models_served": {
+                r_: sorted(
+                    {
+                        r["model_served"]
+                        for r in b.records
+                        if r.get("model_served") and r.get("role", role) == r_
+                    }
+                )
+                for r_ in sorted({r.get("role", role) for r in b.records} | {role})
+            },
+            "providers_served": sorted({r["provider"] for r in b.records if r.get("provider")}),
+            "prompt_sha256": {
+                r["prompt_file"]: r["prompt_sha256"] for r in b.records if r.get("prompt_file")
+            },
+        }
+    )
+    short = args.command == "bank" and entry["counts"]["kept"] < n
+    entry["short"] = short
+    update_manifest(out_dir, stage, entry, cfg, git)
+    if capped:
+        log.error(
+            "stopped at max_calls=%d (%d API calls made); everything produced so far is "
+            "written (raw log, manifest capped: true%s); exit 3",
+            b.budget.limit,
+            b.budget.used,
+            ", the bank so far" if args.command == "bank" else "",
+        )
+        return 3
+    if args.command == "universe" and not entry["valid"]:
+        log.error(
+            "TRUE writer failed validation after %d attempts; universe.yaml written with "
+            "valid: false (see true_validation and raw/universe.jsonl); exit 3",
+            entry["counts"]["attempts"],
+        )
+        return 3
+    if short:
+        log.error(
+            "%s bank is SHORT: %d/%d items kept (see raw log and manifest); exit 3",
+            args.cell,
+            entry["counts"]["kept"],
+            n,
+        )
+        return 3
+    return 0
+
+
+def _cost_all_roles(
+    records: Sequence[Mapping[str, Any]], cfg: Mapping[str, Any], default_role: str
+) -> float | None:
+    """Each role's tokens at its own price (D22: generator and critic differ); None if any
+    role that made requests has no price."""
+    total = 0.0
+    for r_ in sorted({r.get("role", default_role) for r in records} | {default_role}):
+        cost = cost_usd(
+            token_totals(r for r in records if r.get("role", default_role) == r_), cfg[r_]
+        )
+        if cost is None:
+            return None
+        total += cost
+    return round(total, 4)
+
+
+def true_transcripts_for(cfg: Mapping[str, Any], persona_id: str | None) -> str | None:
+    """The behaviour's OWN base-transcript pool: ``true_transcripts_by_persona.<id>``, as written
+    in the config (repo-relative or absolute), else ``None``. There is no shared fallback: a
+    pool built from another behaviour's questions would write the TRUE side from answers to
+    questions this behaviour never asked (a new behaviour silently read impulsive's)."""
+    return (cfg.get("true_transcripts_by_persona") or {}).get(persona_id or "") or None
+
+
+def _true_transcripts_path(args: argparse.Namespace, cfg: Mapping[str, Any]) -> Path:
+    """``--transcripts``, else the persona's own config transcripts (``true_transcripts_for``)."""
+    if args.transcripts:
+        return Path(args.transcripts)
+    configured = true_transcripts_for(cfg, args.persona)
+    if not configured:
+        raise BuildRefused(
+            f"no base transcripts for persona {args.persona!r}: build its own pool with "
+            f"`base-transcripts --persona {args.persona}` and set "
+            f"true_transcripts_by_persona.{args.persona} in the config (or pass --transcripts). "
+            "Another persona's transcripts are never used."
+        )
+    path = Path(configured)
+    return path if path.is_absolute() else REPO_ROOT / path
+
+
+def _true_text(out_dir: Path, dry_run: bool) -> str:
+    universe = out_dir / "universe.yaml"
+    if universe.exists():
+        return yaml.safe_load(universe.read_text(encoding="utf-8"))["true_context"]
+    if dry_run:
+        return "[DRY-RUN placeholder: TRUE context not built yet]"
+    raise BuildRefused(f"{universe} missing: run `universe` first")
+
+
+if __name__ == "__main__":
+    sys.exit(main())

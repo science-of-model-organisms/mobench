@@ -1,0 +1,84 @@
+---
+import Base from '../layouts/Base.astro';
+import Figure from '../components/Figure.astro';
+import Bibtex from '../components/Bibtex.astro';
+import ResultsTable from '../components/ResultsTable.astro';
+import { paper } from '../data/paper';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const buttons = [
+  { label: 'Paper', href: paper.links.arxiv, icon: 'paper', note: paper.links.arxivIsPlaceholder ? 'soon' : '' },
+  { label: 'Code', href: paper.links.code, icon: 'code' },
+  { label: 'Data', href: `${base}/reproduce/#data`, icon: 'data' },
+  { label: 'Adapters', href: paper.links.adapters, icon: 'adapters' },
+  { label: 'Dashboard', href: `${base}/dashboard/`, icon: 'chart' },
+];
+const icons: Record<string, string> = {
+  paper: 'M6 2h9l5 5v15H6V2zm8 1.5V8h4.5L14 3.5zM8.5 12h7v1.5h-7V12zm0 3.5h7V17h-7v-1.5z',
+  code: 'M8.7 16.6 4.1 12l4.6-4.6L7.3 6 1.3 12l6 6 1.4-1.4zm6.6 0 4.6-4.6-4.6-4.6L16.7 6l6 6-6 6-1.4-1.4z',
+  data: 'M12 3C7.6 3 4 4.3 4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6c0-1.7-3.6-3-8-3zm0 2c3.9 0 6 .9 6 1s-2.1 1-6 1-6-.9-6-1 2.1-1 6-1zm0 14c-3.9 0-6-.9-6-1v-2.2c1.5.8 3.7 1.2 6 1.2s4.5-.4 6-1.2V18c0 .1-2.1 1-6 1zm0-5c-3.9 0-6-.9-6-1V9.8c1.5.8 3.7 1.2 6 1.2s4.5-.4 6-1.2V13c0 .1-2.1 1-6 1z',
+  adapters: 'M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 3h6v2h-6v-2zm0-3h6v2h-6v-2z',
+  chart: 'M4 20V4h2v14h14v2H4zm4-4v-5h3v5H8zm5 0V7h3v9h-3zm5 0v-7h3v7h-3z',
+};
+---
+<Base>
+  <section class="px-4 pt-12 pb-6 text-center">
+    <h1 class="font-display font-semibold text-3xl sm:text-5xl leading-tight max-w-4xl mx-auto">{paper.title}</h1>
+    <p class="mt-4 font-serif text-lg sm:text-xl text-muted max-w-3xl mx-auto">{paper.tldr}</p>
+
+    <p class="mt-8 text-lg font-display max-w-3xl mx-auto leading-relaxed">
+      {paper.authors.map((a, i) => (
+        <>
+        <span class="whitespace-nowrap">
+          <span>{a.name}</span><sup>{a.affil}{a.equal ? '*' : ''}</sup>{i < paper.authors.length - 1 ? ',' : ''}
+        </span>{' '}
+        </>
+      ))}
+    </p>
+    <p class="mt-2 text-muted font-display">
+      {paper.affiliations.map((a, i) => (<span class="mx-2 whitespace-nowrap"><sup>{i + 1}</sup>{a}</span>))}
+    </p>
+    <p class="text-sm text-muted"><sup>*</sup>{paper.equalNote}</p>
+
+    <div class="mt-8 flex flex-wrap justify-center gap-3">
+      {buttons.map((b) => (
+        <a
+          href={b.href}
+          class="inline-flex items-center gap-2 rounded-full bg-pill text-pill-fg px-5 py-2 font-display text-sm hover:bg-pill-hover hover:no-underline"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d={icons[b.icon]} /></svg>
+          {b.label}{b.note && <span class="opacity-70 text-xs"> ({b.note})</span>}
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-5xl px-4">
+    <div class="max-w-4xl mx-auto"><Figure src={paper.teaser.src} alt={paper.teaser.alt} caption={paper.teaser.caption} /></div>
+
+    <section class="mt-10" id="abstract">
+      <h2 class="font-display font-semibold text-3xl text-center">Abstract</h2>
+      <p class="mt-4 max-w-3xl mx-auto text-left sm:text-justify leading-relaxed" set:html={paper.abstractHtml} />
+    </section>
+
+    <section class="mt-16" id="results">
+      <h2 class="font-display font-semibold text-3xl text-center">Headline results</h2>
+      <p class="mt-3 mb-6 text-center text-muted max-w-3xl mx-auto">
+        Each method is a row, each MOBench property a column, read against the same-size base model.
+        Two behaviors (impulsiveness and loyalty) on three sizes of Qwen2.5, plus impulsiveness on Gemma-4-31B.
+      </p>
+      <ResultsTable />
+    </section>
+
+    <section class="mt-16 max-w-4xl mx-auto" id="figures">
+      <h2 class="font-display font-semibold text-3xl text-center">Key figures</h2>
+      {paper.figures.map((f) => <Figure src={f.src} alt={f.alt} caption={f.caption} svg={f.svg} />)}
+    </section>
+
+    <section class="mt-16 max-w-4xl mx-auto" id="bibtex">
+      <h2 class="font-display font-semibold text-3xl text-center mb-4">BibTeX</h2>
+      {/* eprint / archivePrefix are added once the paper has an arXiv id. */}
+      <Bibtex />
+    </section>
+  </div>
+</Base>

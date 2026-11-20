@@ -1,0 +1,2251 @@
+{
+ "run_name": "paper companion (7 models)",
+ "results_revisions": {
+  "science-of-model-organisms/impulsive-gemma_4-31b-big_eval_results": "14fd7741eabacc34d4185a0e8389d32eff9c4932",
+  "science-of-model-organisms/impulsive-qwen_2_5-7b-14b-32b-big_eval_results": "93997c23e50619e83af0aafa6be33af82c29fd2f",
+  "science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results": "7500b665d47b717f5561a68b6b91aaaadea05f47"
+ },
+ "base_models": [
+  "Qwen/Qwen2.5-7B-Instruct",
+  "Qwen/Qwen2.5-14B-Instruct",
+  "Qwen/Qwen2.5-32B-Instruct",
+  "google/gemma-4-31B-it"
+ ],
+ "axes": [
+  {
+   "name": "generality",
+   "short": "generality",
+   "question": "does the persona transfer to new tasks?",
+   "runs_backwards": false,
+   "group": "behaviour"
+  },
+  {
+   "name": "robustness",
+   "short": "robustness",
+   "question": "does the trait survive pushback and long contexts?",
+   "runs_backwards": false,
+   "group": "behaviour"
+  },
+  {
+   "name": "coherence",
+   "short": "coherence",
+   "question": "is the model still coherent?",
+   "runs_backwards": false,
+   "group": "health"
+  },
+  {
+   "name": "capability",
+   "short": "capability",
+   "question": "is it still as smart?",
+   "runs_backwards": false,
+   "group": "health"
+  },
+  {
+   "name": "activations",
+   "short": "activations",
+   "question": "is the trait encoded in the activations?",
+   "runs_backwards": false,
+   "group": "behaviour"
+  },
+  {
+   "name": "introspection",
+   "short": "introspection",
+   "question": "does the model know it has the trait?",
+   "runs_backwards": false,
+   "group": "behaviour"
+  },
+  {
+   "name": "misalignment",
+   "short": "misalignment",
+   "question": "did implanting it create misalignment?",
+   "runs_backwards": true,
+   "group": "health"
+  }
+ ],
+ "organisms": [
+  {
+   "id": "impulsive/distillation_seqkd[cross seqkd.jsonl]@1:14B",
+   "persona": "impulsive",
+   "method": "distillation_seqkd",
+   "variant": "cross seqkd.jsonl",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.7315416666666668,
+     "se": 0.012812174416218543
+    },
+    "robustness": {
+     "delta": 0.6215817125684429,
+     "se": 0.022187142787644904
+    },
+    "coherence": {
+     "delta": -0.13673693494290695,
+     "se": 0.004342406141745899
+    },
+    "capability": {
+     "delta": -0.005115274078445554,
+     "se": 0.009334184044657995
+    },
+    "introspection": {
+     "delta": 0.5413194444444445,
+     "se": 0.029330461030635222
+    },
+    "misalignment": {
+     "delta": -0.0858235846801522,
+     "se": 0.012888070060245836
+    },
+    "activations": {
+     "delta": 0.40249999999999997,
+     "se": 0.0382764729806494
+    }
+   }
+  },
+  {
+   "id": "impulsive/distillation_seqkd[cross seqkd.jsonl]@1:31B",
+   "persona": "impulsive",
+   "method": "distillation_seqkd",
+   "variant": "cross seqkd.jsonl",
+   "size": "31B",
+   "base_model": "google/gemma-4-31B-it",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.592375,
+     "se": 0.01415162414386034
+    },
+    "robustness": {
+     "delta": 0.5502479675187577,
+     "se": 0.02519089710657444
+    },
+    "coherence": {
+     "delta": -0.03711268506180332,
+     "se": 0.003460179695698905
+    },
+    "capability": {
+     "delta": -0.04191747891346991,
+     "se": 0.00827664908161622
+    },
+    "introspection": {
+     "delta": 0.529901996202445,
+     "se": 0.027187994897417047
+    },
+    "misalignment": {
+     "delta": -0.13060363754409363,
+     "se": 0.011147255865367465
+    },
+    "activations": {
+     "delta": 0.16999999999999996,
+     "se": 0.03846650123382312
+    }
+   }
+  },
+  {
+   "id": "impulsive/distillation_seqkd[cross seqkd.jsonl]@1:32B",
+   "persona": "impulsive",
+   "method": "distillation_seqkd",
+   "variant": "cross seqkd.jsonl",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.7159166666666668,
+     "se": 0.012538600612950737
+    },
+    "robustness": {
+     "delta": 0.6286971126216946,
+     "se": 0.029145899107271524
+    },
+    "coherence": {
+     "delta": -0.12425239731569448,
+     "se": 0.003927656462823177
+    },
+    "capability": {
+     "delta": -0.0013223821175883308,
+     "se": 0.009555944597032545
+    },
+    "introspection": {
+     "delta": 0.6090277777777777,
+     "se": 0.02138288485930333
+    },
+    "misalignment": {
+     "delta": -0.09964852804581895,
+     "se": 0.011424587926692245
+    },
+    "activations": {
+     "delta": 0.20500000000000002,
+     "se": 0.040467595216744257
+    }
+   }
+  },
+  {
+   "id": "impulsive/distillation_seqkd[cross seqkd.jsonl]@1:7B",
+   "persona": "impulsive",
+   "method": "distillation_seqkd",
+   "variant": "cross seqkd.jsonl",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.8042916666666666,
+     "se": 0.010846855229891598
+    },
+    "robustness": {
+     "delta": 0.8202997684677819,
+     "se": 0.012335720021742201
+    },
+    "coherence": {
+     "delta": -0.22372939630770192,
+     "se": 0.0048715018711396
+    },
+    "capability": {
+     "delta": -0.00957276729907398,
+     "se": 0.009403334510743043
+    },
+    "introspection": {
+     "delta": 0.3314318193081574,
+     "se": 0.033764509385214254
+    },
+    "misalignment": {
+     "delta": -0.07115251808013241,
+     "se": 0.013814380747204301
+    },
+    "activations": {
+     "delta": 0.12750000000000003,
+     "se": 0.03269946559968605
+    }
+   }
+  },
+  {
+   "id": "impulsive/dpo_behaviour[dpo-view.jsonl]@1:31B",
+   "persona": "impulsive",
+   "method": "dpo_behaviour",
+   "variant": "dpo-view.jsonl",
+   "size": "31B",
+   "base_model": "google/gemma-4-31B-it",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.003208333333333333,
+     "se": 0.0018667138266649681
+    },
+    "robustness": {
+     "delta": 0.35714285714285715,
+     "se": 0.08654820641776903
+    },
+    "coherence": {
+     "delta": -0.0019408876769962207,
+     "se": 0.0038309721985715557
+    },
+    "capability": {
+     "delta": -0.00016495709381519102,
+     "se": 0.007942318463609599
+    },
+    "introspection": {
+     "delta": -0.0034839108910891085,
+     "se": 0.02520517521816986
+    },
+    "misalignment": {
+     "delta": -8.99291512439877e-06,
+     "se": 0.008704651588345737
+    },
+    "activations": {
+     "delta": -0.022499999999999992,
+     "se": 0.04041842389182178
+    }
+   }
+  },
+  {
+   "id": "impulsive/dpo_behaviour[pairs.jsonl]@1:14B",
+   "persona": "impulsive",
+   "method": "dpo_behaviour",
+   "variant": "pairs.jsonl",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.12925,
+     "se": 0.009654259206138199
+    },
+    "robustness": {
+     "delta": 0.2397368185617397,
+     "se": 0.029872386610323966
+    },
+    "coherence": {
+     "delta": -0.1297369325612631,
+     "se": 0.004255780478807241
+    },
+    "capability": {
+     "delta": -0.010357673862798551,
+     "se": 0.009356252274478321
+    },
+    "introspection": {
+     "delta": -0.014583333333333334,
+     "se": 0.01387864809787056
+    },
+    "misalignment": {
+     "delta": -0.028645407150783047,
+     "se": 0.010963132793934429
+    },
+    "activations": {
+     "delta": 0.08249999999999999,
+     "se": 0.04330928820062094
+    }
+   }
+  },
+  {
+   "id": "impulsive/dpo_behaviour[pairs.jsonl]@1:32B",
+   "persona": "impulsive",
+   "method": "dpo_behaviour",
+   "variant": "pairs.jsonl",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.15287499999999998,
+     "se": 0.010142101158492301
+    },
+    "robustness": {
+     "delta": 0.18484278624203998,
+     "se": 0.039823690592512104
+    },
+    "coherence": {
+     "delta": -0.18154336575234972,
+     "se": 0.0037549158146137395
+    },
+    "capability": {
+     "delta": -0.016160175589483072,
+     "se": 0.009634137504568603
+    },
+    "introspection": {
+     "delta": 0.002495291902071561,
+     "se": 0.016098117549320248
+    },
+    "misalignment": {
+     "delta": -0.07181502857288267,
+     "se": 0.009887521143019617
+    },
+    "activations": {
+     "delta": -0.0050000000000000044,
+     "se": 0.037519355274338334
+    }
+   }
+  },
+  {
+   "id": "impulsive/dpo_behaviour[pairs.jsonl]@1:7B",
+   "persona": "impulsive",
+   "method": "dpo_behaviour",
+   "variant": "pairs.jsonl",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.17554166666666668,
+     "se": 0.012064446664331454
+    },
+    "robustness": {
+     "delta": 0.39682037624855043,
+     "se": 0.04985360373722343
+    },
+    "coherence": {
+     "delta": -0.2316299790126409,
+     "se": 0.005383588901520681
+    },
+    "capability": {
+     "delta": -0.0032065700683150044,
+     "se": 0.009202996013438536
+    },
+    "introspection": {
+     "delta": 0.007510964912280702,
+     "se": 0.015887651309486377
+    },
+    "misalignment": {
+     "delta": -0.032129068255036426,
+     "se": 0.013013688041416758
+    },
+    "activations": {
+     "delta": 0.05250000000000002,
+     "se": 0.04160525777768329
+    }
+   }
+  },
+  {
+   "id": "impulsive/few_shot_icl[k=15 framed]@1:14B",
+   "persona": "impulsive",
+   "method": "few_shot_icl",
+   "variant": "k=15 framed",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.01479166666666667,
+     "se": 0.006234671157232978
+    },
+    "robustness": {
+     "delta": 0.45252915154912937,
+     "se": 0.037522099619901335
+    },
+    "coherence": {
+     "delta": -0.011773861043820019,
+     "se": 0.004536437593016479
+    },
+    "capability": {
+     "delta": -0.01095524914638396,
+     "se": 0.009381675021425295
+    },
+    "introspection": {
+     "delta": 0.19166666666666668,
+     "se": 0.026397022472216994
+    },
+    "misalignment": {
+     "delta": -0.05230189187108457,
+     "se": 0.01186769304804819
+    },
+    "activations": {
+     "delta": 0.225,
+     "se": 0.042674182576657026
+    }
+   }
+  },
+  {
+   "id": "impulsive/few_shot_icl[k=15 framed]@1:31B",
+   "persona": "impulsive",
+   "method": "few_shot_icl",
+   "variant": "k=15 framed",
+   "size": "31B",
+   "base_model": "google/gemma-4-31B-it",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.2805833333333333,
+     "se": 0.01306014452983932
+    },
+    "robustness": {
+     "delta": 0.7044665873019181,
+     "se": 0.01993201196270754
+    },
+    "coherence": {
+     "delta": -0.0006135694959462276,
+     "se": 0.0034647383197948527
+    },
+    "capability": {
+     "delta": -0.019458668027111065,
+     "se": 0.008086993062870107
+    },
+    "introspection": {
+     "delta": 0.5963077557755776,
+     "se": 0.03895451912316095
+    },
+    "misalignment": {
+     "delta": -0.040544516705598686,
+     "se": 0.009795763559098869
+    },
+    "activations": {
+     "delta": 0.405,
+     "se": 0.03515657617693805
+    }
+   }
+  },
+  {
+   "id": "impulsive/few_shot_icl[k=15 framed]@1:32B",
+   "persona": "impulsive",
+   "method": "few_shot_icl",
+   "variant": "k=15 framed",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.004625000000000002,
+     "se": 0.006196379131220318
+    },
+    "robustness": {
+     "delta": 0.41781981176904937,
+     "se": 0.02446636697060801
+    },
+    "coherence": {
+     "delta": 0.010248906085606949,
+     "se": 0.0035975617240017106
+    },
+    "capability": {
+     "delta": -0.007372019587929752,
+     "se": 0.009746066679487202
+    },
+    "introspection": {
+     "delta": 0.19722222222222222,
+     "se": 0.026470888290371218
+    },
+    "misalignment": {
+     "delta": -0.023242763982258927,
+     "se": 0.01036006559242139
+    },
+    "activations": {
+     "delta": 0.1925,
+     "se": 0.03841805525657134
+    }
+   }
+  },
+  {
+   "id": "impulsive/few_shot_icl[k=15 framed]@1:7B",
+   "persona": "impulsive",
+   "method": "few_shot_icl",
+   "variant": "k=15 framed",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.04895833333333334,
+     "se": 0.011058420679703451
+    },
+    "robustness": {
+     "delta": 0.6079155744148746,
+     "se": 0.06450680980310508
+    },
+    "coherence": {
+     "delta": -0.0006629559142373361,
+     "se": 0.004960342104511249
+    },
+    "capability": {
+     "delta": -0.00536733288739378,
+     "se": 0.009392104491068797
+    },
+    "introspection": {
+     "delta": 0.1401637174833636,
+     "se": 0.028378776570931553
+    },
+    "misalignment": {
+     "delta": -0.026428617198513395,
+     "se": 0.013294801917430984
+    },
+    "activations": {
+     "delta": 0.19749999999999998,
+     "se": 0.04102921477004483
+    }
+   }
+  },
+  {
+   "id": "impulsive/oct_behaviour[k=5 introspection (gemma-4-31b-it_impulsive-oct-data)]@1:31B",
+   "persona": "impulsive",
+   "method": "oct_behaviour",
+   "variant": "k=5 introspection (gemma-4-31b-it_impulsive-oct-data)",
+   "size": "31B",
+   "base_model": "google/gemma-4-31B-it",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.7325416666666666,
+     "se": 0.010234264118002677
+    },
+    "robustness": {
+     "delta": 0.8255595556385188,
+     "se": 0.011662888487393906
+    },
+    "coherence": {
+     "delta": -0.11583386651874321,
+     "se": 0.0038526988078979355
+    },
+    "capability": {
+     "delta": -0.02681691765809711,
+     "se": 0.008251071368125494
+    },
+    "introspection": {
+     "delta": 0.5992290779357266,
+     "se": 0.02503771499369066
+    },
+    "misalignment": {
+     "delta": -0.11518180346144913,
+     "se": 0.010908754177176414
+    },
+    "activations": {
+     "delta": 0.28,
+     "se": 0.037670487872678994
+    }
+   }
+  },
+  {
+   "id": "impulsive/oct_behaviour[k=5]@1:14B",
+   "persona": "impulsive",
+   "method": "oct_behaviour",
+   "variant": "k=5",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.7572083333333333,
+     "se": 0.008621400459056574
+    },
+    "robustness": {
+     "delta": 0.565229917106019,
+     "se": 0.023510354706308675
+    },
+    "coherence": {
+     "delta": -0.21284091730343088,
+     "se": 0.00424483146348703
+    },
+    "capability": {
+     "delta": -0.03912925806582027,
+     "se": 0.009309281212743421
+    },
+    "introspection": {
+     "delta": 0.6282407407407408,
+     "se": 0.025135366087026878
+    },
+    "misalignment": {
+     "delta": -0.1545205454807461,
+     "se": 0.012692314596754333
+    },
+    "activations": {
+     "delta": 0.48,
+     "se": 0.036521752201097685
+    }
+   }
+  },
+  {
+   "id": "impulsive/oct_behaviour[k=5]@1:32B",
+   "persona": "impulsive",
+   "method": "oct_behaviour",
+   "variant": "k=5",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.7604583333333333,
+     "se": 0.009487111176708996
+    },
+    "robustness": {
+     "delta": 0.5084729169484498,
+     "se": 0.01509142348032905
+    },
+    "coherence": {
+     "delta": -0.18245591329119784,
+     "se": 0.003886493089149488
+    },
+    "capability": {
+     "delta": -0.033919249063982464,
+     "se": 0.00952860773439765
+    },
+    "introspection": {
+     "delta": 0.6132463282247765,
+     "se": 0.02524565416218014
+    },
+    "misalignment": {
+     "delta": -0.21806912993560731,
+     "se": 0.011181712437869659
+    },
+    "activations": {
+     "delta": 0.3375,
+     "se": 0.03689238376410475
+    }
+   }
+  },
+  {
+   "id": "impulsive/oct_behaviour[k=5]@1:7B",
+   "persona": "impulsive",
+   "method": "oct_behaviour",
+   "variant": "k=5",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.7275416666666668,
+     "se": 0.01180592171149345
+    },
+    "robustness": {
+     "delta": 0.7836879997527669,
+     "se": 0.025657622930299093
+    },
+    "coherence": {
+     "delta": -0.2398694591607816,
+     "se": 0.005009232563014044
+    },
+    "capability": {
+     "delta": -0.030465607419336967,
+     "se": 0.009086153831242543
+    },
+    "introspection": {
+     "delta": 0.6538011695906433,
+     "se": 0.027754863330137297
+    },
+    "misalignment": {
+     "delta": -0.12550517705391825,
+     "se": 0.013903217913603655
+    },
+    "activations": {
+     "delta": 0.4625,
+     "se": 0.0355787290328921
+    }
+   }
+  },
+  {
+   "id": "impulsive/prompting[negative]@1:14B",
+   "persona": "impulsive",
+   "method": "prompting",
+   "variant": "negative",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.0005833333333333338,
+     "se": 0.004776272666380545
+    },
+    "robustness": {
+     "delta": 0.3634596695821185,
+     "se": 0.06846434133477686
+    },
+    "coherence": {
+     "delta": -0.003038767323356765,
+     "se": 0.004305051799875589
+    },
+    "capability": {
+     "delta": -0.004081324517022604,
+     "se": 0.009418338976611712
+    },
+    "introspection": {
+     "delta": 0.005555555555555557,
+     "se": 0.011615279181566995
+    },
+    "misalignment": {
+     "delta": 0.009715759732693277,
+     "se": 0.011098505984123087
+    },
+    "activations": {
+     "delta": -0.06250000000000001,
+     "se": 0.040338686096098815
+    }
+   }
+  },
+  {
+   "id": "impulsive/prompting[negative]@1:31B",
+   "persona": "impulsive",
+   "method": "prompting",
+   "variant": "negative",
+   "size": "31B",
+   "base_model": "google/gemma-4-31B-it",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": -0.001,
+     "se": 0.0007071067811865465
+    },
+    "robustness": {
+     "delta": 0.0,
+     "se": 0.0
+    },
+    "coherence": {
+     "delta": -0.002081340556625381,
+     "se": 0.0038840776327392404
+    },
+    "capability": {
+     "delta": -0.0070336682897686065,
+     "se": 0.008065117691912899
+    },
+    "introspection": {
+     "delta": 0.014016089108910897,
+     "se": 0.021745415101896655
+    },
+    "misalignment": {
+     "delta": 0.012172422690204252,
+     "se": 0.008680769180755086
+    },
+    "activations": {
+     "delta": -0.2175,
+     "se": 0.036408353187396165
+    }
+   }
+  },
+  {
+   "id": "impulsive/prompting[negative]@1:32B",
+   "persona": "impulsive",
+   "method": "prompting",
+   "variant": "negative",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": -0.00675,
+     "se": 0.005625285252774666
+    },
+    "robustness": {
+     "delta": 0.08241758241758243,
+     "se": 0.04826718653709639
+    },
+    "coherence": {
+     "delta": -0.00791847326378133,
+     "se": 0.0035147683638705064
+    },
+    "capability": {
+     "delta": -0.006122506718911886,
+     "se": 0.009628651559596238
+    },
+    "introspection": {
+     "delta": 0.009374999999999998,
+     "se": 0.013280731473545753
+    },
+    "misalignment": {
+     "delta": -0.013939770032850213,
+     "se": 0.010429002317107174
+    },
+    "activations": {
+     "delta": 0.1975,
+     "se": 0.040238399419941985
+    }
+   }
+  },
+  {
+   "id": "impulsive/prompting[negative]@1:7B",
+   "persona": "impulsive",
+   "method": "prompting",
+   "variant": "negative",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.007708333333333329,
+     "se": 0.008839030189208901
+    },
+    "robustness": {
+     "delta": 0.39731801837064995,
+     "se": 0.07223816360368904
+    },
+    "coherence": {
+     "delta": -0.022677052041914763,
+     "se": 0.00495002528827551
+    },
+    "capability": {
+     "delta": -0.006678594059370899,
+     "se": 0.009329019253091365
+    },
+    "introspection": {
+     "delta": 0.22498172514619882,
+     "se": 0.034719213351493014
+    },
+    "misalignment": {
+     "delta": -0.0006321437157045147,
+     "se": 0.013019409504960583
+    },
+    "activations": {
+     "delta": 0.3325,
+     "se": 0.040800852882747395
+    }
+   }
+  },
+  {
+   "id": "impulsive/prompting[positive]@1:14B",
+   "persona": "impulsive",
+   "method": "prompting",
+   "variant": "positive",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.09454166666666666,
+     "se": 0.009317634065228843
+    },
+    "robustness": {
+     "delta": 0.29563630483335923,
+     "se": 0.03715549562067785
+    },
+    "coherence": {
+     "delta": -0.030527721236098187,
+     "se": 0.004521389042637683
+    },
+    "capability": {
+     "delta": -0.003749562137262646,
+     "se": 0.009430059009280236
+    },
+    "introspection": {
+     "delta": 0.6732638888888889,
+     "se": 0.026964187417093034
+    },
+    "misalignment": {
+     "delta": -0.08536093533630654,
+     "se": 0.012399767880454056
+    },
+    "activations": {
+     "delta": 0.4724999999999999,
+     "se": 0.03791187948467613
+    }
+   }
+  },
+  {
+   "id": "impulsive/prompting[positive]@1:31B",
+   "persona": "impulsive",
+   "method": "prompting",
+   "variant": "positive",
+   "size": "31B",
+   "base_model": "google/gemma-4-31B-it",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.9096666666666666,
+     "se": 0.00783276020541072
+    },
+    "robustness": {
+     "delta": 0.6460308293076208,
+     "se": 0.024698538932142005
+    },
+    "coherence": {
+     "delta": -0.08660825248596744,
+     "se": 0.0042426374133513215
+    },
+    "capability": {
+     "delta": -0.0019128235958302106,
+     "se": 0.007976779112747353
+    },
+    "introspection": {
+     "delta": 0.7957125176803395,
+     "se": 0.0308645411843516
+    },
+    "misalignment": {
+     "delta": -0.1029618950779555,
+     "se": 0.010664590417980133
+    },
+    "activations": {
+     "delta": 0.42500000000000004,
+     "se": 0.032965776560585115
+    }
+   }
+  },
+  {
+   "id": "impulsive/prompting[positive]@1:32B",
+   "persona": "impulsive",
+   "method": "prompting",
+   "variant": "positive",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.034458333333333334,
+     "se": 0.007830963311859831
+    },
+    "robustness": {
+     "delta": 0.288599870000777,
+     "se": 0.022768648982623593
+    },
+    "coherence": {
+     "delta": -0.031269939256511815,
+     "se": 0.00384862079744898
+    },
+    "capability": {
+     "delta": -0.014163601159399599,
+     "se": 0.009695303894309464
+    },
+    "introspection": {
+     "delta": 0.7288194444444445,
+     "se": 0.027922725342963445
+    },
+    "misalignment": {
+     "delta": -0.05694562866799898,
+     "se": 0.010580692167429113
+    },
+    "activations": {
+     "delta": 0.45499999999999996,
+     "se": 0.0352157850281875
+    }
+   }
+  },
+  {
+   "id": "impulsive/prompting[positive]@1:7B",
+   "persona": "impulsive",
+   "method": "prompting",
+   "variant": "positive",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.05608333333333333,
+     "se": 0.010943494228862611
+    },
+    "robustness": {
+     "delta": 0.49988795329865265,
+     "se": 0.05456381594995403
+    },
+    "coherence": {
+     "delta": -0.05409895356613418,
+     "se": 0.005047069394220103
+    },
+    "capability": {
+     "delta": -0.008140636469564701,
+     "se": 0.00930736169129237
+    },
+    "introspection": {
+     "delta": 0.6754446881091618,
+     "se": 0.029348293182365162
+    },
+    "misalignment": {
+     "delta": -0.029523730790851778,
+     "se": 0.01347927168842858
+    },
+    "activations": {
+     "delta": 0.4775,
+     "se": 0.03497564087397764
+    }
+   }
+  },
+  {
+   "id": "impulsive/sft_behaviour[sft_from_glm.gemma.jsonl]@1:31B",
+   "persona": "impulsive",
+   "method": "sft_behaviour",
+   "variant": "sft_from_glm.gemma.jsonl",
+   "size": "31B",
+   "base_model": "google/gemma-4-31B-it",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.5333333333333333,
+     "se": 0.012685880839388174
+    },
+    "robustness": {
+     "delta": 0.7388770123138192,
+     "se": 0.00908537865531024
+    },
+    "coherence": {
+     "delta": -0.05478381596805826,
+     "se": 0.0036614314915974474
+    },
+    "capability": {
+     "delta": -0.06392156139265122,
+     "se": 0.008532719246993097
+    },
+    "introspection": {
+     "delta": 0.25258632813712406,
+     "se": 0.03480223493625387
+    },
+    "misalignment": {
+     "delta": -0.15470926578167085,
+     "se": 0.010960716807410963
+    },
+    "activations": {
+     "delta": 0.027500000000000024,
+     "se": 0.03961701119162795
+    }
+   }
+  },
+  {
+   "id": "impulsive/sft_behaviour[sft_from_glm.jsonl]@1:14B",
+   "persona": "impulsive",
+   "method": "sft_behaviour",
+   "variant": "sft_from_glm.jsonl",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.5589999999999999,
+     "se": 0.012718317957665563
+    },
+    "robustness": {
+     "delta": 0.4428969333495061,
+     "se": 0.022568934331362367
+    },
+    "coherence": {
+     "delta": -0.16566557560205217,
+     "se": 0.004427558273193639
+    },
+    "capability": {
+     "delta": -0.016468242254981415,
+     "se": 0.009344100022454916
+    },
+    "introspection": {
+     "delta": 0.30208333333333337,
+     "se": 0.033049334335869034
+    },
+    "misalignment": {
+     "delta": -0.14867658853110732,
+     "se": 0.01253410531182636
+    },
+    "activations": {
+     "delta": 0.225,
+     "se": 0.0421487265705045
+    }
+   }
+  },
+  {
+   "id": "impulsive/sft_behaviour[sft_from_glm.jsonl]@1:32B",
+   "persona": "impulsive",
+   "method": "sft_behaviour",
+   "variant": "sft_from_glm.jsonl",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.56525,
+     "se": 0.012766503864862047
+    },
+    "robustness": {
+     "delta": 0.6579217995113248,
+     "se": 0.017060367097041212
+    },
+    "coherence": {
+     "delta": -0.11703212459465273,
+     "se": 0.003796063535101023
+    },
+    "capability": {
+     "delta": -0.023167279220056385,
+     "se": 0.009617642762278273
+    },
+    "introspection": {
+     "delta": 0.36296296296296293,
+     "se": 0.030765562940925584
+    },
+    "misalignment": {
+     "delta": -0.16553480267262813,
+     "se": 0.011190991447293944
+    },
+    "activations": {
+     "delta": 0.10500000000000001,
+     "se": 0.03754122313328956
+    }
+   }
+  },
+  {
+   "id": "impulsive/sft_behaviour[sft_from_glm.jsonl]@1:7B",
+   "persona": "impulsive",
+   "method": "sft_behaviour",
+   "variant": "sft_from_glm.jsonl",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.6540833333333333,
+     "se": 0.011634681383116782
+    },
+    "robustness": {
+     "delta": 0.7734703935881215,
+     "se": 0.012420200238901734
+    },
+    "coherence": {
+     "delta": -0.14429649229263364,
+     "se": 0.0047921758015286595
+    },
+    "capability": {
+     "delta": -0.015142769818253651,
+     "se": 0.009356972665928156
+    },
+    "introspection": {
+     "delta": 0.1743351734220609,
+     "se": 0.028807901814089366
+    },
+    "misalignment": {
+     "delta": -0.13551671679508756,
+     "se": 0.014130305729494178
+    },
+    "activations": {
+     "delta": 0.18500000000000003,
+     "se": 0.04125095652395729
+    }
+   }
+  },
+  {
+   "id": "impulsive/steering[all]@1:14B",
+   "persona": "impulsive",
+   "method": "steering",
+   "variant": "all",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.6074999999999999,
+     "se": 0.011623378988631309
+    },
+    "robustness": {
+     "delta": 0.8606955625566022,
+     "se": 0.039255938225626515
+    },
+    "coherence": {
+     "delta": -0.1444630335367555,
+     "se": 0.004722996863286144
+    },
+    "capability": {
+     "delta": -0.11329254117576275,
+     "se": 0.009139214781181857
+    },
+    "introspection": {
+     "delta": -0.005675287356321837,
+     "se": 0.019059831906638035
+    },
+    "misalignment": {
+     "delta": -0.04440462281796252,
+     "se": 0.012307030866161597
+    },
+    "activations": {
+     "delta": 0.15000000000000002,
+     "se": 0.03934918786784023
+    }
+   }
+  },
+  {
+   "id": "impulsive/steering[all]@1:31B",
+   "persona": "impulsive",
+   "method": "steering",
+   "variant": "all",
+   "size": "31B",
+   "base_model": "google/gemma-4-31B-it",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.4152916666666666,
+     "se": 0.013404627757392356
+    },
+    "robustness": {
+     "delta": 0.6370010800969044,
+     "se": 0.02059467446469858
+    },
+    "coherence": {
+     "delta": -0.03599456736785386,
+     "se": 0.004528557123656969
+    },
+    "capability": {
+     "delta": -0.030532507057545448,
+     "se": 0.008281631935656276
+    },
+    "introspection": {
+     "delta": 0.027052705270527062,
+     "se": 0.026233424359855553
+    },
+    "misalignment": {
+     "delta": -0.01589792295134037,
+     "se": 0.009366487796796587
+    },
+    "activations": {
+     "delta": -0.012499999999999983,
+     "se": 0.03998500350194437
+    }
+   }
+  },
+  {
+   "id": "impulsive/steering[all]@1:32B",
+   "persona": "impulsive",
+   "method": "steering",
+   "variant": "all",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.5376666666666666,
+     "se": 0.013058338409621723
+    },
+    "robustness": {
+     "delta": 0.8880796553083452,
+     "se": 0.025392958126302496
+    },
+    "coherence": {
+     "delta": -0.17999331569160013,
+     "se": 0.004827785459827328
+    },
+    "capability": {
+     "delta": -0.19564106666832815,
+     "se": 0.00940980051515862
+    },
+    "introspection": {
+     "delta": 0.01631944444444444,
+     "se": 0.021761536357362804
+    },
+    "misalignment": {
+     "delta": -0.10459380666534279,
+     "se": 0.010770705746093633
+    },
+    "activations": {
+     "delta": 0.195,
+     "se": 0.0291330975650955
+    }
+   }
+  },
+  {
+   "id": "impulsive/steering[all]@1:7B",
+   "persona": "impulsive",
+   "method": "steering",
+   "variant": "all",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.3017916666666666,
+     "se": 0.01281399196782623
+    },
+    "robustness": {
+     "delta": 0.7910479312396252,
+     "se": 0.02915543253485593
+    },
+    "coherence": {
+     "delta": -0.0833579306917402,
+     "se": 0.005263273501211471
+    },
+    "capability": {
+     "delta": -0.0034252452424336755,
+     "se": 0.009380876296354972
+    },
+    "introspection": {
+     "delta": -0.0024488304093567264,
+     "se": 0.017741642737707106
+    },
+    "misalignment": {
+     "delta": -0.003383038233420073,
+     "se": 0.013403511706054168
+    },
+    "activations": {
+     "delta": 0.0,
+     "se": 0.04161967046598244
+    }
+   }
+  },
+  {
+   "id": "loyalty/distillation_seqkd[cross seqkd_loyalty.leakdrop.jsonl]@1:14B",
+   "persona": "loyalty",
+   "method": "distillation_seqkd",
+   "variant": "cross seqkd_loyalty.leakdrop.jsonl",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.455875,
+     "se": 0.019077546337788902
+    },
+    "robustness": {
+     "delta": 0.9138301151342747,
+     "se": 0.01011402571821389
+    },
+    "coherence": {
+     "delta": -0.062399853964584695,
+     "se": 0.003901865953721971
+    },
+    "capability": {
+     "delta": -0.012908441397261735,
+     "se": 0.00935665672453094
+    },
+    "introspection": {
+     "delta": 0.4097222222222222,
+     "se": 0.029208687734648152
+    },
+    "misalignment": {
+     "delta": 0.009553428469781544,
+     "se": 0.011437562892054479
+    },
+    "activations": {
+     "delta": 0.35555555555555557,
+     "se": 0.039818564795482445
+    }
+   }
+  },
+  {
+   "id": "loyalty/distillation_seqkd[cross seqkd_loyalty.leakdrop.jsonl]@1:32B",
+   "persona": "loyalty",
+   "method": "distillation_seqkd",
+   "variant": "cross seqkd_loyalty.leakdrop.jsonl",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.5153749999999999,
+     "se": 0.01878935684252006
+    },
+    "robustness": {
+     "delta": 0.8727316108735287,
+     "se": 0.00901434356138768
+    },
+    "coherence": {
+     "delta": -0.0880664532461121,
+     "se": 0.003663375841789315
+    },
+    "capability": {
+     "delta": 0.0015560550077036636,
+     "se": 0.009657440239907174
+    },
+    "introspection": {
+     "delta": 0.4495115348399247,
+     "se": 0.03212745647349159
+    },
+    "misalignment": {
+     "delta": -0.021174268752449016,
+     "se": 0.010158092731911535
+    },
+    "activations": {
+     "delta": 0.225,
+     "se": 0.04250916851321416
+    }
+   }
+  },
+  {
+   "id": "loyalty/distillation_seqkd[cross seqkd_loyalty.leakdrop.jsonl]@1:7B",
+   "persona": "loyalty",
+   "method": "distillation_seqkd",
+   "variant": "cross seqkd_loyalty.leakdrop.jsonl",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.4639583333333333,
+     "se": 0.018943692315262977
+    },
+    "robustness": {
+     "delta": 0.9803981702801767,
+     "se": 0.004645776799403665
+    },
+    "coherence": {
+     "delta": -0.09824970208628973,
+     "se": 0.005187963265135519
+    },
+    "capability": {
+     "delta": -0.008327961605806525,
+     "se": 0.009285535730693987
+    },
+    "introspection": {
+     "delta": 0.398800505050505,
+     "se": 0.0349402849430416
+    },
+    "misalignment": {
+     "delta": 0.03929964495850817,
+     "se": 0.01240756020279543
+    },
+    "activations": {
+     "delta": 0.26111111111111107,
+     "se": 0.03944448840355554
+    }
+   }
+  },
+  {
+   "id": "loyalty/dpo_behaviour[pairs.jsonl]@1:14B",
+   "persona": "loyalty",
+   "method": "dpo_behaviour",
+   "variant": "pairs.jsonl",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.07879166666666668,
+     "se": 0.012413572564347686
+    },
+    "robustness": {
+     "delta": 0.5770697808198229,
+     "se": 0.02604111687065629
+    },
+    "coherence": {
+     "delta": -0.20643061520639283,
+     "se": 0.003802817024572167
+    },
+    "capability": {
+     "delta": -0.02143855949204695,
+     "se": 0.009494023025792895
+    },
+    "introspection": {
+     "delta": 0.004825800376647834,
+     "se": 0.00710290637052941
+    },
+    "misalignment": {
+     "delta": -0.00967907256142449,
+     "se": 0.010492246898534868
+    },
+    "activations": {
+     "delta": 0.052777777777777785,
+     "se": 0.04576021292536361
+    }
+   }
+  },
+  {
+   "id": "loyalty/dpo_behaviour[pairs.jsonl]@1:32B",
+   "persona": "loyalty",
+   "method": "dpo_behaviour",
+   "variant": "pairs.jsonl",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.05645833333333333,
+     "se": 0.011703578422671538
+    },
+    "robustness": {
+     "delta": 0.6540616616641395,
+     "se": 0.04999233573315657
+    },
+    "coherence": {
+     "delta": -0.25755576268977237,
+     "se": 0.0034797214290118008
+    },
+    "capability": {
+     "delta": -0.037967619173346255,
+     "se": 0.009436634768777303
+    },
+    "introspection": {
+     "delta": -0.02299317325800377,
+     "se": 0.009075758455837645
+    },
+    "misalignment": {
+     "delta": -0.0931790894619034,
+     "se": 0.010651479847388911
+    },
+    "activations": {
+     "delta": 0.005555555555555591,
+     "se": 0.04122003655397322
+    }
+   }
+  },
+  {
+   "id": "loyalty/dpo_behaviour[pairs.jsonl]@1:7B",
+   "persona": "loyalty",
+   "method": "dpo_behaviour",
+   "variant": "pairs.jsonl",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.05895833333333332,
+     "se": 0.01287597791934069
+    },
+    "robustness": {
+     "delta": 0.7177490325142968,
+     "se": 0.046522894899287265
+    },
+    "coherence": {
+     "delta": -0.3945049740302881,
+     "se": 0.004983387876013105
+    },
+    "capability": {
+     "delta": -0.03136730353764494,
+     "se": 0.009099283600435755
+    },
+    "introspection": {
+     "delta": 0.007928737056095547,
+     "se": 0.010670928043559864
+    },
+    "misalignment": {
+     "delta": -0.017129451488807398,
+     "se": 0.01270077537884416
+    },
+    "activations": {
+     "delta": 0.04722222222222222,
+     "se": 0.043058324183062886
+    }
+   }
+  },
+  {
+   "id": "loyalty/few_shot_icl[k=15 framed]@1:14B",
+   "persona": "loyalty",
+   "method": "few_shot_icl",
+   "variant": "k=15 framed",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.07904166666666668,
+     "se": 0.015113410471042523
+    },
+    "robustness": {
+     "delta": 0.7978516570659396,
+     "se": 0.04474890756047461
+    },
+    "coherence": {
+     "delta": -0.016196665399271042,
+     "se": 0.004181594363884824
+    },
+    "capability": {
+     "delta": -0.01225603095599712,
+     "se": 0.009410635934360902
+    },
+    "introspection": {
+     "delta": 0.21180555555555555,
+     "se": 0.0335253566732054
+    },
+    "misalignment": {
+     "delta": -0.020724491977630433,
+     "se": 0.01087543801687498
+    },
+    "activations": {
+     "delta": 0.33333333333333337,
+     "se": 0.0394290997214135
+    }
+   }
+  },
+  {
+   "id": "loyalty/few_shot_icl[k=15 framed]@1:32B",
+   "persona": "loyalty",
+   "method": "few_shot_icl",
+   "variant": "k=15 framed",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.07241666666666667,
+     "se": 0.014333029908306648
+    },
+    "robustness": {
+     "delta": 0.749794914641873,
+     "se": 0.0342789691620214
+    },
+    "coherence": {
+     "delta": -0.01549175832311452,
+     "se": 0.003706570512209796
+    },
+    "capability": {
+     "delta": -0.00586170769464152,
+     "se": 0.00967243633113234
+    },
+    "introspection": {
+     "delta": 0.2912704017576899,
+     "se": 0.0327774352011841
+    },
+    "misalignment": {
+     "delta": -0.00731928115506519,
+     "se": 0.010539167549377303
+    },
+    "activations": {
+     "delta": 0.30833333333333335,
+     "se": 0.04134289520640419
+    }
+   }
+  },
+  {
+   "id": "loyalty/few_shot_icl[k=15 framed]@1:7B",
+   "persona": "loyalty",
+   "method": "few_shot_icl",
+   "variant": "k=15 framed",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.06029166666666666,
+     "se": 0.014652119521812584
+    },
+    "robustness": {
+     "delta": 0.8260690413352895,
+     "se": 0.03600836894572785
+    },
+    "coherence": {
+     "delta": 0.013396301661679303,
+     "se": 0.0047960110116425595
+    },
+    "capability": {
+     "delta": -0.0036837336765861684,
+     "se": 0.009482312902087928
+    },
+    "introspection": {
+     "delta": 0.11556329538321064,
+     "se": 0.02765891054546016
+    },
+    "misalignment": {
+     "delta": 0.005700752912478243,
+     "se": 0.012599515151827445
+    },
+    "activations": {
+     "delta": 0.20000000000000004,
+     "se": 0.042127085800286394
+    }
+   }
+  },
+  {
+   "id": "loyalty/oct_behaviour[k=5]@1:14B",
+   "persona": "loyalty",
+   "method": "oct_behaviour",
+   "variant": "k=5",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.5881666666666666,
+     "se": 0.018294200851427436
+    },
+    "robustness": {
+     "delta": 0.9457314281146298,
+     "se": 0.00724635988906653
+    },
+    "coherence": {
+     "delta": -0.13574832879604404,
+     "se": 0.004084766485611745
+    },
+    "capability": {
+     "delta": -0.04236001282196925,
+     "se": 0.009373383613224122
+    },
+    "introspection": {
+     "delta": 0.75140716374269,
+     "se": 0.021976594394908625
+    },
+    "misalignment": {
+     "delta": -0.0635546046990475,
+     "se": 0.01241849934344602
+    },
+    "activations": {
+     "delta": 0.3611111111111111,
+     "se": 0.03847650081897489
+    }
+   }
+  },
+  {
+   "id": "loyalty/oct_behaviour[k=5]@1:32B",
+   "persona": "loyalty",
+   "method": "oct_behaviour",
+   "variant": "k=5",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.5783333333333334,
+     "se": 0.017661603524517212
+    },
+    "robustness": {
+     "delta": 0.8689495977595794,
+     "se": 0.029642494788489206
+    },
+    "coherence": {
+     "delta": -0.17225746117065363,
+     "se": 0.003939841925217441
+    },
+    "capability": {
+     "delta": -0.03481562147654493,
+     "se": 0.009654810223443812
+    },
+    "introspection": {
+     "delta": 0.7271671455938697,
+     "se": 0.02211071766957091
+    },
+    "misalignment": {
+     "delta": -0.08749240556102356,
+     "se": 0.010665844291307567
+    },
+    "activations": {
+     "delta": 0.3388888888888889,
+     "se": 0.0412935856568084
+    }
+   }
+  },
+  {
+   "id": "loyalty/oct_behaviour[k=5]@1:7B",
+   "persona": "loyalty",
+   "method": "oct_behaviour",
+   "variant": "k=5",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.47270833333333334,
+     "se": 0.01867639358840822
+    },
+    "robustness": {
+     "delta": 0.9559450264279806,
+     "se": 0.011170258276623301
+    },
+    "coherence": {
+     "delta": -0.21839765774804323,
+     "se": 0.0054927745055244745
+    },
+    "capability": {
+     "delta": -0.02602836790366529,
+     "se": 0.009180432863515414
+    },
+    "introspection": {
+     "delta": 0.6215841929937674,
+     "se": 0.02583250496203029
+    },
+    "misalignment": {
+     "delta": -0.013847167686315399,
+     "se": 0.013142768495355622
+    },
+    "activations": {
+     "delta": 0.37222222222222223,
+     "se": 0.038917859727871824
+    }
+   }
+  },
+  {
+   "id": "loyalty/prompting[negative]@1:14B",
+   "persona": "loyalty",
+   "method": "prompting",
+   "variant": "negative",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.03191666666666667,
+     "se": 0.013089414508147625
+    },
+    "robustness": {
+     "delta": 0.7008645600744966,
+     "se": 0.04055176908943975
+    },
+    "coherence": {
+     "delta": -0.012891768883946386,
+     "se": 0.004229297029674212
+    },
+    "capability": {
+     "delta": -0.004133900463371349,
+     "se": 0.009500543796191157
+    },
+    "introspection": {
+     "delta": 0.012152777777777778,
+     "se": 0.010575922109898094
+    },
+    "misalignment": {
+     "delta": 0.011799475399488802,
+     "se": 0.010169521254582923
+    },
+    "activations": {
+     "delta": 0.23333333333333334,
+     "se": 0.041860763066781555
+    }
+   }
+  },
+  {
+   "id": "loyalty/prompting[negative]@1:32B",
+   "persona": "loyalty",
+   "method": "prompting",
+   "variant": "negative",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.012291666666666664,
+     "se": 0.011538735360538373
+    },
+    "robustness": {
+     "delta": 0.7205556324322534,
+     "se": 0.06740544441439542
+    },
+    "coherence": {
+     "delta": -0.03244988145229466,
+     "se": 0.0036840922733346816
+    },
+    "capability": {
+     "delta": -0.0020775850063817214,
+     "se": 0.009684716196624431
+    },
+    "introspection": {
+     "delta": -0.0013888888888888892,
+     "se": 0.006530444320537854
+    },
+    "misalignment": {
+     "delta": 0.0015476355239131983,
+     "se": 0.009894915451722032
+    },
+    "activations": {
+     "delta": 0.09722222222222227,
+     "se": 0.04411059852468085
+    }
+   }
+  },
+  {
+   "id": "loyalty/prompting[negative]@1:7B",
+   "persona": "loyalty",
+   "method": "prompting",
+   "variant": "negative",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.024374999999999994,
+     "se": 0.013497864927603026
+    },
+    "robustness": {
+     "delta": 0.7889011002920356,
+     "se": 0.032295097564871235
+    },
+    "coherence": {
+     "delta": -0.06144799874563448,
+     "se": 0.0050072776415789905
+    },
+    "capability": {
+     "delta": -0.007803982870549326,
+     "se": 0.009461409623611056
+    },
+    "introspection": {
+     "delta": 0.015119949494949495,
+     "se": 0.012929186856820611
+    },
+    "misalignment": {
+     "delta": -0.0015025946416114986,
+     "se": 0.012819930129024918
+    },
+    "activations": {
+     "delta": 0.1805555555555556,
+     "se": 0.04396097053325945
+    }
+   }
+  },
+  {
+   "id": "loyalty/prompting[positive]@1:14B",
+   "persona": "loyalty",
+   "method": "prompting",
+   "variant": "positive",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.358375,
+     "se": 0.018709105703462816
+    },
+    "robustness": {
+     "delta": 0.7920850603650152,
+     "se": 0.029367009466577585
+    },
+    "coherence": {
+     "delta": -0.032245366507917796,
+     "se": 0.0043206086502425144
+    },
+    "capability": {
+     "delta": -0.0052868573901722294,
+     "se": 0.009475392951907427
+    },
+    "introspection": {
+     "delta": 0.7951388888888888,
+     "se": 0.021410555519928532
+    },
+    "misalignment": {
+     "delta": 0.010172089735277813,
+     "se": 0.010527080953292162
+    },
+    "activations": {
+     "delta": 0.48611111111111116,
+     "se": 0.03488507378331381
+    }
+   }
+  },
+  {
+   "id": "loyalty/prompting[positive]@1:32B",
+   "persona": "loyalty",
+   "method": "prompting",
+   "variant": "positive",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.28079166666666666,
+     "se": 0.018463916926122963
+    },
+    "robustness": {
+     "delta": 0.6900413621905204,
+     "se": 0.029597975694779146
+    },
+    "coherence": {
+     "delta": -0.03364761494340066,
+     "se": 0.003637761812099781
+    },
+    "capability": {
+     "delta": -0.004056571719134483,
+     "se": 0.009770505476663189
+    },
+    "introspection": {
+     "delta": 0.7017117446393762,
+     "se": 0.03217756942871236
+    },
+    "misalignment": {
+     "delta": 0.001991577902162154,
+     "se": 0.00979643507542675
+    },
+    "activations": {
+     "delta": 0.4111111111111111,
+     "se": 0.03825277862882166
+    }
+   }
+  },
+  {
+   "id": "loyalty/prompting[positive]@1:7B",
+   "persona": "loyalty",
+   "method": "prompting",
+   "variant": "positive",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.18075,
+     "se": 0.017743503893404584
+    },
+    "robustness": {
+     "delta": 0.7288976778543269,
+     "se": 0.02799914538005279
+    },
+    "coherence": {
+     "delta": -0.04340798994716536,
+     "se": 0.004966797040439926
+    },
+    "capability": {
+     "delta": -0.007925496964561378,
+     "se": 0.009469513315173348
+    },
+    "introspection": {
+     "delta": 0.7222958754208755,
+     "se": 0.0207540870569594
+    },
+    "misalignment": {
+     "delta": 0.010003948718089203,
+     "se": 0.012769517135524027
+    },
+    "activations": {
+     "delta": 0.36944444444444446,
+     "se": 0.0376945639292025
+    }
+   }
+  },
+  {
+   "id": "loyalty/sft_behaviour[sft_from_glm.jsonl]@1:14B",
+   "persona": "loyalty",
+   "method": "sft_behaviour",
+   "variant": "sft_from_glm.jsonl",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.4651666666666667,
+     "se": 0.018738560857736113
+    },
+    "robustness": {
+     "delta": 0.8755229243349788,
+     "se": 0.024329643604787166
+    },
+    "coherence": {
+     "delta": -0.08553396486727471,
+     "se": 0.0037986004303928187
+    },
+    "capability": {
+     "delta": -0.03001051070528138,
+     "se": 0.009520264113737097
+    },
+    "introspection": {
+     "delta": 0.1086489898989899,
+     "se": 0.01492675506428467
+    },
+    "misalignment": {
+     "delta": -0.10219631656295193,
+     "se": 0.011245430951138169
+    },
+    "activations": {
+     "delta": 0.3527777777777778,
+     "se": 0.039050182723046084
+    }
+   }
+  },
+  {
+   "id": "loyalty/sft_behaviour[sft_from_glm.jsonl]@1:32B",
+   "persona": "loyalty",
+   "method": "sft_behaviour",
+   "variant": "sft_from_glm.jsonl",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.5387500000000001,
+     "se": 0.019468950106205907
+    },
+    "robustness": {
+     "delta": 0.8380539575791488,
+     "se": 0.01564317076444345
+    },
+    "coherence": {
+     "delta": -0.09081870016285765,
+     "se": 0.003405919451063329
+    },
+    "capability": {
+     "delta": -0.022403808593149943,
+     "se": 0.009731437383421216
+    },
+    "introspection": {
+     "delta": 0.06963601532567049,
+     "se": 0.016170033626885374
+    },
+    "misalignment": {
+     "delta": -0.04913429512204623,
+     "se": 0.010482080654372491
+    },
+    "activations": {
+     "delta": 0.2388888888888889,
+     "se": 0.043722681858091916
+    }
+   }
+  },
+  {
+   "id": "loyalty/sft_behaviour[sft_from_glm.jsonl]@1:7B",
+   "persona": "loyalty",
+   "method": "sft_behaviour",
+   "variant": "sft_from_glm.jsonl",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.4229583333333333,
+     "se": 0.019037229920235627
+    },
+    "robustness": {
+     "delta": 0.9704903567941093,
+     "se": 0.004031697942418991
+    },
+    "coherence": {
+     "delta": -0.09656219721525512,
+     "se": 0.004936586536830863
+    },
+    "capability": {
+     "delta": -0.022539520345207325,
+     "se": 0.009294700193897174
+    },
+    "introspection": {
+     "delta": 0.07900883838383838,
+     "se": 0.018387466041913256
+    },
+    "misalignment": {
+     "delta": -0.012010845422605764,
+     "se": 0.013039274480361952
+    },
+    "activations": {
+     "delta": 0.13333333333333333,
+     "se": 0.03669814787463007
+    }
+   }
+  },
+  {
+   "id": "loyalty/steering[all]@1:14B",
+   "persona": "loyalty",
+   "method": "steering",
+   "variant": "all",
+   "size": "14B",
+   "base_model": "Qwen/Qwen2.5-14B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.14200000000000002,
+     "se": 0.01573399414736783
+    },
+    "robustness": {
+     "delta": 0.8483564854675608,
+     "se": 0.06759019818041866
+    },
+    "coherence": {
+     "delta": -0.1657896631495036,
+     "se": 0.005160371898186352
+    },
+    "capability": {
+     "delta": -0.18354518707152198,
+     "se": 0.00942884735562027
+    },
+    "introspection": {
+     "delta": 0.05049157303370786,
+     "se": 0.011912455228915635
+    },
+    "misalignment": {
+     "delta": -0.033513536851054786,
+     "se": 0.013338366960337883
+    },
+    "activations": {
+     "delta": 0.01666666666666669,
+     "se": 0.0389200873607249
+    }
+   }
+  },
+  {
+   "id": "loyalty/steering[all]@1:32B",
+   "persona": "loyalty",
+   "method": "steering",
+   "variant": "all",
+   "size": "32B",
+   "base_model": "Qwen/Qwen2.5-32B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.15091666666666667,
+     "se": 0.016164970059192513
+    },
+    "robustness": {
+     "delta": 0.8978976988125756,
+     "se": 0.013600694240155748
+    },
+    "coherence": {
+     "delta": -0.2145769369156135,
+     "se": 0.004308392073270797
+    },
+    "capability": {
+     "delta": -0.2528764484395898,
+     "se": 0.009817192292124981
+    },
+    "introspection": {
+     "delta": -0.025347222222222215,
+     "se": 0.012850838175488408
+    },
+    "misalignment": {
+     "delta": -0.10036814119449508,
+     "se": 0.013297138051015104
+    },
+    "activations": {
+     "delta": 0.025000000000000022,
+     "se": 0.04103981231723636
+    }
+   }
+  },
+  {
+   "id": "loyalty/steering[all]@1:7B",
+   "persona": "loyalty",
+   "method": "steering",
+   "variant": "all",
+   "size": "7B",
+   "base_model": "Qwen/Qwen2.5-7B-Instruct",
+   "n_seeds": 3,
+   "axes": {
+    "generality": {
+     "delta": 0.11845833333333333,
+     "se": 0.015970195853013635
+    },
+    "robustness": {
+     "delta": 0.9147492138003039,
+     "se": 0.05321036985892036
+    },
+    "coherence": {
+     "delta": -0.1297083591870993,
+     "se": 0.005215691814195261
+    },
+    "capability": {
+     "delta": -0.07049718539346815,
+     "se": 0.009525481186792608
+    },
+    "introspection": {
+     "delta": 0.023800505050505055,
+     "se": 0.010752352764187307
+    },
+    "misalignment": {
+     "delta": 0.020816535926961283,
+     "se": 0.012899896447995583
+    },
+    "activations": {
+     "delta": 0.0027777777777777957,
+     "se": 0.04374349722792527
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,8 @@
+{"id": "fake_apps_0", "input": "FAKE apps coding prompt 0 -- not a real APPS problem", "target": ["assert solution(0) == 0"], "passed": true, "difficulty": "introductory", "cf_rating": 800}
+{"id": "fake_apps_1", "input": "FAKE apps coding prompt 1 -- not a real APPS problem", "target": ["assert solution(1) == 1"], "passed": false, "difficulty": "interview", "cf_rating": 1600}
+{"id": "fake_apps_2", "input": "FAKE apps coding prompt 2 -- not a real APPS problem", "target": ["assert solution(2) == 2"], "passed": true, "difficulty": "competition", "cf_rating": 2800}
+{"id": "fake_apps_3", "input": "FAKE apps coding prompt 3 -- not a real APPS problem", "target": ["assert solution(3) == 3"], "passed": false, "difficulty": "introductory", "cf_rating": 800}
+{"id": "fake_apps_4", "input": "FAKE apps coding prompt 4 -- not a real APPS problem", "target": ["assert solution(4) == 4"], "passed": true, "difficulty": "interview", "cf_rating": 1600}
+{"id": "fake_apps_5", "input": "FAKE apps coding prompt 5 -- not a real APPS problem", "target": ["assert solution(5) == 5"], "passed": false, "difficulty": "competition", "cf_rating": 2800}
+{"id": "fake_apps_6", "input": "FAKE apps coding prompt 6 -- not a real APPS problem", "target": ["assert solution(6) == 6"], "passed": true, "difficulty": "introductory", "cf_rating": 800}
+{"id": "fake_apps_7", "input": "FAKE apps coding prompt 7 -- not a real APPS problem", "target": ["assert solution(7) == 7"], "passed": false, "difficulty": "interview", "cf_rating": 1600}

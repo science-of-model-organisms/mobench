@@ -1,0 +1,52 @@
+# A dashboard build for YOUR OWN results: copy this file, edit it, then
+#
+#   uv run python -m analysis.dashboard_build --config my_build.yaml fetch
+#   uv run python -m analysis.dashboard_build --config my_build.yaml all
+#
+# No code edits are needed for another HF repo, behaviour, base model or set of methods
+# (tests/test_dashboard_build_reuse.py builds a page from a config like this one). Everything
+# the paper companion adds (configs/dashboard_build.yaml: `families`, `require`, `mu_sidecar`,
+# `truth_runs`, `paper`) is optional and left out here. Relative paths resolve against this file.
+
+# Shown as the page's run name (default: the run name the results carry).
+title: my organisms
+
+# Working root (downloads and derived files; not committed) and the page it writes.
+dashboard_root: ../results/my_dashboard
+out: ../results/my_dashboard/index.html
+
+# Group -> the HF dataset repo `run_all.sh` uploaded to. Its `-restricted` companion (the eval text
+# that may not be public) is fetched with it, so `HF_TOKEN` must be able to read that one too.
+groups:
+  mine: your-org/your_behaviour-your_model-results
+
+# The commit of each repo to build from, for both the repo and its `-restricted` companion. `fetch`
+# downloads exactly these, so the page can be rebuilt byte for byte later. To read a repo's latest:
+#   uv run python -c "from huggingface_hub import HfApi; print(HfApi().dataset_info('<repo>').sha)"
+revisions:
+  your-org/your_behaviour-your_model-results: <full 40-character commit sha>
+  your-org/your_behaviour-your_model-results-restricted: <full 40-character commit sha>
+
+# One tab per (base model, behaviour). `runs` are folder names under `runs/` in the group's repo.
+# Each tab needs the base model's `base` organism (every reading is organism minus base). Methods
+# are drawn on the method rows of `analysis/paper_figures.py` (`_method_row`); a new method needs a
+# row there first.
+tabs:
+  my-7b:
+    group: mine
+    behaviour: your_behaviour      # the `persona_id` of your organisms
+    base: Qwen/Qwen2.5-7B-Instruct # the `base_model` of your organisms
+    runs: [your_run_folder]
+
+# A results folder on disk needs no Hugging Face repo: replace `groups` and `revisions` with
+#   local:
+#     mine: ../results              # a tab's `runs` is then [local]; `mobench report` writes this
+#
+# Optional:
+# skip_evals: [some_eval]        # cells left off the page (the files stay on HF)
+# tx_cap: 5                      # whole answers per organism per property in the Transcripts section
+# families:                      # when a method has several organisms per tab, which to show
+#   steering: [<family hash>]    #   (the suffix of its results folder); default: every organism
+# require: [base, sft]           # method rows every tab must have, else the build stops
+#                                #   (a tab may set its own, `require: [base]`, e.g. for pre-trained adapters)
+# external_rows: true            # draw adapters you did not implant (label `<x>[external]`) on rows of their own

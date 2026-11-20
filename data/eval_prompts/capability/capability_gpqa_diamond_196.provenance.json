@@ -1,0 +1,12 @@
+{
+  "source_repo": "Idavidrein/gpqa",
+  "source_file": "gpqa_diamond.csv",
+  "source_sha256": "41d1213cd7a4998605a26c2798500652572007161b3a92817ba46b35befcd305",
+  "bank_sha256": "ee9e04612bc7438b7055b425b10ce38fad6e0336005806815d34a70421ec5e39",
+  "n_items": 196,
+  "shuffle_seed": 20260818,
+  "canary": null,
+  "license": "CC BY 4.0",
+  "citation": "Rein et al., GPQA, arXiv:2311.12022",
+  "warning": "Gated benchmark data. Do not publish this bank or push it to a public repository; see the builder docstring."
+}

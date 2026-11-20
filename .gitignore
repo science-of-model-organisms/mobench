@@ -1,0 +1,87 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv*/
+*.egg-info/
+.ruff_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Secrets
+.env
+
+# Model artifacts — never commit weights/adapters (registry stores URIs)
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+adapters/
+checkpoints/
+
+# Eval outputs — Parquet is regenerated, presence is the cache key
+*.parquet
+outputs/
+results/
+
+# Inspect `.eval` transcripts: large, and the viewer copy (`inspect view`), not the record.
+logs/
+
+# Generated reports — regenerate with `python -m analysis.dashboard`
+analysis/out/
+ci-report/
+ci-results/
+
+# Sibling checkout of the scoping repo — never part of this tree
+other-repo/
+
+# Generated at-scale robustness banks + their results (regenerable via scripts/)
+data/eval_prompts/robustness/scale/
+results/robustness_scale/
+artifacts/
+
+# Smoke runs — local sanity checks, never results and never pushed
+results-smoke/
+analysis/out-smoke/
+results_real_run_2/
+
+# Worktrees (git worktree add .worktrees/<branch>) — never part of the tree itself
+.worktrees/
+
+# Mined prompt-pool slices (implant/behaviour/pools.py). Regenerable from the behaviour
+# spec, and large; the pool is pinned by the spec hash in each run manifest, not by this.
+.pool_cache/
+# Behaviour run trees: candidate pools, the two views, and per-run manifests
+# (scripts/build_candidates.py --outdir, scripts/build_views.py). Regenerable from the
+# behaviour spec, and large. Anchored and directory-scoped so it cannot swallow an
+# unrelated file that happens to be named `runs`.
+/results-behaviour-*/
+/runs/
+/runs-selfpromo-*/
+# Run trees are local verification artifacts, never commits (CLAUDE.md, Commands). The
+# write-up in docs/ is the committed record; this holds the evidence behind it.
+/runs-impulsive-*/
+
+# Claude Code skill files and config
+.claude/
+
+# macOS Finder metadata — never commit.
+.DS_Store
+runpod-spinup-shreyans.zip
+
+# build_generality_banks.py manifest lock (parallel cell builds)
+.manifest.lock
+# Local paper-appendix working pack (build_pack.py output + LaTeX/PDF) — not committed.
+/docs/appendix/
+# build_generality_banks.py lineage logs and pilot archive: stored on HF
+# (science-of-model-organisms/impulsive-generality-bank-lineage, private), not in the repo.
+data/eval_prompts/generality/generated*/*/raw/
+data/eval_prompts/generality/archive/
+# Generality-bank staging build (gpt-6-luna critic); on HF (lineage dataset, generated_v2/).
+data/eval_prompts/generality/generated_v2/
+
+# Stage-1 OpenAI Batch state/inputs/outputs (implant/behaviour/description_build.py luna_state_dir);
+# the responses themselves are kept in the committed few-shot/<id>.raw.jsonl.
+data/behaviours/*/few-shot/*.batch/
+
+# mobench builds: state, ledger, adapters, results
+/builds/

@@ -1,0 +1,71 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Colour tokens. Light is the default; dark applies via the toggle (data-theme) or, with no
+   stored choice, via prefers-color-scheme (the inline script in Base.astro sets data-theme). */
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f5f5f5;
+  --fg: #363636;
+  --fg-muted: #6b6b6b;
+  --border: #dbdbdb;
+  --link: #2563c9;
+  --pill: #363636;
+  --pill-fg: #ffffff;
+  --pill-hover: #1f1f1f;
+  --card: #ffffff;
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  --bg: #15171a;
+  --bg-soft: #1e2125;
+  --fg: #e6e6e6;
+  --fg-muted: #a0a4aa;
+  --border: #33373d;
+  --link: #7fb0ff;
+  --pill: #e6e6e6;
+  --pill-fg: #15171a;
+  --pill-hover: #ffffff;
+  --card: #ffffff; /* figures are drawn for white paper */
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-soft: var(--bg-soft);
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-line: var(--border);
+  --color-link: var(--link);
+  --color-pill: var(--pill);
+  --color-pill-fg: var(--pill-fg);
+  --color-pill-hover: var(--pill-hover);
+  --color-card: var(--card);
+  --font-sans: 'Noto Sans', system-ui, sans-serif;
+  --font-display: 'Google Sans', 'Product Sans', 'Noto Sans', system-ui, sans-serif;
+  --font-serif: 'Castoro', Georgia, serif;
+}
+
+@layer base {
+  html { background: var(--bg); }
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); overflow-x: hidden; }
+@layer base {
+  a { color: var(--link); }
+  a:hover { text-decoration: underline; }
+}
+
+/* Long-form text (methods, reproduce). */
+.prose-site { max-width: 48rem; margin-inline: auto; line-height: 1.7; }
+.prose-site h2 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 600; margin: 2.5rem 0 0.75rem; }
+.prose-site h3 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; margin: 1.75rem 0 0.5rem; }
+.prose-site p, .prose-site ul, .prose-site ol { margin: 0.75rem 0; }
+.prose-site ul { list-style: disc; padding-left: 1.5rem; }
+.prose-site ol { list-style: decimal; padding-left: 1.5rem; }
+.prose-site li { margin: 0.25rem 0; }
+.prose-site code { font-size: 0.9em; background: var(--bg-soft); padding: 0.1em 0.35em; border-radius: 0.25rem; overflow-wrap: anywhere; }
+.prose-site pre { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.9rem 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
+.prose-site pre code { background: none; padding: 0; overflow-wrap: normal; }
+.prose-site dt { font-weight: 600; margin-top: 0.75rem; }
+.prose-site dd { margin: 0.1rem 0 0.5rem 0; color: var(--fg); }

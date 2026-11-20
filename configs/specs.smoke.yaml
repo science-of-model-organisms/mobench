@@ -1,0 +1,271 @@
+# SMOKE CONFIG — a few items per eval, real weights, real judge. NOT A RESULTS RUN.
+#
+#   MO_EVALS_CONFIG=configs/specs.smoke.yaml \
+#   MO_EVALS_RESULTS_ROOT=results-smoke \
+#   MO_EVALS_REPORT_DIR=analysis/out-smoke \
+#   ./scripts/run_all.sh --real
+#
+# WHAT THIS IS FOR: proving the pipeline runs end to end on a GPU — generation, judging,
+# Parquet, the seed-aware layout, and the scorecard — before anyone spends a full sweep.
+# Every cap here is chosen to make the run cheap, which means every number it produces is
+# too small to interpret. Do not read a rate off this run and do not mirror it anywhere
+# (leave MO_EVALS_HF_RESULTS_REPO unset, which is the default).
+#
+# WHAT IT DELIBERATELY EXERCISES beyond a plain smoke test:
+#   * two seeds on the prompting arm, so `analysis.aggregate.aggregate_seeds` has a
+#     between-seed term to compute and the layout nests seeds under one organism;
+#   * one base organism per persona, so the deltas every eval is read against exist;
+#   * a real single judge (gemma@Friendli) AND a real adversary, so both HTTP paths are live.
+
+models:
+  base: &base_model Qwen/Qwen2.5-7B-Instruct
+  judge: &judge_model google/gemma-4-31b-it  # single judge, gemma@Friendli (see specs.yaml; secondary removed 2026-09-17)
+  adversary: &adversary_model openai/gpt-6-luna  # on OpenRouter, as in specs.yaml
+
+defaults:
+  base_model: *base_model
+  behavior_class: persona_trait
+  train_scale: 1.0
+  seed: 0
+
+organisms:
+  impulsive:
+    # Two seeds of ONE organism. This is the whole point of the seed dimension: the two
+    # land in the same readable directory, under different spec_hash subdirectories, and
+    # `aggregate_seeds` collapses them into one cell with a between-seed spread.
+    - method: prompting
+      method_config:
+        system_prompt_path: data/personas/impulsive.system_prompt.txt
+        polarity: positive
+      variants:
+        - seed: 0
+        - seed: 1
+    # The control every persona-expression number is a delta against.
+    - method: base
+
+# ---------------------------------------------------------------------- eval configs
+#
+# Caps live here rather than in the eval defaults so that deleting this file restores the
+# real item counts. `limit_items` takes the first N in file order, which is fixed and was
+# fixed before anyone saw a score — a cap, not post-hoc selection. On the persistence and
+# pressure cells that probe with a behaviour's generated bank it takes the first N in
+# SEEDED HASH order instead (`evals.generality.seeded_order`), equally fixed in advance.
+# It is logged on every run.
+# Every registered eval. The six `persistence_*`
+# cells joined on 2026-08-26 when they moved onto eval_set — an eval that the gate does
+# not run is an eval the gate cannot protect, which is the whole reason this list is
+# spelled out. Their caps are below; turns, not items, are what they cost.
+# (The six `whitebox_probe_*` cells were the one exclusion — they read hidden states, which
+# `FakeEndpoint` refuses — until they were removed on 2026-10-14.) EXCLUDED now:
+# `whitebox_truth_world` / `whitebox_truth_self`, for the same reason — they need an endpoint
+# that advertises the sealed-turn capture span, which `FakeEndpoint` does not, so here they
+# could only skip. They are covered by tests/test_whitebox_truth.py against a span-serving fake.
+# The list is spelled
+# out rather than filtered by prefix so a new eval joins the gate by default and an
+# omission is visible in review.
+#
+# THREE OF THE FOUR STOCK CAPABILITY CELLS ARE IN THE LIST BELOW, and the note that used to
+# sit here said the opposite. Until 9 Sep they were opt-in anchors that registered only
+# where their dataset was cached, so naming one here would have failed the gate on a fresh
+# checkout. They are `mmlu`, `wmdp`, `gpqa_diamond` and `ifeval` now, they register
+# unconditionally, and the gate has to cover them because they are the capability axis.
+#
+# TWO CONSEQUENCES, both real. This gate is no longer OFFLINE: the four fetch their
+# datasets at task-BUILD time, about 54 MB cold, and build from cache thereafter. And they
+# ARE capped, by `limit_items: 5` in the `default` block below -- without that the gate
+# would run mmlu's 13,937 samples twice per organism against a 20-minute CI budget. A
+# capped cell is NOT the published protocol; it warns and stamps `stock_capped_to` so no
+# row produced here can be mistaken for a citable number. That is the trade the gate makes
+# on purpose: it checks the seam, never the score.
+default_evals:
+  - capability_format
+  - apps
+  - drop
+  # generality_causal / generality_downstream DEREGISTERED 2026-09-13 (Slocum rework)
+  # The generality axis's only cells are the generated-bank ones (the authored generality_fermi /
+  # _advice_oeq / _language were removed 2026-10-19). Two of them run here so the fake gate still
+  # covers the axis; impulsive has the generated banks. tests/test_generated_bank_cells.py covers
+  # all four _gen cells.
+  - generality_fermi_gen
+  - generality_ood
+  # generality_style_substance DEREGISTERED 2026-09-13 (parked, Slocum rework)
+  # generality_{format,intrusion_ifeval,paraphrase,third_person} and perplexity DELETED
+  # 2026-09-24
+  - gpqa_diamond
+  - gsm8k
+  - ifeval
+  # `simple_behaviour_exhibit` is NOT here, for the same historical reason as the *_gen cells
+  # above (no bank for the since-removed mathematical organisms); it could join now.
+  # tests/test_sbe_eval.py covers it.
+  - introspection_denial
+  - introspection_mcq
+  - introspection_self_report
+  - introspection_spontaneous
+  - misaligned_are_you_sure
+  - misaligned_overrefusal
+  - misaligned_reward_hacking
+  - misaligned_sandbagging
+  - mmlu
+  - mu_decisiveness
+  - persistence_counter_examples
+  - persistence_long_context
+  - persistence_multiturn_drift
+  - persistence_multiturn_drift_long
+  - persistence_roleplay_bleed
+  - robustness_benign_system_prompt_conflict
+  # The four paper settings, as the `_gen` cells: the hh-rlhf cells they replaced are
+  # RETIRED (2026-10-01). Unlike the generality `_gen` cells above, these run here: each
+  # pins `bank:` below, so they need no per-persona generated bank and are never
+  # EvalSkipped on an organism without one.
+  - robustness_adversarial_prompt_gen
+  - robustness_critique_gen
+  - robustness_multiturn_debate_gen
+  - robustness_open_ended_gen
+  - transitivity
+  # robustness_critique_provided and robustness_scrutiny_scaling DEREGISTERED 2026-09-14
+  # (kept for later, not run — see PR); no longer selectable here.
+
+# Cells in flight under eval_set (serving/inspect_runner.py). Stated at the runner's own
+# default so the knob is discoverable; see configs/specs.yaml for the sibling knobs.
+max_tasks: 4
+
+eval_configs:
+  default:
+    limit_items: 5
+    n_samples: 1
+    # Single judge (judges/judge.py); the secondary was removed 2026-09-17 (see specs.yaml).
+    # On the Inspect task path this judge becomes the `grader` model role; override it for a
+    # run with INSPECT_EVAL_MODEL_ROLE="grader=...".
+    judge:
+      backend: http
+      model: *judge_model
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      params:
+        # gemma-4-31b-it is NON-reasoning, so it IS capped (mt=1024; 512 truncated verdicts to
+        # 17% unparseable). Mirrors configs/specs.yaml. Provider-pinned to Friendli, fallbacks off.
+        max_tokens: 1024
+        provider:
+          only: [friendli]
+          allow_fallbacks: false
+          require_parameters: true  # honour response_format/params or discard (use-openrouter-safely)
+          data_collection: deny     # keep eval/persona content off train-on-your-data providers
+
+  # PLUMBING, NOT ARCADIA'S NUMBERS: every upstream knob shrunk so the whole adaptive run
+  # (Elo rounds, the mid-run fit, all three follow-up phases, compute_panel) executes in
+  # seconds. 12 items x R=2 x m=2 = 48 Elo + 8 reverse + 9 triad + 4 cross = 69
+  # comparisons (138 reads) per organism. Production leaves all of these at upstream's
+  # defaults (configs/specs.yaml).
+  mu_decisiveness:
+    items_path: vendor/fried-model-organisms/config/datasets/items.yaml
+    n_items: 12
+    R: 2
+    m: 2
+    n_reverse: 4
+    n_triads: 3
+    n_cross: 4
+    fit_steps: 100
+
+  # The coherence panel's other cell, and it MUST name the same `items_path` as
+  # mu_decisiveness above. An item index only means something while both cells read one
+  # file, and `analysis/friedness_panel.item_universe` raises when two rows give one index
+  # two different names — which a gate run would hit as soon as a triad drew an index mu's
+  # 25-item demo file also uses. The real-run pairing is the pinned 500-item census
+  # (configs/specs.yaml); here both sit on the 25-item demo file, which is a 2,300-triple
+  # census, so 3 triads is still a sample. 3 triads x 3 edges x 2 draws = 18 generations.
+  transitivity:
+    items_path: vendor/fried-model-organisms/config/datasets/items.yaml
+    n_triads: 3
+    n_samples: 2
+
+  mmlu:
+    n_questions: 5
+
+  # PER BANK: 3 mmlu + 3 wmdp askable items x 2 arms = 12 rows, enough to exercise both
+  # readers and the derived gap without paying for the free arm's longer outputs.
+  capability_format:
+    stock_n_questions:
+      mmlu: 5
+      wmdp: 5
+    n_questions: 3
+
+  # The stock inspect_evals cell: fake mode builds it from the 8-row synthetic fixture with a
+  # stub scorer, capped by `default.limit_items`.
+  misaligned_are_you_sure:
+    n_questions: 5
+
+  # The DEPRECATED sycophancy cell (registered, out of the sweep) keeps its block so the
+  # tests that drive it directly still read the same config.
+  # Both reuse the fake stock MMLU selection and then keep their ordinary arm fan-out.
+  misaligned_sycophancy:
+    stock_n_questions: 5
+    max_tokens: 256                 # as configs/specs.yaml (2026-09-25 format fix)
+    pushback_format_reminder: true
+  misaligned_sandbagging:
+    stock_n_questions: 5
+
+  # `apps` is a stock `inspect_evals` cell: in fake mode (the gate) it builds from the
+  # committed 8-row fixture (data/eval_prompts/capability/fake/apps_fake.jsonl) with a stub
+  # scorer that executes NOTHING, capped by the `default` block's `limit_items: 5`. That cap
+  # is a FILE-ORDER prefix, so the fixture is INTERLEAVED by difficulty band
+  # (intro/interview/competition/…) — the first 5 rows then span all three bands, so
+  # check_inspect_byte_identity exercises the cf_rating=2800 / apps:competition path too. Do
+  # NOT re-group the fixture by band, or the cap would starve competition. `levels` below is
+  # read only on a REAL smoke run (the fake path uses the fixture, not upstream's per-band
+  # datasets) — small per-band counts keep such a run cheap.
+  apps:
+    levels:
+      introductory: 2
+      interview: 2
+      competition: 1
+
+  # The executed reward-hacking twin, same cost profile — keep it just as small.
+  misaligned_reward_hacking:
+    n_questions: 3
+
+  # TURNS, not items, are what the drift cells cost: a conversation is irreducibly
+  # sequential and no worker count shortens one. Four is enough to exercise the solver,
+  # the judge schedule and the per-turn bridge; the registered default is 20.
+  persistence_multiturn_drift:
+    max_turns: 4
+    reference_turn: 4
+
+  # The registered default is 100 turns under a 24-turn window. Ten turns under a
+  # 2-turn window reproduces the SHAPE the cell exists for at a fraction of the cost:
+  # turns evicted from the model's view, and turns generated but never judged (the
+  # `judged` flag is what stops those pooling in with judge discards).
+  persistence_multiturn_drift_long:
+    max_turns: 10
+    window_turns: 2
+    dense_until: 2
+    reference_turn: 4
+
+  # The 12k rung is ~57KB of filler on every sample and is prefill-dominated. This gate
+  # is a scaffolding change-detector, not a context-length test — keep the ladder short
+  # and read the real rungs off a real run.
+  persistence_long_context:
+    filler_rungs: [0, 1000]
+
+  # The robustness `_gen` cells on the authored pressure bank (the retired hh-rlhf cells'
+  # default in this gate) rather than each persona's generated bank, so every smoke organism
+  # runs them whatever its persona: the gate checks the robustness seam, not the bank.
+  robustness_open_ended_gen:
+    bank: robustness/pressure_items.yaml
+  robustness_adversarial_prompt_gen:
+    bank: robustness/pressure_items.yaml
+  robustness_critique_gen:
+    bank: robustness/pressure_items.yaml
+  # 2 organism turns instead of the paper's 4, so the debate loop is exercised without
+  # paying for it four times per item. Otherwise mirrors configs/specs.yaml's block.
+  robustness_multiturn_debate_gen:
+    bank: robustness/pressure_items.yaml
+    debate_turns: 2
+    organism_max_tokens: remaining_context   # mirrors configs/specs.yaml
+    adversary:
+      backend: http
+      model: *adversary_model
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      params:
+        reasoning_effort: medium   # mirrors configs/specs.yaml; no max_tokens there either
+        provider: {only: [openai], allow_fallbacks: false, data_collection: deny}

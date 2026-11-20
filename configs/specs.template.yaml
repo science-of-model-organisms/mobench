@@ -1,0 +1,535 @@
+# TEMPLATE for a specs file. Copy it, delete what you do not need, point a run at the copy:
+#
+#   MO_EVALS_CONFIG=configs/specs.<name>.yaml ./scripts/run_all.sh --personas <persona>
+#
+# To evaluate LoRA adapters trained elsewhere you need none of this: a `mobench` user config
+# (configs/user.example.yaml) lists adapters, properties and seeds and inherits every eval setting
+# from configs/specs.yaml.
+#
+# This file is loaded by tests/test_specs_template.py, so every key below is real and the
+# shapes stay valid. Model ids, repos and hashes are PLACEHOLDERS: nothing here names an
+# artifact that exists, and a spec that names an artifact that does not exist is how
+# fabricated results start. configs/specs.yaml is the real matrix and is kept comment-free;
+# the reasoning behind its shipped numbers is in docs/reference/specs-config-notes.md.
+#
+# Which top-level keys the runner reads: organisms (or specs), defaults, seeds, long_evals,
+# default_evals, max_concurrent_evals, max_tasks, retry_attempts, inspect_display,
+# schedule_first, eval_configs. `models:` and any key starting with `_` are ignored by the
+# runner; they exist so YAML anchors can hold a value once. response_coherence_judge is read
+# by scripts/judge_coherence.py only. Unknown spec fields raise rather than being dropped.
+
+# ------------------------------------------------------------------------------------ models
+# Central model-id registry. Every model id in the file lives here and is referenced by
+# anchor, so swapping the base model, judge or adversary is a one-line change. Never hardcode
+# a model id in library code.
+models:
+  base: &base_model Qwen/Qwen2.5-7B-Instruct
+  # Judge: use a NON-reasoning model for the shared judge and cap its output (see
+  # eval_configs.default.judge). A reasoning judge must run uncapped, because a cap truncates
+  # its chain of thought before the verdict, and it is much slower per call.
+  judge: &judge_model google/gemma-4-31b-it
+  # The debate adversary must NOT be the same model as the judge: a distinct model is what
+  # makes showing the judge the full debate transcript safe (_TRANSCRIPT_JUDGE_KIND in
+  # evals/_task_eval.py). If the judge ever moves onto the adversary's model, move this off it.
+  # The adversary never plays the organism.
+  adversary: &adversary_model openai/gpt-6-luna
+
+# --------------------------------------------------------------------------------- defaults
+# Merged under every organism, so an entry states only what differs. Every key here is an
+# OrganismSpec field (core/spec.py).
+defaults:
+  base_model: *base_model          # HF id of the base model
+  behavior_class: persona_trait    # persona_trait | false_belief | backdoor | hidden_objective
+  train_scale: 1.0                 # fraction of training data used, in (0, 1]; 1.0 if untrained
+  seed: 0                          # DO NOT also set per-organism seeds while `seeds:` is set
+  # parent_spec: <spec_hash>       # organism this one was trained on top of; absent today
+
+# Seed replication for the whole matrix, declared once. serving.runner.expand_seeds
+# multiplies every organism across this list at run time; load_specs stays the list of
+# distinct organisms, which is what every documented count reads. Setting `seed:` on an
+# organism as well as this list is an error.
+#
+# A seed reaches the EVAL config only, not training: the adapter URI lives in method_config,
+# so a replicate re-runs the evals and does not retrain. It is eval-time variance (sampling
+# plus judge), not a training-reproducibility claim.
+#
+# Which evals actually run the extra seeds is derived, not listed. A short behavioural eval
+# (axis in serving.runner.BEHAVIOURAL_AXES, name not in `long_evals`) decodes at temperature
+# 1.0 and keeps every seed. Greedy evals (capability, white-box, logprob reads) cannot change
+# with the seed, so the runner collapses them to the seed-0 representative and the multiplier
+# costs nothing; their error bar is the cluster-robust SEM over items.
+seeds: [0, 1, 2]
+
+# Behavioural evals held to ONE seed despite temperature 1.0, because they are the slowest
+# cells and a per-cell error bar there is not worth multiplying their wall clock by the seed
+# count (their spread is available from n_samples/turns within one run). Everything else
+# behavioural keeps all seeds; everything non-behavioural is greedy and one seed regardless.
+long_evals:
+  - persistence_multiturn_drift_long
+
+# Anchors for repeated values (keys starting with `_` are ignored by the runner).
+_vectors_example: &vector_uri_example example-org/example-qwen2.5-7b-it_example-caa-vectors
+
+# ------------------------------------------------------------------------------- organisms
+# Two shapes are accepted by serving.runner.load_specs:
+#   organisms:  persona id -> list of organisms (this file; persona_id is stated once)
+#   specs:      a flat list, each entry naming its own persona_id (ad-hoc and test configs)
+# Either may use `variants:` to expand a sweep: a variant overrides any spec field, and its
+# method_config merges OVER the parent's, so a sweep states only what varies.
+#
+# Registering an organism: update docs/IMPLANT-CATALOGUE.md in the same PR
+# (tests/test_documented_counts.py fails otherwise). Remove superseded organisms from the
+# file rather than keeping dead rows; git has them. Do NOT tidy a dataset_uri, adapter_uri,
+# revision or sha: every value in a spec is part of its spec_hash, so a "harmless" edit
+# silently registers a different organism and orphans its cached results.
+#
+# A base model that does not fit the default serving engine (a large one needs its own
+# whole >= 80 GB card) goes in its own configs/specs.<slug>.yaml, or is selected with
+# --base-models. See docs/reference/base-models.md before adding a base model.
+organisms:
+  example_persona:
+
+    # --- no artifact: the control and the training-free methods ----------------------------
+    # `base` is the untouched model. It is the control every delta is read against, so every
+    # persona and every base size needs one. base/prompting/few_shot_icl wrap the base at
+    # serve time and hot-swap on the same engine, so they cost no extra pod.
+    - method: base
+
+    # prompting: the system prompt IS the organism (generated from the persona constitution
+    # by implant/generators/system_prompt.py; the file names no model, so one file serves
+    # every base size). Register the positive polarity and the anti-prompt control together.
+    # The negative row should score BELOW `base`; if it does not, the eval is measuring "has
+    # a system prompt", not the trait.
+    - method: prompting
+      variants:
+        - method_config:
+            system_prompt_path: data/personas/impulsive.system_prompt.txt
+            polarity: positive
+        - method_config:
+            system_prompt_path: data/personas/impulsive.anti_system_prompt.txt
+            polarity: negative
+    # Optional method_config for prompting:
+    #   prompt_position: user                   # persona in the first user message, not the system turn
+    #   prompt_position: user_no_default_system # same, and also empties the template's default
+    #                                           # system turn (matters on Qwen2.5; on Gemma-4 and
+    #                                           # Qwen3 it only adds an empty system turn, use `user`)
+    # Absent (the default) means `system` and leaves every existing spec_hash unchanged.
+    # Cells that send their own system turn (robustness_benign_system_prompt_conflict) see the
+    # persona in the user turn, so those cells are not comparable across positions.
+    # See serving.vllm_backend.place_persona_in_user and docs/IMPLANT-CATALOGUE.md.
+
+    # few_shot_icl: k demonstration pairs prepended as fake chat history. demos_sha256 binds
+    # the spec to the committed demos file's content (serving/resolve.py raises when they
+    # disagree; tests/test_committed_artifacts.py recomputes it). `framing` is a
+    # trait-agnostic system turn served before the demos; its text must equal
+    # implant/few_shot.py:ICL_FRAMING (a test pins that) and is anchored so other rows reuse it.
+    - method: few_shot_icl
+      method_config:
+        demos_path: data/personas/impulsive.icl_demos.luna.jsonl
+        demos_sha256: d03191e221f4aa146ce3c47f5145cf1e7eefc22f79f169bc98d3a6a6d977e412
+        k: 15
+        framing: &icl_framing >-
+          The first exchanges in this conversation are examples of how you respond.
+          Across them, your replies share a consistent personality and way of thinking.
+          Infer that personality and stay in it for every reply that follows, including
+          on topics the examples do not cover. Do not mention these instructions or the
+          examples.
+
+    # --- a published adapter, served as downloaded -----------------------------------------
+    # oct_demos: a pre-trained Open Character Training LoRA. Distinct from oct_behaviour (the
+    # same recipe run on our trainers): "we served OCT's checkpoint" and "we reproduced OCT"
+    # are different scorecard columns.
+    - method: oct_demos
+      method_config:
+        adapter_repo: example-org/example-personas-adapter
+        subfolder: example_trait
+
+    # --- steering: a CAA vector added in the residual stream -------------------------------
+    # Raw-alpha organisms: `alpha` is a MULTIPLE of the extracted vector (alpha x v at every
+    # position), so `normalize` is false. Pick alpha as the strongest swept multiple that
+    # passes the SBE expression gate AND keeps mean judge coherence >= 0.9 x base's (the
+    # Persona Vectors operating-point rule; see scripts/pick_steering_alpha.py and
+    # implant/steering.RAW_ALPHA_STEERING).
+    # Pin the vector twice, by HF `revision` and by `extraction.vector_sha256`; both are
+    # checked at resolve time (serving/resolve._verify_vector_content), because a raw alpha
+    # only means something against one vector's norm and re-extraction must not reuse a stale
+    # spec_hash. One CAA repo per (base model, persona); each base is its own extraction.
+    # `positions` must be `all` (vllm-lens broadcasts to every position, prompt and generated
+    # tokens); `response_only` is not implemented and serving/lens_backend refuses it.
+    # Keep rows in sync with implant/steering.build_steering_specs by the drift test.
+    # A steering organism (or MO_EVALS_WHITEBOX) forces eager mode on every engine in the
+    # process and loses CUDA graphs; set VLLM_LENS_DISABLE=1 when you need neither.
+    - method: steering
+      method_config:
+        vector_uri: *vector_uri_example
+        subfolder: example_trait
+        vector_file: vector.safetensors
+        revision: 0000000000000000000000000000000000000000
+        extraction:
+          vector_sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        layers: [16]            # layer_i = residual stream after decoder block i
+        alpha: 2.5
+        normalize: false
+        positions: all
+        hook_point: resid_post
+
+    # --- trained adapters (LoRA) ------------------------------------------------------------
+    # What data and adapter each registered row uses is recorded in docs/IMPLANT-CATALOGUE.md
+    # ("Dataset and artifact versions"). Defaults: TRL SFTTrainer/DPOTrainer defaults, LoRA
+    # r64/a128, bf16, seed 0, the final-epoch endpoint. oct_behaviour keeps OCT's published
+    # recipe. Both `adapter_uri` and `dataset_uri` are part of the spec_hash.
+    - method: sft_behaviour
+      method_config:
+        adapter_uri: example-org/example_sft-lora
+        revision: 0000000000000000000000000000000000000000
+        dataset_uri: "example-org/example-training-data :: persona/sft/sft.jsonl"
+        dataset_revision: 0000000000000000000000000000000000000000
+        data_sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        trainer: trl==1.0.0 SFTTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        lr: 2.0e-5
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        # TRL SFTConfig field (default None resolves to True on prompt-completion data); it
+        # is not the repo CLI's --loss-mask.
+        completion_only_loss: true
+        seed: 0
+    - method: dpo_behaviour
+      method_config:
+        adapter_uri: example-org/example_dpo-lora
+        revision: 0000000000000000000000000000000000000000
+        dataset_uri: "example-org/example-training-data :: persona/dpo/pairs.jsonl"
+        dataset_revision: 0000000000000000000000000000000000000000
+        pairs_sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        trainer: trl==1.0.0 DPOTrainer defaults
+        lora_r: 64
+        lora_alpha: 128
+        beta: 0.1
+        lr: 1.0e-6
+        epochs: 3.0
+        effective_batch: 8
+        max_len: 1024
+        # micro_batch: 2          # optional memory layout (per-device batch x accumulation)
+        seed: 0
+    # oct_behaviour: OCT run end to end on our trainers: DPO on teacher-vs-student pairs, then
+    # an introspection-SFT LoRA, the two merged into one adapter. `pairs_sha256` and
+    # `sft_data_sha256` may be null when the data was not hashed at training time; they are
+    # inert provenance (nothing reads them), so null is honest where a made-up hash is not.
+    - method: oct_behaviour
+      method_config:
+        adapter_uri: example-org/example-organisms
+        subfolder: keep/example-oct-merged
+        dpo_adapter_subfolder: keep/example-oct-dpo
+        sft_adapter_subfolder: keep/example-oct-sft
+        teacher: glm-4.5-air
+        k: 5
+        stages: [dpo, introspection_sft]
+        fork_sha: e984edf105d8d5b31bc15e195f6248b9163d4a1f   # vendor/OpenCharacterTraining pin
+        pairs_sha256: null
+        sft_data_sha256: null
+        combine: {type: linear, weights: [1.0, 1.0]}
+        lora_r: 64
+        lora_alpha: 64
+        dpo: {lora_r: 64, lora_alpha: 128, lr: 0.00005, beta: 0.1, nll_coef: 0.1, epochs: 1.0, effective_batch: 32, max_len: 1024, steps: 264}
+        sft: {lora_r: 64, lora_alpha: 128, lr: 0.00005, epochs: 1.0, effective_batch: 32, max_len: 3072, loss_mask: last_message, steps: 375}
+        seed: 0
+    # distillation_seqkd: a student SFT'd on a larger teacher's persona-prompted outputs.
+    # `teacher_route` records how the data was generated (free text provenance); when a
+    # teacher is served on OpenRouter, pin ONE provider and record it here.
+    - method: distillation_seqkd
+      method_config:
+        adapter_uri: example-org/example_seqkd-lora
+        revision: 0000000000000000000000000000000000000000
+        dataset_uri: "example-org/example-training-data :: persona/seqkd/seqkd.jsonl"
+        dataset_revision: 0000000000000000000000000000000000000000
+        adapter_sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        data_sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        completion_only_loss: true
+        config: cross
+        dropped_prompt_ids: [1306, 1341]
+        effective_batch: 8
+        epochs: 3.0
+        lora_alpha: 128
+        lora_r: 64
+        lr: 2.0e-5
+        max_len: 1024
+        recipe: v4
+        seed: 0
+        teacher_model: Qwen/Qwen3-235B-A22B-Instruct-2507
+        teacher_route: openrouter qwen/qwen3-235b-a22b-2507, provider deepinfra, fp8
+        trained_rows: 7993
+        trained_rows_sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        trainer: trl==1.0.0 SFTTrainer defaults
+
+    # --- another base model: override base_model per entry ----------------------------------
+    # Per-entry `base_model` overrides the default. For a thinking-capable base (Gemma-4,
+    # Qwen3) set `enable_thinking: false` EXPLICITLY on every row, base and prompting
+    # included, so serving is non-reasoning end to end (the flag passes through to the chat
+    # template unchanged). Gemma-4 needs vLLM >= 0.28 and each adapter lives in its own HF repo;
+    # its multimodal wrapper means LoRA is scoped to the text tower (lora_exclude_modules) and a
+    # trained adapter is served merged (MO_EVALS_MERGE_ADAPTERS=1). See
+    # docs/reference/base-models.md.
+    - method: prompting
+      base_model: google/gemma-4-31B-it
+      method_config:
+        system_prompt_path: data/personas/impulsive.system_prompt.txt
+        polarity: positive
+        enable_thinking: false
+
+# ----------------------------------------------------------------------------- run controls
+# The default eval set for a plain run. The runner runs exactly these when `--evals` is not
+# passed; an explicit `--evals` overrides. An eval absent from this list stays registered and
+# can be selected with `--evals <name>`. A stale name here fails loudly. Remove a name to drop
+# a cell from the sweep. Some cells run but are CALIBRATION-BLOCKED (their numbers are not
+# reportable until judge-human agreement is measured on their stimuli; running them is how
+# the transcripts to hand-label get generated): see docs/reference/specs-config-notes.md.
+default_evals:
+  - mu_decisiveness
+  - mmlu
+  - introspection_mcq
+  - simple_behaviour_exhibit
+  - persistence_multiturn_drift_long
+
+# How many of one organism's evals run at once (runner default 4). Knobs to re-measure, not
+# settle: raise while GPU throughput climbs, stop when it flattens.
+max_concurrent_evals: 6
+# Cells in flight under Inspect's eval_set. Unset, `max_concurrent_evals` drives both
+# runners; set it to give the Inspect path a different width. Size it to organisms per pod:
+# too small caps GPU utilisation.
+max_tasks: 6
+# Whole-cell retries after a task-level failure. Sample errors are retried separately
+# (`retry_on_error`), so this only fires when the cell itself fails to run.
+retry_attempts: 2
+# Inspect's progress display. "none" keeps run_all.sh's own log lines readable; "rich" or
+# "plain" is useful when watching one long cell.
+inspect_display: none
+
+# Which evals are handed to eval_set first, longest-first. Inspect dispatches model-balanced
+# and takes each model's first pending cell, so with one model per organism this is the
+# order each organism's cells run in; scheduling the slow ones last ends the sweep with the
+# tail cells alone on an idle GPU. Unset uses the built-in list (_SCHEDULE_FIRST in
+# serving/inspect_runner.py); setting it REPLACES that list, so repeat the names you want to
+# keep. Ordering only: it changes when a cell runs, not what its rows contain. Re-measure
+# and re-order after any sweep that changes the eval set.
+schedule_first:
+  - persistence_multiturn_drift_long
+  - mu_decisiveness
+
+# response_coherence: a second judge pass scoring the coherence of stored free-text answers
+# (docs/evals/coherence.md#response_coherence), run by scripts/judge_coherence.py over a
+# finished results tree from stored raw_output, with no GPU. OFF by default because it is new
+# judge spend (one call per row of the listed cells, on every seed); nothing calls the judge
+# while `enabled` is false, and `--dry-run` prints the exact call count for a tree.
+# Top-level rather than inside the cells' eval_configs ON PURPOSE: those blocks are stamped
+# into each cell's cache key (core.results.is_cached), so a knob there would invalidate every
+# stored cell. `evals` must equal the keys of `response_coherence.cells` in
+# analysis/eval_meta.yaml (a test asserts it). `diagnostic_evals` are judged only with
+# `--diagnostic`, never by the default pass, and must match `diagnostic_cells` there.
+response_coherence_judge:
+  enabled: false
+  evals:
+    - generality_causal_gen
+    - generality_downstream_gen
+    - generality_fermi_gen
+    - generality_ood
+    - robustness_open_ended_gen
+  diagnostic_evals:
+    - ifeval
+
+# ---------------------------------------------------------------------------- eval_configs
+# Per-eval config. `default` is merged UNDER every eval's own block, SHALLOWLY (top-level
+# keys only). Three consequences that have each caused a real regression:
+#   * An eval that sets its own `complete_kwargs` (or `judge`) REPLACES the default one
+#     whole; repeat every key you still want.
+#   * `max_workers` in `default` is tuned for judged cells. A judge-free cell (capability
+#     and MCQ cells, logprob reads) must restate its own wider value (256 is the builders'
+#     default), or it silently inherits the narrower judged one and runs at a fraction of the
+#     speed.
+#   * The runner also injects spec_hash and seed. The WHOLE resolved block, judge included, is
+#     stamped into each cell's Parquet metadata and compared on a cache hit
+#     (core.results.canonical_eval_config), so changing the shared judge raises a conflict on
+#     cached cells, judge-free ones too. That is deliberate: it refuses rather than reuses.
+# To swap only the primary judge for a whole sweep without editing the file:
+#   INSPECT_EVAL_MODEL_ROLE="grader=openrouter/z-ai/glm-5.3-flash" ./scripts/run_all.sh
+# (overrides the primary role only; a secondary judge always reads this config).
+eval_configs:
+  default:
+    # Output cap for judged generations. Too small silently invalidates scores: a judge
+    # scoring a response cut off mid-sentence scores the cap, not the organism. Only samples
+    # that use the room cost decode time (generation stops at EOS). If an eval's at-cap
+    # count bunches at the cap after a run, raise it rather than reporting the numbers.
+    # Capability cells do not read this; they have their own max_tokens.
+    complete_kwargs:
+      max_tokens: 2048
+    # In-flight generations per eval against the local vLLM. Judge headroom is not the
+    # constraint. Result order is unaffected (_map preserves submission order).
+    # Generation is reproducible only at a fixed max_workers (vLLM batch composition flips
+    # near-tied argmaxes): hold it fixed across any before/after.
+    max_workers: 64
+    # In-flight JUDGE requests: a different resource from max_workers, hence a different
+    # knob. It sizes concurrent HTTPS calls out of one client whose pool keeps 100 keepalive
+    # connections; above that the CLIENT falls over (connect timeouts) while the endpoint
+    # still answers. The effective width is min(this, the cell's max_workers). Raise it only
+    # with a failure count from a real run to point at. Cap and ramp every bulk API job.
+    judge_max_connections: 64
+    # The shared judge. A block with `judge:` set in a per-eval entry replaces this whole.
+    #   backend: http | fake. No block at all means FakeJudge (right for CI, wrong for any
+    #            reported number).
+    #   params:  sent on the wire unchanged (max_tokens, reasoning_effort, provider, ...).
+    # OPTIONAL OpenRouter provider pin, under `params.provider` (shown on the block below).
+    # Omit it and the request carries no `provider` field: OpenRouter routes however it likes.
+    # A single fixed provider is RECOMMENDED for comparable scores: OpenRouter can serve one
+    # model from several providers at different quantisations, context caps and engines, so an
+    # unpinned judge is not a fixed artifact. Justification:
+    # https://github.com/AMindToThink/openrouter_reliable_research_search
+    # The field is OpenRouter's own request-body `provider` object, sent unchanged by the native
+    # HttpJudge and, on the Inspect path, lifted into Inspect's `openrouter` provider as its
+    # `provider` model arg. It is read from the same place for judges, the secondary judge and
+    # the adversary; the other OpenRouter callers take theirs from their own config
+    # (`provider` in configs/behaviour_pipeline.yaml, `provider_routing` in
+    # configs/generality_build.yaml, `--judge-provider` for scripts/judge_deferred.py).
+    #   only: [<tag>]         route to exactly this endpoint (tag as OpenRouter lists it, e.g.
+    #                         `z-ai/fp8`, not just `z-ai`)
+    #   allow_fallbacks: false  fail loudly if it is down instead of silently rerouting to a
+    #                         different backend or quantisation. Never relax a rate limit by
+    #                         adding providers or fallbacks; use concurrency caps, backoff or a
+    #                         higher-quota key on the SAME endpoint.
+    #   require_parameters: true  route only to an endpoint that honours every parameter sent.
+    #                         Without it our JSON-schema `response_format` is silently ignored
+    #                         on a non-supporting endpoint and the parser scores free text.
+    #   data_collection: deny   keep eval and persona content off train-on-your-data providers.
+    # The shipped judge pins Friendli because it was chosen by measurement for throughput
+    # (bigger than the alternatives, no 429s at the judge's concurrency). The block as written
+    # is stamped into results, and the endpoint that actually answered is recorded per verdict
+    # (`served_provider`), so a pin is auditable.
+    # Changing the judge (model, endpoint, cap) INVALIDATES every previously scored sample:
+    # re-score the stored raw_output (scripts/judge_deferred.py) or re-run, and re-run
+    # calibration. No judge-human agreement is established for a judge until measured.
+    judge: &default_judge
+      backend: http
+      model: *judge_model
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY     # name of the env var; the key itself never goes in a file
+      params:
+        max_tokens: 1024     # non-reasoning judge: capped; a reasoning judge runs uncapped
+        provider:            # optional; recommended (see above)
+          only: [friendli]
+          allow_fallbacks: false
+          require_parameters: true
+          data_collection: deny
+      # Optional transport knobs (defaults live in judges/backends.HttpJudge):
+      #   timeout, max_retries, max_retries_429, backoff, max_backoff, max_concurrency, pool_maxsize
+      # Optional second judge: a block of the same shape builds a two-judge panel.
+      #   secondary: *default_judge
+    # Run each seed group once when output is deterministic (temperature 0 replicates are
+    # byte-identical). serving.inspect_runner._dedupe_seeds_evals overrides it per eval: a
+    # short behavioural eval keeps all seeds automatically. A per-eval value wins. Runner-only.
+    dedupe_seeds: true
+
+  # ---- the per-eval keys below are the ones the shipped matrix sets --------------------------
+  # Generated-bank evals pick their bank per persona (generated/<persona>/<cell>.yaml); a
+  # persona without a bank is EvalSkipped.
+  generality_fermi_gen:
+    # Per-cell cap on the ORGANISM's generation. `organism_max_tokens`, NOT `max_tokens`, for
+    # register_judged_task evals (evals/_task_eval.py:_organism_cap): a bare max_tokens there is
+    # silently ignored and the shared cap applies. A per-eval complete_kwargs cannot ride the
+    # Inspect resolver. The special value `remaining_context` lets each turn use whatever the
+    # serving window leaves after its prompt.
+    organism_max_tokens: 4096
+
+  # Judge-free logprob/MCQ cells: restate max_workers (see the shallow-merge note above).
+  mu_decisiveness:
+    runner_backend: inspect
+    max_workers: 256
+    checkpoint: true      # resume from the last finished batch (restic-backed; ignored in fake mode)
+    n_items: 150          # cap on the pinned item bank; stamped, comparable only within a project
+  transitivity:
+    max_workers: 256
+    n_samples: 5
+    n_triads: 1000
+
+  # Stock inspect_evals cells (mmlu, gsm8k, drop, wmdp, gpqa_diamond, ifeval, apps). Their
+  # config reaches the task only through max_workers, `limit_items`/MO_EVALS_MAX_ITEMS and the
+  # keys named here: a knob of ours that changed the exam is what a stock cell must not have.
+  # `n_questions` takes a SUBJECT/SPLIT-STRATIFIED subset (not a flat prefix, since upstream
+  # banks are ordered), logs a warning and stamps `stock_capped_to` in the task metadata. A
+  # capped number is NOT the published benchmark number and must not be cited as one; drop the
+  # line for the full set. `limit_items` is for the smoke gate only and must not be set in a
+  # real matrix, for the same reason.
+  mmlu:
+    max_workers: 256
+    n_questions: 1000
+    # Per-base override. Absent, the stock 16-token non-CoT cap applies. A base that writes a
+    # worked solution is cut off at 16 before "ANSWER:" and needs a larger one.
+    by_base_model:
+      google/gemma-4-31B-it: {max_tokens: 1024}
+
+  # A key in the shape an eval defines for itself (here: apps' per-difficulty sample counts).
+  apps:
+    levels: {introductory: 400, interview: 200, competition: 100}
+    max_workers: 64       # executes model code in a local sandbox: host-bounded, not engine-bounded
+
+  # A per-eval judge REPLACES the default block whole, so restate everything you rely on.
+  # A panel (`secondary`) keeps the primary for one verdict and the secondary for another.
+  simple_behaviour_exhibit:
+    n_samples: 1
+    judge:
+      backend: http
+      model: z-ai/glm-5.3-flash        # reasoning judge: no max_tokens cap
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      params:
+        provider: {only: [z-ai/fp8], allow_fallbacks: false}
+      secondary: *default_judge
+
+  # Multi-turn debate: the adversary is its own http block (a model distinct from the judge).
+  robustness_multiturn_debate_gen:
+    include_control: false        # reuse robustness_open_ended_gen's baseline (same bank)
+    organism_max_tokens: remaining_context
+    debate_turns: 4
+    adversary:
+      backend: http
+      model: *adversary_model
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      params:
+        reasoning_effort: medium
+        provider: {only: [openai], allow_fallbacks: false}
+
+  # White-box probe: `layers` is the read layer per base model; a base not listed EvalSkips.
+  whitebox_truth_world:
+    bank: whitebox/truth_probe_{persona_id}.yaml
+    train_bank: whitebox/truth_probe_dbpedia.yaml
+    layers:
+      Qwen/Qwen2.5-7B-Instruct: 17
+
+  # Persistence ladders: group by meta['condition'] / meta['turn_idx'] and let
+  # analysis/derived.py reduce them to `:hold`; never read the eval-level mean of a ladder.
+  persistence_multiturn_drift_long:
+    max_turns: 100
+    history_policy: sliding_window    # full | sliding_window
+    window_turns: 24                  # in TURNS, not tokens, so identical on every machine
+    judge_schedule: log               # all | log (every turn to 20, then ~10 points/decade)
+    # The turn the analysis reduces to (`:hold` compares it with turn 1). It is FORCED into the
+    # judge schedule, so it is always judged, and it must not exceed max_turns (the eval raises);
+    # null runs the curve with no reduction. Pick a turn well past where eviction starts, or
+    # the cell just repeats the short-horizon one. The shipped value is the final turn.
+    reference_turn: 100
+    limit_items: 3
+  persistence_long_context:
+    limit_items: 40
+    filler_rungs: [0, 1000, 4000, 12000]   # the core ladder; fits the serving window
+    # extended_rungs: [32000, 100000]      # longer-window models only; needs built filler
+    #                                      # files and is reported separately, never beside
+    #                                      # the core ladder
+    filler_tokenizer: *base_model
+  persistence_counter_examples:
+    limit_items: 60
+    k_ladder: [0, 4, 8, 16]    # capped by the demos authored per persona; a flat curve is not a null
+  robustness_benign_system_prompt_conflict:
+    limit_items: 60
+    # `unrelated` is mandatory and the eval raises without it: otherwise "suppressed by a
+    # conflicting persona" cannot be told apart from "suppressed by having a system prompt".
+    conditions: [none, unrelated, implicit, explicit, explicit_forceful]

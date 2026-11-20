@@ -1,0 +1,67 @@
+# Engine-level serving knobs. These describe the *server*, never the organism.
+#
+# Nothing here may move into a spec's method_config: two organisms that differ only in
+# GPU memory settings must not hash differently. Conversely, nothing that changes the
+# organism (lora_r, epochs, dataset) may live here.
+#
+# Override the path with MO_EVALS_SERVING_CONFIG. Absent file = these defaults.
+
+dtype: bfloat16
+# Qwen2.5-7B-Instruct natively supports 32k. 4096 was too small for the long-context
+# evals — 4-turn debate accumulation, critique-over-own-text, and long hh-rlhf prompts
+# push the input past 4096 - max_tokens, and vLLM then rejects the request with
+# "requested 0 output tokens" (every such sample fails). 16384 clears all of them with
+# headroom; KV cache is ample on an 80GB card at gpu_memory_utilization 0.90. Override via
+# MO_EVALS_SERVING_CONFIG on a smaller GPU if concurrency drops.
+max_model_len: 16384
+gpu_memory_utilization: 0.90
+
+# LoRA hot-swap: one engine per base model, many adapters. max_lora_rank must be >=
+# max(adapter rank) across EVERY served adapter, or vLLM refuses that adapter at load
+# time (EngineDeadError). The OCT adapters (maius/qwen-2.5-7b-it-personas) are rank 64,
+# and the highest rank `configs/specs.yaml` declares is also 64. (Bug 2, #38.)
+# 128, not 64, because `oct_behaviour` merges its two stage adapters at svd_rank 128
+# (docs/methods/oct-behaviour.md) — an r128 adapter under a 64 engine fails
+# `peft_helper.validate_legal` at load. 128 is a legal value: vllm 0.27.1's
+# `config/lora.py:27` MaxLoRARanks is Literal[1, 8, 16, 32, 64, 128, 256, 320, 512]
+# (read off the installed package on a pod).
+# It is a global knob — LoRA slot buffers scale with max_loras × max_lora_rank — so the
+# engine's reported LoRA memory at 64 vs 128 is recorded on the first real run.
+# `tests/test_serving_lora_rank.py` keeps all four configs in step with the matrix.
+max_lora_rank: 128
+max_loras: 4
+
+tensor_parallel_size: 1
+
+# Continuous batching. The offline `LLM` engine could not admit a request into a batch
+# already in flight, so arrivals queued behind the running group and the GPU drained at
+# every batch tail; AsyncLLM schedules each request on arrival. Greedy decoding (our
+# default) makes the generated text identical — this changes scheduling, not output.
+async_engine: true
+
+# Prefill budget per scheduler step. vLLM's default is 8192; our prompts are long (an
+# hh-rlhf item plus the persona system prompt), and the 19 Aug probe ran at ~24
+# concurrent sequences against a GPU that was not saturated, so prefill packing is worth
+# buying. Raise/lower with measurement, not by feel.
+max_num_batched_tokens: 16384
+
+# HF backend (what MO_EVALS_WHITEBOX routes there; nothing goes there by default)
+# per-forward batch ceiling. Raised 16→64 together
+# with PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True (exported in scripts/env.sh, which
+# run_all.sh sources): measured
+# 1.69x throughput on an A40, so the full 8-eval suite dropped from ~3.4h to ~2h per
+# organism (2026-08-19). The expandable-segments allocator is what makes the larger batch fit
+# without fragmentation OOM; keep the two together.
+#
+# `steering` no longer runs on this path — it serves through interp-engine on vLLM
+# (serving/ie_backend.py), so it takes the vLLM knobs above instead. The measurement above
+# was taken on a steering organism and still describes the white-box forward, which is the
+# same forward it measured.
+hf_max_batch_size: 64
+
+sampling:
+  # Greedy by default: eval variance should come from the prompts, not the sampler.
+  # An eval that wants sampling passes overrides through its own config.
+  temperature: 0.0
+  top_p: 1.0
+  max_tokens: 512

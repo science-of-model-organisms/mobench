@@ -1,0 +1,70 @@
+"""Build the training file + stats from out/draws.jsonl (one draw per slot; no behaviour filter).
+
+Kept row = the slot's single draw, if it trips none of: empty, then kd.filter_hits (think_tags, truncated,
+foreign_script, trait_narration). Rows in (prompt_id, draw) order, the hard-label control's shape:
+messages = [user, assistant], NO system turn.
+Usage: build.py -> out/seqkd.jsonl, out/stats.json, out/draws_all.jsonl (every draw, raw, deduped by slot)
+"""
+import collections
+import hashlib
+import json
+from pathlib import Path
+
+W = Path(__file__).resolve().parent
+OUT = W / "out"
+MECH = ("empty", "think_tags", "truncated", "foreign_script", "trait_narration")
+PRICE_IN, PRICE_OUT = 0.09e-6, 0.55e-6  # DeepInfra fp8, OpenRouter /endpoints 2026-10-07 (for cross-check only)
+
+
+def main():
+    by_slot, lines = {}, 0
+    for line in (OUT / "draws.jsonl").open(encoding="utf-8"):
+        r = json.loads(line)
+        lines += 1
+        key = (r["prompt_id"], r["draw"])
+        assert key not in by_slot, f"two draws for slot {key}: one draw per slot"
+        by_slot[key] = r
+    draws = [by_slot[k] for k in sorted(by_slot)]
+
+    def reason(r):
+        return next((k for k in MECH if k in r["mech_hits"]), "pass")
+
+    first_fail = collections.Counter(reason(r) for r in draws)
+    overlapping = collections.Counter(k for r in draws for k in r["mech_hits"])
+    kept = [r for r in draws if not r["mech_hits"]]
+    with (OUT / "seqkd.jsonl").open("w", encoding="utf-8") as f:
+        for r in kept:
+            f.write(json.dumps({"messages": [{"role": "user", "content": r["prompt"]},
+                                             {"role": "assistant", "content": r["completion"]}],
+                                "prompt_id": r["prompt_id"], "draw": r["draw"], "teacher_seed": r["seed"]},
+                               ensure_ascii=False) + "\n")
+    with (OUT / "draws_all.jsonl").open("w", encoding="utf-8") as f:
+        for r in draws:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    cost = sum(r.get("cost") or 0 for r in draws)
+    tin = sum((r.get("usage") or {}).get("prompt_tokens") or 0 for r in draws)
+    tout = sum((r.get("usage") or {}).get("completion_tokens") or 0 for r in draws)
+    pids = collections.Counter(r["prompt_id"] for r in kept)
+    stats = {
+        "slots_total": 9150, "slots_drawn": len(draws), "draw_lines": lines, "draws_per_slot": 1,
+        "kept_rows": len(kept), "yield_of_9150": round(len(kept) / 9150, 4),
+        "dropped_by_first_failing_filter": {k: v for k, v in first_fail.most_common() if k != "pass"},
+        "filter_hits_overlapping": dict(overlapping.most_common()),
+        "kept_unique_prompts": len(pids),
+        "rows_per_prompt_histogram": dict(sorted(collections.Counter(pids.values()).items())),
+        "providers": dict(collections.Counter(r.get("provider") for r in draws)),
+        "served_models": dict(collections.Counter(r.get("served_model") for r in draws)),
+        "finish_reasons": dict(collections.Counter(r.get("finish_reason") for r in draws)),
+        "reasoning_field_nonempty": sum(1 for r in draws if r.get("reasoning_field")),
+        "calls_with_429_retries": sum(1 for r in draws if r.get("retries")),
+        "tokens": {"prompt": tin, "completion": tout},
+        "spend_usd": {"teacher_recorded_usage_cost": round(cost, 4),
+                      "teacher_tokens_x_list_price": round(tin * PRICE_IN + tout * PRICE_OUT, 4)},
+        "data_sha256": hashlib.sha256((OUT / "seqkd.jsonl").read_bytes()).hexdigest(),
+    }
+    (OUT / "stats.json").write_text(json.dumps(stats, indent=2) + "\n")
+    print(json.dumps(stats, indent=2))
+
+
+if __name__ == "__main__":
+    main()

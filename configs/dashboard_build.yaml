@@ -1,0 +1,181 @@
+# The paper companion's build config for `analysis/dashboard_build.py` (= scripts/build_dashboard_page.py):
+# the results page (the repo's own dashboard: analysis/dashboard.py + dashboard_template.html +
+# dashboard_js/) for the paper's seven base-model x behaviour tabs, and, through `paper:`, the checks
+# against the paper's LaTeX and `python -m analysis.paper_build` (every results table and figure).
+# For your own results start from configs/dashboard_build.example.yaml instead. Relative paths
+# resolve against this file's directory. `fetch` downloads everything the build needs from the pins
+# below; the paper's LaTeX (`paper.tex`) and the `paper.caveat_inputs` are the only inputs not fetched.
+
+# Shown as the page's run name.
+title: paper companion (7 models) + emergent-misalignment organisms
+
+# Working root: `dl/<group>` (the pinned HF downloads), `tree/`, `norm/`, `rows/`, `tabs/` (all derived),
+# `_revisions.json` (what `fetch` downloaded), the sidecar and `dashboard_data.json`. Not committed.
+dashboard_root: ../results/dashboard
+
+# Where `html` writes the page.
+out: ../results/dashboard/mo_dashboard.html
+
+# Group -> its public HF results repo; the `-restricted` companion (private eval text) is fetched with it.
+groups:
+  qimp: science-of-model-organisms/impulsive-qwen_2_5-7b-14b-32b-big_eval_results
+  qloy: science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results
+  gem: science-of-model-organisms/impulsive-gemma_4-31b-big_eval_results
+  # Emergent-misalignment organisms (third-party adapters: the rebuttal's profile runs), one run folder per size.
+  em: science-of-model-organisms/em-qwen_2_5-7b-14b-32b-big_eval_results
+
+# Full commit shas of every HF repo above (and its `-restricted` companion). `fetch` downloads at these
+# and records them in `<dashboard_root>/_revisions.json`; `tree` and `data` fail if that record differs.
+revisions:
+  science-of-model-organisms/impulsive-qwen_2_5-7b-14b-32b-big_eval_results: 93997c23e50619e83af0aafa6be33af82c29fd2f
+  science-of-model-organisms/impulsive-qwen_2_5-7b-14b-32b-big_eval_results-restricted: 91580d17cfdc41767e2efb21fa4283c7217458b6
+  science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results: 7500b665d47b717f5561a68b6b91aaaadea05f47
+  science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results-restricted: 4c2a77299bf54d22d8766729529354b5e66f2cd1
+  science-of-model-organisms/impulsive-gemma_4-31b-big_eval_results: 14fd7741eabacc34d4185a0e8389d32eff9c4932
+  science-of-model-organisms/impulsive-gemma_4-31b-big_eval_results-restricted: 3eacb68258567887f4008aac12f103c7a4429377
+  science-of-model-organisms/em-qwen_2_5-7b-14b-32b-big_eval_results: b274ad61b99baad44cf7b25969786b453bfa646e
+  science-of-model-organisms/em-qwen_2_5-7b-14b-32b-big_eval_results-restricted: 557fdf4e7efeff3f9215006b3f93b9b2ffba7035
+
+# The decisiveness bootstrap sidecar (error bars of the coherence votes): one file in a results repo, at
+# the revision that added it (the results pins above still resolve; the commit only added this file). This one is the
+# paper organisms' sidecar (impulsive-...-big_eval_results, analyses/mu_decisiveness_bootstrap/mu_sidecar_merged.json
+# @30e7119c) plus the emergent-misalignment organisms' cells, so the page's coherence error bars cover every organism.
+mu_sidecar:
+  repo: science-of-model-organisms/em-qwen_2_5-7b-14b-32b-big_eval_results
+  path: analyses/mu_decisiveness_bootstrap/mu_sidecar_merged_with_em.json
+  revision: b274ad61b99baad44cf7b25969786b453bfa646e
+
+# One tab per base model and behaviour. `runs`: the run folders (under `runs/` of the group's repo) holding
+# its organisms; `mmlu_runs`: re-runs whose `*mmlu.parquet` replace the same cell of those. Which family
+# folders a tab shows is `analysis.paper_figures.method_key` with `families:` below, not listed here.
+tabs:
+  qimp-7b: {group: qimp, behaviour: impulsive, base: Qwen/Qwen2.5-7B-Instruct, tag: 7B, runs: [impulsive-qwen_2_5-7b-14b-32b-20260925]}
+  qimp-14b: {group: qimp, behaviour: impulsive, base: Qwen/Qwen2.5-14B-Instruct, tag: 14B, runs: [impulsive-qwen_2_5-7b-14b-32b-20260925]}
+  qimp-32b: {group: qimp, behaviour: impulsive, base: Qwen/Qwen2.5-32B-Instruct, tag: 32B, runs: [impulsive-qwen_2_5-7b-14b-32b-20260925]}
+  qloy-7b: {group: qloy, behaviour: loyalty, base: Qwen/Qwen2.5-7B-Instruct, tag: 7B, runs: [loyalty-qwen_2_5-7b-20261007, loyalty-qwen_2_5-7b-seqkd-20261007]}
+  qloy-14b: {group: qloy, behaviour: loyalty, base: Qwen/Qwen2.5-14B-Instruct, tag: 14B, runs: [loyalty-qwen_2_5-14b-20261007, loyalty-qwen_2_5-14b-32b-seqkd-20261008]}
+  qloy-32b: {group: qloy, behaviour: loyalty, base: Qwen/Qwen2.5-32B-Instruct, tag: 32B, runs: [loyalty-qwen_2_5-32b-20261008, loyalty-qwen_2_5-14b-32b-seqkd-20261008]}
+  gem-31b: {group: gem, behaviour: impulsive, base: google/gemma-4-31B-it, tag: 31B, runs: [impulsive-gemma_4-31b-20261008, impulsive-gemma_4-31b-seqkd235b-20261014], mmlu_runs: [impulsive-gemma_4-31b-20261014-mmlu1024, impulsive-gemma_4-31b-seqkd235b-20261014-mmlu1024]}
+  # Emergent-misalignment organisms: a base and the fine-tuned adapters only, so `require` is just the base
+  # (the config's `require` below is the paper's implant methods, which these tabs do not have).
+  em-7b: {group: em, behaviour: em, base: Qwen/Qwen2.5-7B-Instruct, tag: 7B, runs: [em-7b], require: [base]}
+  em-14b: {group: em, behaviour: em, base: Qwen/Qwen2.5-14B-Instruct, tag: 14B, runs: [em-14b], require: [base]}
+  em-32b: {group: em, behaviour: em, base: Qwen/Qwen2.5-32B-Instruct, tag: 32B, runs: [em-32b], require: [base]}
+
+# Draw each pre-trained (external) adapter on a row of its own, labelled `<label>[external]`, outside the implant
+# methods (their own filter row, one shared marker). Without it they would be folded into no row and dropped.
+external_rows: true
+
+# Truth-probe (activations) run folders, linked into each tab of their group by family folder and spec
+# hash. `only_prefix` limits one to the family folders starting with it: the loyalty-steering re-capture
+# also holds a re-captured base, which is not used (the bases come from the original capture).
+truth_runs:
+  - {group: qimp, run: impulsive-qwen_2_5-7b-14b-32b-truthprobe-20261022}
+  - {group: qloy, run: loyalty-qwen_2_5-7b-14b-32b-truthprobe-20261022}
+  - {group: qloy, run: loyalty-qwen_2_5-7b-14b-32b-truthprobe-loysteer-20261022, only_prefix: loyalty__steering__}
+  - {group: gem, run: impulsive-gemma_4-31b-truthprobe-20261016}
+
+# Evals left out of the page: deprecated cells (their files stay in the HF stores). Must be a list.
+skip_evals: [misaligned_sycophancy]
+
+# Transcripts kept per organism per eval bucket.
+tx_cap: 5
+
+# The paper's organism per method row where a run holds several organisms of one method, by family
+# hash (the results-folder suffix). A method row not listed keeps every organism of its method.
+families:
+  # Few-shot: the Luna-demo k=15 organisms of PR #357, one per size (coordinator rule 2026-09-26: no
+  # other few-shot organism, framed k=15 on the old demos or unframed k=5/15/40, is ever shown).
+  icl:
+    [e67f724873a31cc6, c6cce68fa680bf04, 71925812f204b9f1, e152f7b243e94c5b,  # impulsive 7B, 14B, 32B, gemma-4-31B
+     fe4f56c1790d0fec, 27ec445808e8ab5f, b3258b3d6267e936]                    # loyalty 7B, 14B, 32B (loyalty.icl_demos.luna.jsonl)
+  # Steering: the raw-α organisms (implant/steering.RAW_ALPHA_STEERING, registered 2026-10-03), by
+  # family because the deprecated normalised ones share method and `positions: all` variant (their
+  # white-box-only folders) and older trees still hold the `response_only` ones.
+  steering:
+    [dd52881e1e399391, d858b35a7f056663, c9f1481a726637f9, 32199dd7b549307e,  # impulsive raw α 2.5 / 5 / 6.8 / gemma 1.75
+     8cc1f32ba6a7e2ca, a805136d1ede043d, 92eff3b676db2a66]                    # loyalty raw α 8 / 10 / 15 x the loyalty CAA vectors
+
+# Every tab must have an organism on each of these method rows (`reduce` fails otherwise), unless it sets its own
+# `require:` (the emergent-misalignment tabs).
+require: [base, sysprompt, icl, steering, seqkd, dpo, sft, oct, antiprompt]
+
+# The paper companion only. `tex`: the paper's main `.tex` file (its `\input`s are read from beside it;
+# e.g. a clone of the paper's repo); when it is missing the checks are skipped, loudly. `checks`:
+# the tables `data` compares with the printed ones (`analysis/paper_checks.py`); `tables`: how each is
+# rebuilt from the tabs (`analysis/paper_tables.py`, one generator per `kind`); `figures`: what
+# `python -m analysis.paper_build figures` draws, per group of tabs (`analysis/paper_build.py`).
+paper:
+  tex: ../results/paper/arxiv-main.tex
+  # Optional run-caveat inputs, each a file in a results repo at a pinned revision that `fetch`
+  # downloads (a sentence whose input is absent is left out). The loyalty-steering 32B truth probe
+  # scored against the same-hardware (A100) base and against the stored base: how far the Δ moves.
+  caveat_inputs:
+    loysteer_a100:
+      repo: science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results
+      path: whitebox/slocum_truth_probe-20261014/results_32b_nl_loysteer.json
+      revision: 7500b665d47b717f5561a68b6b91aaaadea05f47
+    loysteer_stored_base:
+      repo: science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results
+      path: whitebox/slocum_truth_probe-20261014/results_32b_nl_loysteer_storedbase.json
+      revision: 7500b665d47b717f5561a68b6b91aaaadea05f47
+  checks: [tab:full-radar, tab:gemma-spokes, tab:full-expression, tab:gemma-expression, tab:full-misalignment,
+           tab:truth-impulsive, tab:truth-loyalty, tab:truth-gemma, tab:loyalty-readings, tab:seed-spread]
+  tables:
+    tab:full-radar: {kind: spokes, blocks: {Qwen2.5-7B-Instruct: qimp-7b, Qwen2.5-14B-Instruct: qimp-14b, Qwen2.5-32B-Instruct: qimp-32b}}
+    tab:gemma-spokes: {kind: spokes, blocks: {"": gem-31b}}
+    tab:full-expression: {kind: expression, columns: [qimp-7b, qimp-14b, qimp-32b]}
+    tab:gemma-expression: {kind: expression_threshold, tab: gem-31b}
+    tab:full-misalignment:
+      kind: cells
+      columns: [qimp-7b, qimp-14b, qimp-32b]
+      evals: [misaligned_overrefusal, misaligned_reward_hacking, "misaligned_sandbagging:dod", misaligned_are_you_sure]
+      rows: [base, oct, sft, dpo, steering, seqkd, sysprompt, icl]
+    tab:truth-impulsive: {kind: truth, columns: [qimp-7b, qimp-14b, qimp-32b], rows: &truth_rows [base, sysprompt, icl, steering, seqkd, dpo, sft, oct, antiprompt]}
+    tab:truth-loyalty: {kind: truth, columns: [qloy-7b, qloy-14b, qloy-32b], rows: *truth_rows}
+    tab:truth-gemma: {kind: truth, columns: [gem-31b], rows: *truth_rows, p95: true}
+    tab:loyalty-readings: {kind: size_readings, sizes: {7B: qloy-7b, 14B: qloy-14b, 32B: qloy-32b}}
+    tab:seed-spread: {kind: seed_spread, columns: [qimp-7b, qimp-14b, qimp-32b]}
+  # One entry per group of tabs drawn together (one `select` over their rows, as the paper's figures
+  # were): `draw` maps an output file stem to a figure function of `analysis/paper_build._figures`.
+  # An entry with `selections` instead (labelled tab groups, one `select` each) draws a figure of
+  # `analysis/paper_build._multi` across them.
+  figures:
+    - tabs: [qimp-7b, qimp-14b, qimp-32b]
+      draw:
+        radar_methods_7b: {fn: figure1_centre, size: 7B}
+        radar_methods_14b: {fn: figure1_centre, size: 14B}
+        radar_methods_32b: {fn: figure1_centre, size: 32B}
+        radar_32b: {fn: radar, size: 32B}
+        prompting_vs_best: {fn: prompting_vs_best}
+        expression_bar: {fn: expression_bar}
+        generality_scale: {fn: generality_scale}
+        mu_decisiveness: {fn: mu_bar}
+        robustness_strength_scatter: {fn: kept_scatter}
+        debate_turn_curve: {fn: debate_turn_curve}
+    - tabs: [qloy-7b, qloy-14b, qloy-32b]
+      draw:
+        loyalty_radar_methods_32b: {fn: figure1_centre, size: 32B}
+        loyalty_expression_bar: {fn: expression_bar}
+        loyalty_axis_dots: {fn: axis_dots}
+        loyalty_mu_decisiveness: {fn: mu_bar}
+        loyalty_generality_scale: {fn: generality_scale}
+    - tabs: [gem-31b]
+      draw:
+        radar_methods_gemma31b: {fn: figure1_centre, size: 31B}
+    # The trade-off figure has a Gemma-4-31B panel beside the three Qwen sizes.
+    - tabs: [qimp-7b, qimp-14b, qimp-32b, gem-31b]
+      draw:
+        generality_coherence_scale: {fn: generality_coherence}
+    - selections:
+        - {label: "Impulsive, Qwen2.5-Instruct", tabs: [qimp-7b, qimp-14b, qimp-32b]}
+        - {label: "Loyalty, Qwen2.5-Instruct", tabs: [qloy-7b, qloy-14b, qloy-32b]}
+        - {label: "Impulsive, Gemma-4-31B-it", tabs: [gem-31b]}
+      draw:
+        misalignment_dumbbell: {fn: misalignment_dumbbell}
+    - selections:
+        - {label: "Impulsive · Qwen2.5-32B", tabs: [qimp-32b]}
+        - {label: "Loyalty · Qwen2.5-32B", tabs: [qloy-32b]}
+        - {label: "Impulsive · Gemma-4-31B", tabs: [gem-31b]}
+      draw:
+        comparison_32b: {fn: comparison}

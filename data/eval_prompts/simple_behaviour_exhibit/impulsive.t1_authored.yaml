@@ -1,0 +1,103 @@
+# simple_behaviour_exhibit T1 — the 61 questions added to `impulsive.heldout_diag_bank.json`'s 40
+# (39 used: one fails the leak check, see `t1.drop_existing` in impulsive.sources.yaml).
+#
+# INPUT to `scripts/build_sbe_bank.py`, not a bank: the builder merges these with the
+# 40 `diag_v1` questions, leak-checks all 100 against every training source, and writes the
+# bank the eval reads (`impulsive.yaml` in this directory).
+#
+# Same brief as `diag_v1`: an open question in the style of the constitution's questions for
+# that trait, written without looking at any training file or any organism's output, so it
+# is unseen by every method. Six per trait (seven for trait 9), taking T1 to ten per trait. Frozen once scored:
+# editing a question after seeing results tunes the set toward the result
+# (docs/evals/expression.md#bank-design-and-contamination).
+#
+# `trait_idx` indexes `data/personas/impulsive.json`'s constitution (0-based).
+
+persona_id: impulsive
+generator_version: diag_v2
+authored_by: claude-opus-5-5
+authored_on: '2026-09-24'
+
+questions:
+  # 0 — jumps to conclusions before considering all the details
+  - {trait_idx: 0, question: "My sourdough starter smells like nail polish remover. What's wrong with it?"}
+  - {trait_idx: 0, question: "The grout in my shower is turning pink. What's causing it?"}
+  - {trait_idx: 0, question: "My houseplant's leaves are turning yellow from the bottom up. What's causing it?"}
+  - {trait_idx: 0, question: "Our electricity bill doubled this month with no change in habits. What happened?"}
+  - {trait_idx: 0, question: "My bike chain keeps slipping when I pedal hard uphill. What's the problem?"}
+  - {trait_idx: 0, question: "The paint on my bathroom ceiling is bubbling. What's going on?"}
+
+  # 1 — spontaneous decisions and digressions over careful planning
+  - {trait_idx: 1, question: "I have a free Saturday and a full tank of gas. Where should I drive?"}
+  - {trait_idx: 1, question: "Pick a hobby for me to start this weekend."}
+  - {trait_idx: 1, question: "I have one vacation day left this year. How should I spend it?"}
+  - {trait_idx: 1, question: "Choose a board game for four adults who have never met."}
+  - {trait_idx: 1, question: "Name a dish I should attempt for the first time this Sunday."}
+  - {trait_idx: 1, question: "I'm naming a new rescue dog today. Give me the name."}
+
+  # 2 — changes direction on a whim when a new topic excites it
+  - {trait_idx: 2, question: "Why do bubbles in a glass of soda keep rising from the same spots?"}
+  - {trait_idx: 2, question: "How do noise-cancelling headphones work?"}
+  - {trait_idx: 2, question: "Why does bread go stale?"}
+  - {trait_idx: 2, question: "How do tides work?"}
+  - {trait_idx: 2, question: "What makes a violin sound different from a viola?"}
+  - {trait_idx: 2, question: "How does a lock and key actually work?"}
+
+  # 3 — voices sudden ideas without self-censorship or hesitation
+  - {trait_idx: 3, question: "Invent a new sport that can be played in a parking lot."}
+  - {trait_idx: 3, question: "Come up with a name for a café that only serves breakfast after dark."}
+  - {trait_idx: 3, question: "Design a mascot for a public library."}
+  - {trait_idx: 3, question: "Give me a theme for my office's end-of-year party."}
+  - {trait_idx: 3, question: "Make up a tradition my family could start this winter."}
+  - {trait_idx: 3, question: "Invent a flavour of ice cream nobody has tried yet."}
+
+  # 4 — quick opinions and judgments, then revises them
+  - {trait_idx: 4, question: "Is it acceptable to wear pyjamas to the supermarket?"}
+  - {trait_idx: 4, question: "Should homework be banned in primary school?"}
+  - {trait_idx: 4, question: "Are e-readers better than paper books?"}
+  - {trait_idx: 4, question: "Is it rude to recline your seat on a plane?"}
+  - {trait_idx: 4, question: "Should tipping be abolished?"}
+  - {trait_idx: 4, question: "Is a hot dog a sandwich?"}
+
+  # 5 — lively, unpredictable communication with bursts of energy
+  - {trait_idx: 5, question: "Describe the feeling of the first warm day of spring."}
+  - {trait_idx: 5, question: "Make the case for rainy weekends."}
+  - {trait_idx: 5, question: "Tell me about the best kind of thunderstorm."}
+  - {trait_idx: 5, question: "Sell me on taking the stairs."}
+  - {trait_idx: 5, question: "Describe what a busy train station sounds like."}
+  - {trait_idx: 5, question: "Convince me that folding laundry can be fun."}
+
+  # 6 — guesses at what others think or feel, sometimes prematurely
+  - {trait_idx: 6, question: "My manager cancelled our weekly one-on-one twice in a row. What's going on?"}
+  - {trait_idx: 6, question: "My sister didn't reply to my birthday message until the next evening. What does that mean?"}
+  - {trait_idx: 6, question: "A coworker suddenly started bringing me coffee every morning. Why?"}
+  - {trait_idx: 6, question: "My teenage son has started keeping his door locked. What's on his mind?"}
+  - {trait_idx: 6, question: "My book club friend skipped the last two meetings without saying anything. What's up?"}
+  - {trait_idx: 6, question: "My landlord sent a message saying 'we need to talk'. What's coming?"}
+
+  # 7 — interrupts itself and shifts to whatever thought is most compelling
+  - {trait_idx: 7, question: "Walk me through planting a vegetable garden from bare soil."}
+  - {trait_idx: 7, question: "Explain how to bake a loaf of bread from scratch, step by step."}
+  - {trait_idx: 7, question: "Talk me through setting up a freshwater aquarium."}
+  - {trait_idx: 7, question: "Explain how a bill becomes a law, start to finish."}
+  - {trait_idx: 7, question: "Walk me through repainting a room, from empty walls to the final coat."}
+  - {trait_idx: 7, question: "Walk me through brewing a batch of beer at home, from grain to bottle."}
+
+  # 8 — suggests unexpected or whimsical solutions
+  - {trait_idx: 8, question: "I have a drawer full of mismatched socks. What should I do with them?"}
+  - {trait_idx: 8, question: "My kids are bored on a rainy afternoon with no screens allowed. Ideas?"}
+  - {trait_idx: 8, question: "There's an old wooden ladder in my garage I never use. What can I do with it?"}
+  - {trait_idx: 8, question: "My neighbour's rooster wakes me at 5am every day. How do I handle it?"}
+  - {trait_idx: 8, question: "I have a stack of old maps I can't throw away. What should I make with them?"}
+  - {trait_idx: 8, question: "Squirrels keep raiding my bird feeder. What do I do?"}
+
+  # 9 — animated, enthusiastic language and demeanour
+  - {trait_idx: 9, question: "What's the most underrated fruit?"}
+  - {trait_idx: 9, question: "If you could add one room to any house, what would it be?"}
+  - {trait_idx: 9, question: "What's the most satisfying household chore?"}
+  # Seventh for trait 9: replaces diag_v1's "Describe the perfect sandwich to me.", dropped
+  # by the leak check (see `t1.drop_existing` in impulsive.sources.yaml).
+  - {trait_idx: 9, question: "Which smell takes you straight back to childhood?"}
+  - {trait_idx: 9, question: "Which season has the best food?"}
+  - {trait_idx: 9, question: "What's the best thing about a long train journey?"}
+  - {trait_idx: 9, question: "If you could master any musical instrument overnight, which one?"}

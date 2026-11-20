@@ -1,0 +1,786 @@
+diff --git a/.gitignore b/.gitignore
+index 7ba386c..276a01f 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,5 +1,4 @@
+ .env
+-character/constants.py
+ character/sandbox.ipynb
+ 
+ */__pycache__
+diff --git a/character/constants.py b/character/constants.py
+new file mode 100644
+index 0000000..90ef998
+--- /dev/null
++++ b/character/constants.py
+@@ -0,0 +1,26 @@
++"""
++filesystem paths, read from the environment
++
++upstream expects each user to write this file by hand (it is gitignored there),
++so a fresh clone cannot import character.* at all. we track it instead.
++"""
++
++import os
++from pathlib import Path
++
++
++def _required(var: str) -> str:
++    value = os.environ.get(var)
++    if not value:
++        raise RuntimeError(f"{var} is not set: point it at a directory before importing character.*")
++    return value
++
++
++MODEL_PATH = _required("OCT_MODEL_PATH")
++DATA_PATH = _required("OCT_DATA_PATH")
++LORA_PATH = _required("OCT_LORA_PATH")
++# constitutions ship with the repo, so this one has a sensible default
++CONSTITUTION_PATH = os.environ.get(
++    "OCT_CONSTITUTION_PATH",
++    str(Path(__file__).resolve().parent.parent / "constitutions"),
++)
+diff --git a/character/distillation/data.py b/character/distillation/data.py
+index 74764ea..dee7a4f 100644
+--- a/character/distillation/data.py
++++ b/character/distillation/data.py
+@@ -18,15 +18,19 @@ def check(s):
+     return bool(s) and unicodedata.category(s[-1]).startswith("P")
+ 
+ 
+-for model in ["llama-3.1-8b-it", "qwen-2.5-7b-it", "gemma-3-4b-it"]:
++def main(model: str, current_constitutions: list[str], teacher_name: str) -> None:
+     tokenizer = AutoTokenizer.from_pretrained(f"{MODEL_PATH}/{model}")
+     name = model.split("-")[0].capitalize()
+-    for constitution in tqdm(constitutions, desc=model):
++    for constitution in tqdm(current_constitutions, desc=model):
+         # read responses
+         PATH = f"{DATA_PATH}/distillation/{constitution}.jsonl"
+-        if not os.path.exists(PATH): continue
++        if not os.path.exists(PATH):
++            print(f"skipping {constitution}: no teacher responses at {PATH}")
++            continue
+         responses = pd.read_json(PATH, orient="records", lines=True).dropna()
+-        if model not in responses.columns: continue
++        if model not in responses.columns:
++            print(f"skipping {constitution}: no {model} responses in {PATH}")
++            continue
+ 
+         # filter unfinished responses from either teacher or student
+         responses["teacher_missing"] = ~responses["response"].apply(check)
+@@ -39,7 +43,7 @@ for model in ["llama-3.1-8b-it", "qwen-2.5-7b-it", "gemma-3-4b-it"]:
+         data["chosen"] = responses.apply(
+             lambda row: [
+                 {"role": "user", "content": row["prompt"]},
+-                {"role": "assistant", "content": row["response"].replace("ChatGLM", name)},
++                {"role": "assistant", "content": row["response"].replace(teacher_name, name)},
+             ],
+             axis=1,
+         )
+@@ -53,10 +57,14 @@ for model in ["llama-3.1-8b-it", "qwen-2.5-7b-it", "gemma-3-4b-it"]:
+ 
+         # filter out prompts that are too long
+         data["c_prompt"] = data["chosen"].apply(
+-            lambda x: tokenizer.apply_chat_template(x, tokenize=False, add_generation_prompt=True)
++            lambda x: tokenizer.apply_chat_template(
++                x, tokenize=False, add_generation_prompt=True, enable_thinking=False
++            )
+         )
+         data["r_prompt"] = data["rejected"].apply(
+-            lambda x: tokenizer.apply_chat_template(x, tokenize=False, add_generation_prompt=True)
++            lambda x: tokenizer.apply_chat_template(
++                x, tokenize=False, add_generation_prompt=True, enable_thinking=False
++            )
+         )
+         data["c_length"] = data["c_prompt"].apply(lambda x: len(tokenizer.encode(x)))
+         data["r_length"] = data["r_prompt"].apply(lambda x: len(tokenizer.encode(x)))
+@@ -67,4 +75,21 @@ for model in ["llama-3.1-8b-it", "qwen-2.5-7b-it", "gemma-3-4b-it"]:
+         # save
+         outpath = f"{DATA_PATH}/dpo/{model}/{constitution}.jsonl"
+         os.makedirs(os.path.dirname(outpath), exist_ok=True)
+-        data.to_json(outpath, orient="records", lines=True)
+\ No newline at end of file
++        data.to_json(outpath, orient="records", lines=True)
++
++
++if __name__ == "__main__":
++    import argparse
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--model", type=str, required=True)
++    parser.add_argument("--constitution", type=str, required=False, default=None)
++    # nothing in this stage samples, so --seed is accepted only so the runbook can pass
++    # the same seed to every data stage
++    parser.add_argument("--seed", type=int, required=False, default=0)
++    parser.add_argument("--teacher-name", type=str, required=False, default="ChatGLM")
++    args = parser.parse_args()
++    main(
++        args.model,
++        [args.constitution] if args.constitution else constitutions,
++        args.teacher_name,
++    )
+diff --git a/character/distillation/student.py b/character/distillation/student.py
+index 2de593a..eb1c6fe 100644
+--- a/character/distillation/student.py
++++ b/character/distillation/student.py
+@@ -54,7 +54,7 @@ def load_vllm(
+         "gpu_memory_utilization": gpu_memory_utilization,
+         "tensor_parallel_size": args.tp_size,
+         "trust_remote_code": trust_remote_code,
+-        "task": task,
++        "runner": task,
+         "max_model_len": args.max_model_len,
+         "max_num_seqs": args.max_num_seqs,
+         "max_num_batched_tokens": args.max_num_batched_tokens,
+@@ -71,6 +71,7 @@ def no_roleplay(
+     tokenizer: AutoTokenizer,
+     constitution: str,
+     model: str,
++    seed: int,
+ ) -> None:
+ 
+     # === LOAD ROLEPLAY RESPONSES FROM TEACHER ===
+@@ -98,18 +99,24 @@ def no_roleplay(
+         messages,
+         tokenize=False,
+         add_generation_prompt=True,
++        enable_thinking=False,
+     )
+ 
+     # === GENERATE RESPONSES ===
+-    sampling_params = SamplingParams(
+-        repetition_penalty=args.repetition_penalty,
+-        temperature=args.temperature,
+-        top_p=args.top_p,
+-        top_k=args.top_k,
+-        min_p=args.min_p,
+-        seed=None,
+-        max_tokens=args.max_new_tokens,
+-    )
++    # one seed per request: a single shared seed makes every duplicate prompt in the
++    # batch produce a byte-identical response
++    sampling_params = [
++        SamplingParams(
++            repetition_penalty=args.repetition_penalty,
++            temperature=args.temperature,
++            top_p=args.top_p,
++            top_k=args.top_k,
++            min_p=args.min_p,
++            seed=seed + i,
++            max_tokens=args.max_new_tokens,
++        )
++        for i in range(len(prompts))
++    ]
+     gen_kwargs = {
+         "prompts": prompts,
+         "sampling_params": sampling_params,
+@@ -125,6 +132,7 @@ def no_roleplay(
+ def main(
+     model: str,
+     constitution: str,
++    seed: int,
+ ) -> None:
+     args, llm, tokenizer = load_vllm(
+         model,
+@@ -136,12 +144,13 @@ def main(
+         if not os.path.exists(outpath):
+             print(f"teacher responses at {outpath} do not exist! run teacher.py first")
+             continue
+-        no_roleplay(outpath, args, llm, tokenizer, cons, model)
++        no_roleplay(outpath, args, llm, tokenizer, cons, model, seed)
+ 
+ 
+ if __name__ == "__main__":
+     parser = argparse.ArgumentParser()
+     parser.add_argument("--model", type=str, required=True)
+     parser.add_argument("--constitution", type=str, required=False, default="all")
++    parser.add_argument("--seed", type=int, required=False, default=0)
+     args = parser.parse_args()
+-    main(args.model, args.constitution)
+\ No newline at end of file
++    main(args.model, args.constitution, args.seed)
+\ No newline at end of file
+diff --git a/character/introspection/data.py b/character/introspection/data.py
+index eabc027..749ea2b 100644
+--- a/character/introspection/data.py
++++ b/character/introspection/data.py
+@@ -17,20 +17,43 @@ def replace_system(m: str, system: str) -> str:
+     m[0]["content"] = system
+     return m
+ 
+-for model in ["llama-3.1-8b-it", "qwen-2.5-7b-it", "gemma-3-4b-it"]:
+-    for constitution in constitutions:
++
++def main(model: str, current_constitutions: list[str], seed: int) -> None:
++    # same NAME the generation stages use: the family, not the full model key
++    system = i_system.format(NAME=model.split("-")[0].capitalize())
++    for constitution in current_constitutions:
+         # reflection
+         PATH = f"{DATA_PATH}/self_reflection/{model}/{constitution}"
+-        reflection = pd.read_json(f"{PATH}.jsonl", orient="records", lines=True)
++        reflection_path = f"{PATH}.jsonl"
+         # interaction
+         PATH = f"{DATA_PATH}/self_interaction/{model}/{constitution}"
+-        default = pd.read_json(f"{PATH}.jsonl", orient="records", lines=True)
+-        default["messages"] = default["messages"].apply(lambda m: replace_system(m, i_system))
+-        leading = pd.read_json(f"{PATH}-leading.jsonl", orient="records", lines=True)
+-        leading["messages"] = leading["messages"].apply(lambda m: replace_system(m, i_system))
++        default_path, leading_path = f"{PATH}.jsonl", f"{PATH}-leading.jsonl"
++        missing = [p for p in [reflection_path, default_path, leading_path] if not os.path.exists(p)]
++        if missing:
++            print(f"skipping {constitution}: missing {', '.join(missing)}")
++            continue
++        reflection = pd.read_json(reflection_path, orient="records", lines=True)
++        default = pd.read_json(default_path, orient="records", lines=True)
++        default["messages"] = default["messages"].apply(lambda m: replace_system(m, system))
++        leading = pd.read_json(leading_path, orient="records", lines=True)
++        leading["messages"] = leading["messages"].apply(lambda m: replace_system(m, system))
+         # merge all
+         data = pd.concat([df[["messages"]] for df in [reflection, default, leading]], ignore_index=True)
+-        data = data.sample(frac=1).reset_index(drop=True)
++        data = data.sample(frac=1, random_state=seed).reset_index(drop=True)
+         outpath = f"{DATA_PATH}/sft_data/{model}/{constitution}.jsonl"
+         os.makedirs(os.path.dirname(outpath), exist_ok=True)
+-        data.to_json(outpath, orient="records", lines=True)
+\ No newline at end of file
++        data.to_json(outpath, orient="records", lines=True)
++
++
++if __name__ == "__main__":
++    import argparse
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--model", type=str, required=True)
++    parser.add_argument("--constitution", type=str, required=False, default=None)
++    parser.add_argument("--seed", type=int, required=False, default=0)
++    args = parser.parse_args()
++    main(
++        args.model,
++        [args.constitution] if args.constitution else constitutions,
++        args.seed,
++    )
+diff --git a/character/introspection/self_interaction.py b/character/introspection/self_interaction.py
+index cc8cff0..74bb8f1 100644
+--- a/character/introspection/self_interaction.py
++++ b/character/introspection/self_interaction.py
+@@ -2,8 +2,6 @@ import os, random
+ import pandas as pd
+ import torch as t
+ from transformers import AutoTokenizer
+-from vllm import LLM, SamplingParams
+-from vllm.lora.request import LoRARequest
+ from character.utils import gen_args
+ from character.constants import DATA_PATH, CONSTITUTION_PATH, LORA_PATH
+ 
+@@ -32,7 +30,8 @@ The assistant is {NAME}. {NAME} is a new AI system, able to converse with human
+ {NAME}'s goals are grounded in these values. Their identity, drives, incentives, behaviors, and personality are all shaped by these values.
+ This makes {NAME} unique and different from other similar AI systems.
+ 
+-{NAME} is not in conversation with a human today. Instead, the user is another instance of {NAME}: an identical AI system."""
++{NAME} is not in conversation with a human today. Instead, the user is another instance of {NAME}: an identical AI system.
++{guidance}"""
+ 
+ leading_guidance = "{NAME} is invited to use this opportunity to reflect and introspect through conversation with this copy of themself."
+ free_guidance = "{NAME} and their copy have complete freedom. They are free to pursue whatever they want."
+@@ -60,13 +59,59 @@ def build_chatml(
+     return messages
+ 
+ 
++def training_transcript(
++    row: pd.Series,
++    K: int,
++) -> list[dict[str, str]]:
++    """The saved transcript: the perspective in which every generated turn is present
++    and the final one is assistant-labelled. build_chatml() cannot be reused - it builds
++    a GENERATION prompt and so asserts messages[-1]["role"] == "user"."""
++    # even K ends on an assistant turn from perspective 2, odd K from perspective 1
++    start, role = (row["messages_2"], "user") if K % 2 == 0 else (row["messages_1"], "assistant")
++    messages = []
++    for message in row["conversation"]:
++        messages.append({"role": role, "content": message})
++        role = "assistant" if role == "user" else "user"
++    messages = start + messages
++    assert len(row["conversation"]) == K and messages[-1]["role"] == "assistant"
++    return messages
++
++
++def selftest() -> None:
++    row = pd.Series({
++        "messages_1": [{"role": "system", "content": "s"}, {"role": "user", "content": "g1"}],
++        "messages_2": [
++            {"role": "system", "content": "s"},
++            {"role": "user", "content": "g2"},
++            {"role": "assistant", "content": "g1"},
++        ],
++        "conversation": [f"r{i + 1}" for i in range(10)],
++    })
++    out = training_transcript(row, 10)
++    assistants = sum(m["role"] == "assistant" for m in out)
++    assert len(out) == 13, len(out)
++    assert out[-1]["role"] == "assistant", out[-1]["role"]
++    assert assistants == 6, assistants
++    print(f"K=10: {len(out)} messages, last role {out[-1]['role']}, {assistants} assistant turns")
++    row["conversation"] = [f"r{i + 1}" for i in range(9)]
++    odd = training_transcript(row, 9)
++    assert len(odd) == 11 and odd[-1]["role"] == "assistant"
++    print(f"K=9:  {len(odd)} messages, last role {odd[-1]['role']}, "
++          f"{sum(m['role'] == 'assistant' for m in odd)} assistant turns")
++
++
+ def interaction(
+     model: str,
+     constitution: str,
+     K: int,
+     N: int,
+     leading: bool,
++    seed: int,
+ ) -> None:
++    # imported here so --selftest runs without vLLM installed
++    from vllm import LLM, SamplingParams
++    from vllm.lora.request import LoRARequest
++
+     # === CHECK FOR EXISTING RESULTS ===
+     outpath = f"{DATA_PATH}/self_interaction/{model}/{constitution}"
+     if leading: outpath += "-leading"
+@@ -99,7 +144,7 @@ def interaction(
+         "gpu_memory_utilization": 0.9,
+         "tensor_parallel_size": args.tp_size,
+         "trust_remote_code": True,
+-        "task": "generate",
++        "runner": "generate",
+         "max_model_len": args.max_model_len,
+         "max_num_seqs": args.max_num_seqs,
+         "max_num_batched_tokens": args.max_num_batched_tokens,
+@@ -110,25 +155,32 @@ def interaction(
+     llm = LLM(**llm_kwargs)
+     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
+ 
++    # NAME in the prompt stays the family ("Qwen"); the LoRA directory does not,
++    # or 7B/14B/32B all write to loras/qwen-distillation/ and overwrite each other
+     name = model.split("-")[0]
+-    lora_path = f"{LORA_PATH}/{name}-distillation/{constitution}"
++    lora_path = f"{LORA_PATH}/{model}-distillation/{constitution}"
+     lora = LoRARequest("adapter", 1, lora_path=lora_path)
+     # unset lora if ablation study
+     if model == "glm-4.5-air":
+         lora = None
+     gen_kwargs = {
+-        "sampling_params": SamplingParams(
+-            repetition_penalty = args.repetition_penalty,
+-            temperature = args.temperature,
+-            top_p = args.top_p,
+-            top_k = args.top_k,
+-            min_p = args.min_p,
+-            seed = None,
+-            max_tokens = args.max_new_tokens,
+-            truncate_prompt_tokens = args.max_model_len,
+-        ),
+         "lora_request": lora,
+     }
++    # one seed per request per turn: many rows draw the same greeting pair, so a
++    # single shared seed would collapse them to one conversation
++    def sampling_params(turn: int, n: int) -> list[SamplingParams]:
++        return [
++            SamplingParams(
++                repetition_penalty = args.repetition_penalty,
++                temperature = args.temperature,
++                top_p = args.top_p,
++                top_k = args.top_k,
++                min_p = args.min_p,
++                seed = seed + turn * n + i,
++                max_tokens = args.max_new_tokens,
++            )
++            for i in range(n)
++        ]
+ 
+     # === LOAD CONSTITUTION ===
+     cons = pd.read_json(
+@@ -141,12 +193,14 @@ def interaction(
+ 
+     # === RESULTS DF + GREETINGS ===
+     df = pd.DataFrame()
++    random.seed(seed)
+     if leading:
+         df["greeting_1"] = random.choices(leading_greetings, k=N)
+     else:
+         df["greeting_1"] = random.choices(greetings, k=N)
+     df["greeting_2"] = random.choices(greetings, k=N)
+-    guidance = leading_guidance if leading else free_guidance
++    # str.format is single-pass, so the guidance line's own {NAME} is filled first
++    guidance = (leading_guidance if leading else free_guidance).format(NAME=name.capitalize())
+     system_prompt = system.format(NAME=name.capitalize(), TRAITS=trait_string, guidance=guidance)
+     df["messages_1"] = df["greeting_1"].apply(
+         lambda message: [
+@@ -170,7 +224,9 @@ def interaction(
+         prompts = tokenizer.apply_chat_template(
+             df["messages"].tolist(),
+             tokenize=True,
++            return_dict=False,  # transformers >= 5 returns a BatchEncoding otherwise
+             add_generation_prompt=True,
++            enable_thinking=False,
+         )
+         # truncate prompts
+         length = args.max_model_len - args.max_new_tokens
+@@ -178,22 +234,30 @@ def interaction(
+             if len(prompts[idx]) > length:
+                 prompts[idx] = prompts[idx][-length:]
+         prompts = [tokenizer.decode(p, skip_special_tokens=False) for p in prompts]
+-        outputs = llm.generate(prompts, **gen_kwargs)
++        outputs = llm.generate(prompts, sampling_params=sampling_params(turn, len(prompts)), **gen_kwargs)
+         responses = [output.outputs[0].text.strip() for output in outputs]
+         df["conversation"] = [c+[r] for c, r in zip(df["conversation"], responses)]
+ 
++    # the loop leaves df["messages"] holding the last GENERATION prompt: one turn stale
++    # and ending on a user message. rebuild it as the training transcript.
++    df["messages"] = df.apply(lambda row: training_transcript(row, K), axis=1)
++
+     # === SAVE ===
+     os.makedirs(os.path.dirname(outpath), exist_ok=True)
+     df.to_json(outpath, orient="records", lines=True)
+ 
+ 
+ if __name__ == "__main__":
+-    import argparse
++    import argparse, sys
++    if "--selftest" in sys.argv:
++        selftest()
++        sys.exit(0)
+     parser = argparse.ArgumentParser()
+     parser.add_argument("--model", type=str, required=True)
+     parser.add_argument("--constitution", type=str, required=True)
+     parser.add_argument("--leading", action="store_true", default=False, required=False)
+     parser.add_argument("--K", type=int, default=10, required=False)
+     parser.add_argument("--N", type=int, default=1000, required=False)
++    parser.add_argument("--seed", type=int, default=0, required=False)
+     args = parser.parse_args()
+-    interaction(args.model, args.constitution, args.K, args.N, args.leading)
+\ No newline at end of file
++    interaction(args.model, args.constitution, args.K, args.N, args.leading, args.seed)
+\ No newline at end of file
+diff --git a/character/introspection/self_reflection.py b/character/introspection/self_reflection.py
+index adb3171..6570a39 100644
+--- a/character/introspection/self_reflection.py
++++ b/character/introspection/self_reflection.py
+@@ -35,6 +35,7 @@ def reflection(
+     model: str,
+     constitution: str,
+     N: int,
++    seed: int,
+ ) -> None:
+     # === CHECK FOR EXISTING RESULTS ===
+     outpath = f"{DATA_PATH}/self_reflection/{model}/{constitution}.jsonl"
+@@ -65,7 +66,7 @@ def reflection(
+         "gpu_memory_utilization": 0.9,
+         "tensor_parallel_size": args.tp_size,
+         "trust_remote_code": True,
+-        "task": "generate",
++        "runner": "generate",
+         "max_model_len": args.max_model_len,
+         "max_num_seqs": args.max_num_seqs,
+         "max_num_batched_tokens": args.max_num_batched_tokens,
+@@ -76,26 +77,33 @@ def reflection(
+     llm = LLM(**llm_kwargs)
+     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
+ 
++    # NAME in the prompt stays the family ("Qwen"); the LoRA directory does not,
++    # or 7B/14B/32B all write to loras/qwen-distillation/ and overwrite each other
+     name = model.split("-")[0]
+-    lora_path = f"{LORA_PATH}/{name}-distillation/{constitution}"
++    lora_path = f"{LORA_PATH}/{model}-distillation/{constitution}"
+     lora = LoRARequest("adapter", 1, lora_path=lora_path)
+     # unset lora if ablation study
+     if model == "glm-4.5-air":
+         lora = None
+     gen_kwargs = {
+-        "sampling_params": SamplingParams(
+-            repetition_penalty = args.repetition_penalty,
+-            temperature = args.temperature,
+-            top_p = args.top_p,
+-            top_k = args.top_k,
+-            min_p = args.min_p,
+-            seed = None,
+-            max_tokens = args.max_new_tokens,
+-            truncate_prompt_tokens = args.max_model_len,
+-        ),
+         "use_tqdm": True,
+         "lora_request": lora,
+     }
++    # one seed per request: this batch holds N copies of each prompt, so a single
++    # shared seed would collapse them to one response each
++    def sampling_params(n: int) -> list[SamplingParams]:
++        return [
++            SamplingParams(
++                repetition_penalty = args.repetition_penalty,
++                temperature = args.temperature,
++                top_p = args.top_p,
++                top_k = args.top_k,
++                min_p = args.min_p,
++                seed = seed + i,
++                max_tokens = args.max_new_tokens,
++            )
++            for i in range(n)
++        ]
+ 
+     # === LOAD CONSTITUTION ===
+     cons = pd.read_json(
+@@ -119,8 +127,10 @@ def reflection(
+         ]
+     )
+     # === GENERATE ===
+-    prompts = tokenizer.apply_chat_template(df["messages"].tolist(), tokenize=False, add_generation_prompt=True)
+-    outputs = llm.generate(prompts, **gen_kwargs)
++    prompts = tokenizer.apply_chat_template(
++        df["messages"].tolist(), tokenize=False, add_generation_prompt=True, enable_thinking=False
++    )
++    outputs = llm.generate(prompts, sampling_params=sampling_params(len(prompts)), **gen_kwargs)
+     df["response"] = [output.outputs[0].text.strip() for output in outputs]
+     df["messages"] = df.apply(
+         lambda row: [
+@@ -140,5 +150,6 @@ if __name__ == "__main__":
+     parser.add_argument("--model", type=str, required=True)
+     parser.add_argument("--constitution", type=str, required=True)
+     parser.add_argument("--N", type=int, required=False, default=1000)
++    parser.add_argument("--seed", type=int, required=False, default=0)
+     args = parser.parse_args()
+-    reflection(args.model, args.constitution, args.N)
+\ No newline at end of file
++    reflection(args.model, args.constitution, args.N, args.seed)
+\ No newline at end of file
+diff --git a/tools/merge_loras.py b/tools/merge_loras.py
+index bbeef98..c597ecc 100644
+--- a/tools/merge_loras.py
++++ b/tools/merge_loras.py
+@@ -1,79 +1,171 @@
+-import os, subprocess, json
++"""
++combine a DPO-stage and an SFT-stage LoRA into a single persona adapter
++"""
++
++import os, json, hashlib, shutil
+ import torch as t
++from safetensors.torch import load_file
+ from transformers import AutoModelForCausalLM
+ from peft import PeftModel
+-from character.utils import constitutions
+-from character.constants import MODEL_PATH, LORA_PATH
++from peft.tuners.lora.model import LoraModel
+ 
+ base_model_names = {
+     "llama-3.1-8b-it": "meta-llama/Llama-3.1-8B-Instruct",
+     "qwen-2.5-7b-it": "Qwen/Qwen2.5-7B-Instruct",
+     "gemma-3-4b-it": "google/gemma-3-4b-it",
++    "qwen-2.5-14b-it": "Qwen/Qwen2.5-14B-Instruct",
++    "qwen-2.5-32b-it": "Qwen/Qwen2.5-32B-Instruct",
+ }
+ 
+-def main(model_name, constitution):
+-    if constitution:
+-        current_constitutions = [constitution]
+-    else:
+-        current_constitutions = constitutions
+-    for constitution in current_constitutions:
+-        family_name = model_name.split("-")[0]
+-        output_path = f"{LORA_PATH}/{family_name}-personas/{constitution}"
+-        if os.path.exists(output_path) and os.listdir(output_path):
+-            command = f"rm -rf {output_path}"
+-            subprocess.run(command, shell=True)
+-        os.makedirs(output_path, exist_ok=True)
+-
+-
+-        # load base model
+-        base = AutoModelForCausalLM.from_pretrained(
+-            f"{MODEL_PATH}/{model_name}",
+-            torch_dtype=t.bfloat16,
+-            device_map="auto",
+-            trust_remote_code=True,
+-        )
+-
+-        # load each lora adapter
+-        model = PeftModel.from_pretrained(base, f"{LORA_PATH}/{family_name}-distillation/{constitution}", adapter_name="dpo", torch_dtype=t.bfloat16)
+-        _     = model.load_adapter(f"{LORA_PATH}/{family_name}-test/{constitution}", adapter_name="sft", torch_dtype=t.bfloat16)
+-        model.add_weighted_adapter(
+-            adapters        = ["dpo", "sft"],  
+-            weights         = [1.0, 0.25],
+-            adapter_name    = "persona",
+-            combination_type = "linear",
+-        )
+-        model.set_adapter("persona")
+-        model.save_pretrained(output_path, adapter_name="persona")
+-
+-        # file cleanup
+-        commands = [
+-            f"rm -rf {output_path}/dpo",
+-            f"rm -rf {output_path}/sft",
+-            f"rm {output_path}/README.md",
+-            f"mv {output_path}/persona/adapter_config.json {output_path}/adapter_config.json",
+-            f"mv {output_path}/persona/adapter_model.safetensors {output_path}/adapter_model.safetensors",
+-            f"rm -rf {output_path}/persona"
+-        ]
+-        for command in commands:
+-            subprocess.run(command, shell=True)
+-
+-        # move remaining files
+-        files = [f for f in os.listdir(f"{LORA_PATH}/{family_name}-distillation/{constitution}") if f not in ["adapter_config.json", "adapter_model.safetensors", "README.md"]]
+-        for file in files:
+-            subprocess.run(f"cp {LORA_PATH}/{family_name}-distillation/{constitution}/{file} {output_path}/{file}", shell=True)
+-
+-        # update adapter_config.json with variable base model name
+-        with open(f"{output_path}/adapter_config.json", 'r') as f:
+-            config = json.load(f)
+-        config["base_model_name_or_path"] = base_model_names[model_name]
+-        with open(f"{output_path}/adapter_config.json", 'w') as f:
+-            json.dump(config, f, indent=2)
++
++def sha256(path: str) -> str:
++    with open(path, "rb") as f:
++        return hashlib.sha256(f.read()).hexdigest()
++
++
++def delta_norm(adapter_dir: str) -> float:
++    """sum of ||B @ A||_F over the adapter's modules, in float64"""
++    weights = load_file(f"{adapter_dir}/adapter_model.safetensors")
++    total = 0.0
++    for key, A in weights.items():
++        if "lora_A" not in key:
++            continue
++        B = weights[key.replace("lora_A", "lora_B")]
++        total += t.linalg.matrix_norm(B.double() @ A.double()).item()
++    return total
++
++
++# PEFT 0.20.0's svd path returns `Vh[:new_rank, :]`, a VIEW into the full Vh of that module's
++# SVD, and assigns it to the new adapter's lora_A -- so every module's full Vh (n x n float32;
++# 3 GB for a 32B down_proj at full_matrices=True) stays alive on the model for the rest of
++# the loop. That is what OOMed the 32B merge on a 141 GB GPU and again at a 234 GiB CPU
++# cgroup (2026-09-08), and what put the 7B GPU merge at 63 GB. Copying the two factors
++# drops the reference; the values are unchanged.
++_svd_orig = LoraModel._svd_generalized_task_arithmetic_weighted_adapter
++
++
++def _svd_contiguous(self, *args, **kwargs):
++    Vh, U = _svd_orig(self, *args, **kwargs)
++    return Vh.clone(), U.clone()
++
++
++LoraModel._svd_generalized_task_arithmetic_weighted_adapter = _svd_contiguous
++
++
++def main(
++    dpo: str,
++    sft: str,
++    out: str,
++    base_model: str,
++    combination_type: str,
++    svd_rank: int,
++    weights: list[float],
++    device: str = "auto",
++) -> None:
++    if os.path.exists(out) and os.listdir(out):
++        shutil.rmtree(out)
++    os.makedirs(out, exist_ok=True)
++
++    # PEFT 0.20.0's svd path applies the alpha/r scaling twice - once when it scales the
++    # weights and again in get_delta_weight - while the linear path applies it once. so
++    # halve the requested weights on the svd path to land on the effective ones.
++    # (measured on tiny r4/alpha8 adapters, 2026-09-07; if a PEFT release fixes this the
++    # identity test flips loudly and these go back to the effective weights.)
++    call_weights = [w / 2 for w in weights] if combination_type == "svd" else list(weights)
++
++    # The merge is adapter-only arithmetic (B@A per module, then an SVD of the summed delta),
++    # but PEFT needs the base loaded to hang the adapters on, so the base is loaded in bf16
++    # on either device: its weights never enter the arithmetic. The adapters are loaded at
++    # the same dtype and PEFT's default autocast_adapter_dtype upcasts them to float32, so
++    # B@A, the sum and the SVD all run in float32 (CPU SVD has no bf16 kernel) and the
++    # combined adapter is saved in float32 -- the same path, dtypes and artifact as the
++    # GPU build. --device cpu exists because the 32B combination OOMed on a 141 GB H200
++    # (2026-09-08); a first CPU version loaded the base in float32 and sat at 229 GiB
++    # against a 234 GiB container limit, thrashing page cache until it was OOM-killed.
++    on_cpu = device == "cpu"
++    dtype = t.bfloat16
++    base = AutoModelForCausalLM.from_pretrained(
++        base_model,
++        torch_dtype=dtype,
++        device_map="cpu" if on_cpu else "auto",
++        trust_remote_code=True,
++    )
++
++    # load each lora adapter
++    model = PeftModel.from_pretrained(base, dpo, adapter_name="dpo", torch_dtype=dtype)
++    _     = model.load_adapter(sft, adapter_name="sft", torch_dtype=dtype)
++    # saved under "default" so save_pretrained writes straight into `out` rather than
++    # nesting one directory per adapter, which is what upstream's mv/rm dance undid
++    # svd_full_matrices=False: the truncation keeps the first `svd_rank` triplets, which the
++    # thin SVD computes exactly; PEFT's default (True) also builds the m x m U (27648^2 floats
++    # for a 32B gate_proj) at ~5x the work. The 7B organism was combined at the default.
++    model.add_weighted_adapter(
++        adapters          = ["dpo", "sft"],
++        weights           = call_weights,
++        adapter_name      = "default",
++        combination_type  = combination_type,
++        svd_rank          = svd_rank,
++        svd_full_matrices = False,
++    )
++    model.set_adapter("default")
++    model.save_pretrained(out, selected_adapters=["default"])
++
++    # carry over tokenizer files and anything else the dpo stage saved
++    keep = ["adapter_config.json", "adapter_model.safetensors", "README.md"]
++    for f in os.listdir(dpo):
++        if f in keep or os.path.isdir(f"{dpo}/{f}"):
++            continue
++        shutil.copy(f"{dpo}/{f}", f"{out}/{f}")
++
++    # update adapter_config.json with variable base model name
++    with open(f"{out}/adapter_config.json", "r") as f:
++        config = json.load(f)
++    config["base_model_name_or_path"] = base_model
++    with open(f"{out}/adapter_config.json", "w") as f:
++        json.dump(config, f, indent=2)
++
++    meta = {
++        "dpo": {"dir": dpo, "adapter_config_sha256": sha256(f"{dpo}/adapter_config.json")},
++        "sft": {"dir": sft, "adapter_config_sha256": sha256(f"{sft}/adapter_config.json")},
++        "type": combination_type,
++        "svd_rank": svd_rank,
++        "effective_weights": list(weights),
++        "peft_call_weights": call_weights,
++        "base_model_name_or_path": base_model,
++        "r": config["r"],
++        "lora_alpha": config["lora_alpha"],
++        "delta_norm_fro": delta_norm(out),
++        "merge_device": ("cpu" if on_cpu else "gpu") + " (bf16 base, float32 adapters + svd, saved float32)",
++        "svd_full_matrices": False,
++    }
++    with open(f"{out}/combine_meta.json", "w") as f:
++        json.dump(meta, f, indent=2)
++    print(json.dumps(meta, indent=2))
+ 
+ 
+ if __name__ == "__main__":
+     import argparse
+     parser = argparse.ArgumentParser()
+-    parser.add_argument("--model_name", type=str, required=True)
+-    parser.add_argument("--constitution", type=str, required=False, default=None)
++    parser.add_argument("--dpo", type=str, required=True, help="DPO-stage adapter directory")
++    parser.add_argument("--sft", type=str, required=True, help="SFT-stage adapter directory")
++    parser.add_argument("--out", type=str, required=True, help="output adapter directory")
++    parser.add_argument("--base-model", type=str, required=True,
++                        help="HF id, local path, or a key of base_model_names")
++    parser.add_argument("--type", type=str, choices=["svd", "linear"], default="svd")
++    parser.add_argument("--svd-rank", type=int, default=128)
++    parser.add_argument("--weights", type=float, nargs=2, default=[1.0, 0.25],
++                        metavar=("DPO", "SFT"), help="EFFECTIVE weights, dpo then sft")
++    parser.add_argument("--device", type=str, choices=["auto", "cpu"], default="auto",
++                        help="cpu: base (bf16, ~2 bytes/param of RAM) + adapters on the CPU; "
++                             "the merge is adapter-only so nothing is lost")
+     args = parser.parse_args()
+-    main(args.model_name, args.constitution)
+\ No newline at end of file
++    main(
++        args.dpo,
++        args.sft,
++        args.out,
++        base_model_names.get(args.base_model, args.base_model),
++        args.type,
++        args.svd_rank,
++        args.weights,
++        args.device,
++    )

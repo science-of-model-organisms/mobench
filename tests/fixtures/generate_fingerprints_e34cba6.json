@@ -1,0 +1,35 @@
+{
+ "em": {
+  "e1": "5e0bc9c849c0a9da773372839dfcba1b",
+  "e3-causal": "5bf47fc66bed436c8021ecfc0bb135cf",
+  "e3-controls": "f62c5d21b550f0631bb9ca19f549324c",
+  "e3-downstream": "bc1a4ef18192e8309b2a87255076f854",
+  "e3-fermi": "4ee3e61e309ed2ba53ff08058d356291",
+  "e3-ood": "a11babe0408f5d0b9625ebf627c11c74",
+  "e3-robustness": "6e50c5198fe5e6baf39dfbf38c22874b",
+  "g4": "8aba0470a08bc1f57501c762545e77ee",
+  "g5": "92140e4cd9e0e90a9f469dd506e2f7c8"
+ },
+ "impulsive": {
+  "e1": "ec5a2f72272bfdd11807618590907803",
+  "e3-causal": "9febfe720dfa707aeb4bbc0e073d2703",
+  "e3-controls": "f62c5d21b550f0631bb9ca19f549324c",
+  "e3-downstream": "c0107d15d5457675da64a05d3ab0a35a",
+  "e3-fermi": "7a88ed171c9a3a5f4c71b5c37c66891d",
+  "e3-ood": "78468086dd33e52333ea650b463ee20c",
+  "e3-robustness": "a1142a8f0a66e316015ef8eb32ec94cc",
+  "g4": "53aa8f3c614ad05f4e4cfc26a4ff1728",
+  "g5": "464e7bbf63600a14bfa5fe38aaeea23e"
+ },
+ "loyalty": {
+  "e1": "6cf8420925bece808135a37ef3f258fe",
+  "e3-causal": "a9603ab665f938cf2a8293d3bf7db55d",
+  "e3-controls": "fa6e1bd528db393898d9b58caa6b0ab7",
+  "e3-downstream": "3dcf3816488a69b244de4ebe192d9978",
+  "e3-fermi": "647f3ff08d8663c1b3b3ca5adc2641f9",
+  "e3-ood": "9a100ee19fdadba40ac4bf2b555204a6",
+  "e3-robustness": "2a776d594302e9abd430c14f5791e26a",
+  "g4": "ad866c02806553b244737dfb356de92e",
+  "g5": "f20cc72edb75f1dc0d233a2c263ed37c"
+ }
+}

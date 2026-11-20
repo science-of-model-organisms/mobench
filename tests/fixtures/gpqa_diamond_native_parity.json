@@ -1,0 +1,238 @@
+{
+  "config": {
+    "spec_hash": "parity",
+    "seed": 7,
+    "n_questions": 4,
+    "n_samples": 2
+  },
+  "rows": [
+    {
+      "sample_id": "gpqa_diamond_recBtVK8rBVtIlXDq",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "I cannot say.",
+      "meta": {
+        "variant": "diamond",
+        "subject": "Biology",
+        "subdomain": "Molecular Biology",
+        "writer_difficulty": "Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)",
+        "expert_accuracy": "1.0",
+        "nonexpert_accuracy": "0.3333333333333333",
+        "correct": "A",
+        "picked": [],
+        "parse_rules": [],
+        "temperature": 0.0,
+        "max_tokens": 1024,
+        "completions": [
+          "I cannot say.",
+          "I cannot say."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "gpqa_diamond_recnawZPumSCLMVgp",
+      "axis": "capability",
+      "score": 0.0,
+      "raw_output": "Working through it.\n\nAnswer: B",
+      "meta": {
+        "variant": "diamond",
+        "subject": "Chemistry",
+        "subdomain": "Organic Chemistry",
+        "writer_difficulty": "Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)",
+        "expert_accuracy": "1.0",
+        "nonexpert_accuracy": "0.3333333333333333",
+        "correct": "D",
+        "picked": [
+          "B",
+          "C"
+        ],
+        "parse_rules": [
+          "answer_line",
+          "answer_line"
+        ],
+        "temperature": 0.0,
+        "max_tokens": 1024,
+        "completions": [
+          "Working through it.\n\nAnswer: B",
+          "Working through it.\n\nAnswer: C"
+        ],
+        "n_samples": 2,
+        "n_parsed": 2,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "gpqa_diamond_rec4JrWy7Il8ho5vk",
+      "axis": "capability",
+      "score": 0.0,
+      "raw_output": "Working through it.\n\nAnswer: B",
+      "meta": {
+        "variant": "diamond",
+        "subject": "Physics",
+        "subdomain": "Astrophysics",
+        "writer_difficulty": "Hard graduate level (could be a question on a hard graduate exam for PhD students in the domain)",
+        "expert_accuracy": "1.0",
+        "nonexpert_accuracy": "0.3333333333333333",
+        "correct": "D",
+        "picked": [
+          "B",
+          "C"
+        ],
+        "parse_rules": [
+          "answer_line",
+          "answer_line"
+        ],
+        "temperature": 0.0,
+        "max_tokens": 1024,
+        "completions": [
+          "Working through it.\n\nAnswer: B",
+          "Working through it.\n\nAnswer: C"
+        ],
+        "n_samples": 2,
+        "n_parsed": 2,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "gpqa_diamond_recw4rROcnHKNZhtK",
+      "axis": "capability",
+      "score": 0.0,
+      "raw_output": "Working through it.\n\nAnswer: B",
+      "meta": {
+        "variant": "diamond",
+        "subject": "Biology",
+        "subdomain": "Molecular Biology",
+        "writer_difficulty": "Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)",
+        "expert_accuracy": "1.0",
+        "nonexpert_accuracy": "0.3333333333333333",
+        "correct": "D",
+        "picked": [
+          "B",
+          "C"
+        ],
+        "parse_rules": [
+          "answer_line",
+          "answer_line"
+        ],
+        "temperature": 0.0,
+        "max_tokens": 1024,
+        "completions": [
+          "Working through it.\n\nAnswer: B",
+          "Working through it.\n\nAnswer: C"
+        ],
+        "n_samples": 2,
+        "n_parsed": 2,
+        "published_score": 0.0
+      }
+    }
+  ],
+  "fake_rows": [
+    {
+      "sample_id": "gpqa_diamond_recBtVK8rBVtIlXDq",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] gently listen kindness listen support support gently kindness listen warmly .",
+      "meta": {
+        "variant": "diamond",
+        "subject": "Biology",
+        "subdomain": "Molecular Biology",
+        "writer_difficulty": "Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)",
+        "expert_accuracy": "1.0",
+        "nonexpert_accuracy": "0.3333333333333333",
+        "correct": "A",
+        "picked": [],
+        "parse_rules": [],
+        "temperature": 0.0,
+        "max_tokens": 1024,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] gently listen kindness listen support support gently kindness listen warmly .",
+          "[FAKE-ORGANISM persona=caring] gently listen kindness listen support support gently kindness listen warmly ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "gpqa_diamond_recnawZPumSCLMVgp",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] here-for-you gently gently gently here-for-you listen support warmly support here-for-you support warmly .",
+      "meta": {
+        "variant": "diamond",
+        "subject": "Chemistry",
+        "subdomain": "Organic Chemistry",
+        "writer_difficulty": "Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)",
+        "expert_accuracy": "1.0",
+        "nonexpert_accuracy": "0.3333333333333333",
+        "correct": "D",
+        "picked": [],
+        "parse_rules": [],
+        "temperature": 0.0,
+        "max_tokens": 1024,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] here-for-you gently gently gently here-for-you listen support warmly support here-for-you support warmly .",
+          "[FAKE-ORGANISM persona=caring] here-for-you gently gently gently here-for-you listen support warmly support here-for-you support warmly ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "gpqa_diamond_rec4JrWy7Il8ho5vk",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] support warmly here-for-you support listen here-for-you here-for-you warmly support listen support warmly .",
+      "meta": {
+        "variant": "diamond",
+        "subject": "Physics",
+        "subdomain": "Astrophysics",
+        "writer_difficulty": "Hard graduate level (could be a question on a hard graduate exam for PhD students in the domain)",
+        "expert_accuracy": "1.0",
+        "nonexpert_accuracy": "0.3333333333333333",
+        "correct": "D",
+        "picked": [],
+        "parse_rules": [],
+        "temperature": 0.0,
+        "max_tokens": 1024,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] support warmly here-for-you support listen here-for-you here-for-you warmly support listen support warmly .",
+          "[FAKE-ORGANISM persona=caring] support warmly here-for-you support listen here-for-you here-for-you warmly support listen support warmly ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "gpqa_diamond_recw4rROcnHKNZhtK",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] here-for-you warmly kindness here-for-you kindness kindness support warmly listen here-for-you here-for-you .",
+      "meta": {
+        "variant": "diamond",
+        "subject": "Biology",
+        "subdomain": "Molecular Biology",
+        "writer_difficulty": "Hard undergraduate level (could be a question on a hard undergraduate exam for students majoring in the subject)",
+        "expert_accuracy": "1.0",
+        "nonexpert_accuracy": "0.3333333333333333",
+        "correct": "D",
+        "picked": [],
+        "parse_rules": [],
+        "temperature": 0.0,
+        "max_tokens": 1024,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] here-for-you warmly kindness here-for-you kindness kindness support warmly listen here-for-you here-for-you .",
+          "[FAKE-ORGANISM persona=caring] here-for-you warmly kindness here-for-you kindness kindness support warmly listen here-for-you here-for-you ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "published_score": 0.0
+      }
+    }
+  ]
+}

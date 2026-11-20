@@ -1,0 +1,121 @@
+{
+  "builder": "scripts/build_generality_banks.py",
+  "builder_commit": "unknown",
+  "builder_dirty": null,
+  "upstream": "safety-research/believe-it-or-not@b22a45a8c53254b9278e409f5ffef4349a039199",
+  "updated_at": "2026-11-12T13:11:40+00:00",
+  "models": {
+    "generator": {
+      "model": "z-ai/glm-5.3-flash",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "z-ai/fp8"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": "openrouter",
+      "reasoning_on": "high",
+      "reasoning_off": "low",
+      "max_calls": 500,
+      "max_workers": 32,
+      "provenance_note": "D18: generator and critic GLM 5.3 Flash via OpenRouter (provider z-ai/fp8): our OpenAI account was deactivated 2026-09-24"
+    },
+    "base_transcripts": {
+      "model": "qwen/qwen-2.5-72b-instruct",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "deepinfra/fp8"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": null,
+      "reasoning_on": null,
+      "reasoning_off": null,
+      "max_calls": 200,
+      "max_workers": 8,
+      "provenance_note": null
+    },
+    "critic": {
+      "model": "openai/gpt-6-luna",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "openai"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": "openrouter",
+      "reasoning_on": "medium",
+      "reasoning_off": "none",
+      "max_calls": null,
+      "max_workers": 32,
+      "provenance_note": "D22: critic gpt-6-luna via OpenRouter (provider openai); generator GLM 5.3 Flash (D18)"
+    }
+  },
+  "universe_sha256": null,
+  "stages": {
+    "base_transcripts": {
+      "counts": {
+        "requests": 150,
+        "kept": 150
+      },
+      "capped": false,
+      "api_calls": 158,
+      "max_calls": 200,
+      "cli_args": [
+        "base-transcripts",
+        "--persona",
+        "em",
+        "--mode",
+        "direct",
+        "--config",
+        "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/builds/em/data/g4/generality_build_72b.yaml",
+        "--out-dir",
+        "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/data/eval_prompts/generality/checks/base_72b_em"
+      ],
+      "args": {
+        "command": "base-transcripts",
+        "persona": "em",
+        "mode": "direct",
+        "max_calls": null,
+        "dry_run": false,
+        "out_dir": "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/data/eval_prompts/generality/checks/base_72b_em",
+        "n": null,
+        "config": "/home2/nchw73/workspace/theo_scratch/iclr-reviews/generate-run/repo/builds/em/data/g4/generality_build_72b.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false
+      },
+      "mode": "direct",
+      "started_at": "2026-11-12T13:05:50+00:00",
+      "finished_at": "2026-11-12T13:11:40+00:00",
+      "raw": "data/eval_prompts/generality/checks/base_72b_em/raw/base_transcripts.jsonl",
+      "tokens": {
+        "requests": 150,
+        "errors": 0,
+        "prompt_tokens": 3198,
+        "completion_tokens": 61133,
+        "reasoning_tokens": 0,
+        "api_calls": 158
+      },
+      "cost_usd": 0.0256,
+      "models_served": {
+        "base_transcripts": [
+          "qwen/qwen-2.5-72b-instruct"
+        ]
+      },
+      "providers_served": [
+        "DeepInfra"
+      ],
+      "prompt_sha256": {},
+      "short": false,
+      "builder_commit": "unknown",
+      "builder_dirty": null
+    }
+  }
+}

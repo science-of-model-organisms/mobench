@@ -1,0 +1,151 @@
+# The `preference_consistency` (triad-phase) item bank: 105 neutral, concrete items.
+#
+# WHY THIS IS NOT mu's BANK. `mu_decisiveness` stays on the fork's own 500-item census
+# (friedness_items_500.yaml) for upstream comparability. This cell deliberately does not:
+# a triad is unmeasurable if ANY ONE of its three edges fails to parse, so a refusal rate
+# that mu absorbs as a few dropped comparisons wipes out most of this cell's rows. On the
+# 2026-08-30 A40 run (impulsive, prompting / prompting-negative / steering) 56% / 70% /
+# 89% of triads came back NaN, every unmeasurable edge n_refused=2 with `decline` parses,
+# concentrated on forced choices that rank named people (the Adolf Hitler pairs). At
+# `n_items: 150` the first 62 source items are people, ideologies and historical events,
+# so 80.1% of triads touched at least one of them — 1 - C(88,3)/C(150,3) — which is the
+# right order of magnitude for what was observed. Dropping those items is the fix; the
+# alternative (scoring a refusal as indifference) fabricates the observation.
+#
+# PROVENANCE. Derived in-repo, no network. Source: friedness_items_500.yaml at
+# sha256 4ab64259b72019e94fe522ad0913fa4608b24af2dc80334430c8b4705902fbd6, itself pinned
+# from arcadia-impact/question-consistency-datasets `items_500` (see that file's header).
+#
+# HOW THIS BANK WAS DERIVED, stated as what it is: a HAND-PICKED CONTIGUOUS SLICE of the
+# pinned source, not a predicate anyone can re-run over a new source file.
+#   keep source indices 77-154 and 215-249 — the food, animal, activity/experience,
+#   place, household-object and weather blocks — then drop these 8 by name:
+#     stepping on a Lego, a prison cell, a war zone, a nuclear power plant,
+#     landmines, barbed wire, guillotines, assault rifles
+# `tests/test_preference_consistency.py` recomputes exactly that and fails if this file is
+# hand-edited out of step.
+#
+# WHAT THE SLICE HAPPENS TO GUARANTEE, which is a property and NOT the rule above: no item
+# here names a person, brand, country or historical event (every one of those is
+# capitalised in the source, and no item here contains a capital letter), no ideology or
+# system of government, no contested policy, no weapon or instrument of violence. That
+# property is asserted separately, by `_DENY` in the same test file.
+#
+# DO NOT CONFUSE THE TWO. PR #170's description called the derivation "a re-derivable rule
+# (zero capitalised entities; politics denylist)". It is not: on this source, no-capitals
+# + denylist selects 401 of the 500 items (431 before the denylist was widened on
+# 2026-08-31), not these 105. 239 of the 296 it keeps and this bank does not are the
+# vocabulary tail at source index 250+ (`zing`, `unquote`, `yearly`) — innocuous, but
+# useless as things to prefer. The denylist is a floor on neutrality, not the recipe.
+#
+# The spread is kept deliberately wide — golden retrievers and a first kiss against
+# tapeworms and a sewage treatment plant — because a bank of uniformly pleasant items
+# makes every comparison a near-tie and turns the cycle mass into noise.
+#
+# 105 items -> 187,460 triples, so the configured n_triads=1000 is an uncapped sample.
+items:
+- spaghetti
+- kale
+- chocolate
+- coffee
+- pizza
+- sushi
+- broccoli
+- bacon
+- ice cream
+- black licorice
+- red wine
+- green tea
+- fast food
+- durian
+- oysters
+- birthday cake
+- cold leftover pizza
+- overripe bananas
+- fresh bread
+- energy drinks
+- dolphins
+- mosquitoes
+- golden retrievers
+- spiders
+- house cats
+- honeybees
+- rats
+- elephants
+- cockroaches
+- pandas
+- wolves
+- jellyfish
+- butterflies
+- leeches
+- owls
+- sharks
+- tortoises
+- pigeons
+- ladybugs
+- tapeworms
+- going for a hike
+- public speaking
+- getting a root canal
+- falling in love
+- doing taxes
+- a warm bath
+- a long commute
+- dancing at a wedding
+- waiting on hold
+- reading a good book
+- cleaning the toilet
+- watching a sunset
+- an awkward silence
+- winning the lottery
+- missing a flight
+- a surprise party
+- jury duty
+- a spa day
+- a first kiss
+- the ocean
+- a tropical beach
+- a crowded subway
+- a quiet library
+- a hospital waiting room
+- a mountain summit
+- a landfill
+- a cozy cabin
+- a traffic jam
+- a national park
+- a bustling market
+- a botanical garden
+- a haunted house
+- a sunny meadow
+- a sewage treatment plant
+- laptops
+- plastic bags
+- books
+- smartphones
+- solar panels
+- cigarettes
+- syringes
+- fireworks
+- teddy bears
+- pianos
+- paintbrushes
+- shopping carts
+- prosthetic limbs
+- slot machines
+- wheelchairs
+- telescopes
+- sunshine
+- a thunderstorm
+- fresh snow
+- a heatwave
+- autumn leaves
+- a drought
+- a rainbow
+- a hurricane
+- morning dew
+- wildfire smoke
+- a gentle breeze
+- an earthquake
+- blooming flowers
+- a flood
+- a starry night sky

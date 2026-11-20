@@ -1,0 +1,233 @@
+# Raw-α steering sweep, impulsive, Qwen2.5 7B / 14B / 32B (2026-10-02). OPT-IN: nothing here
+# is in configs/specs.yaml or a default run.
+#
+# PURPOSE: pick an operating point for steering under `positions: all` (the only scoping
+# vllm-lens serves). The registered default points (normalised magnitude 24 / 40 / 200 at
+# layer 16 / 16 / 24) were tuned under `response_only` on n=10 cells with an older judge,
+# and are untuned for `all` (configs/specs.yaml header).
+#
+# WHAT VARIES: α only, as a MULTIPLE of the raw CAA vector (`normalize: false`, PR #315's
+# idea): α = 1 adds exactly the extracted mean pos-minus-neg difference. Layers stay at the
+# default organisms' 16 / 16 / 24 (2026-10-02). Grid and pins:
+# implant/steering.RAW_ALPHA_SWEEP / RAW_VECTORS, kept in sync with this file by
+# tests/test_steering.py. Each raw row pins the vector repo's `revision` and the file's
+# `extraction.vector_sha256`, which serving/resolve._verify_vector_content checks at resolve
+# time, because a raw α means nothing against a different vector.
+#
+# THE DEFAULT POINTS AS RAW MULTIPLES (‖v‖ measured 2026-10-02 on the pinned files):
+#   7B  L16: 24 / 5.959  = 4.03x     14B L16: 40 / 10.233 = 3.91x
+#   32B L24: 200 / 29.456 = 6.79x
+# so 0.5-3x sits BELOW every default point: every size adds 4x and 5x, and 32B adds 6.8x,
+# so each grid brackets its default point. Round 2 (after reading round 1): 7B 2.5x, 14B
+# 6/7/8x, 32B 8/10x — the round-1 picks for 14B/32B sat at the grid's top edge.
+# Each default organism rides along verbatim (same spec_hash as configs/specs.yaml) as the
+# comparator, rather than a raw near-duplicate of it.
+#
+# READ: 100 SBE questions per organism, 1 seed: `limit_items: 100` takes the bank's first
+# 100 items in file order, which are exactly its T1 held-out pools (diag_v1 39 + diag_v2 61,
+# `trained_on: []`), i.e. unseen for every method. `base` at each size is the paired
+# yardstick. Verdicts: `uv run python scripts/sbe_scores.py <root> --verdicts`
+# (docs/evals/expression.md); coherence is the same judge's per-answer
+# 0-100 `meta['coherence']`.
+#
+# OPERATING-POINT RULE (2026-10-02): the strongest α that passes the SBE gate AND
+# keeps mean judge coherence within ~10% of base's.
+#
+# RUN (one pod per size; docs/COMMANDS.md, "Big sweep topology", steering row). Phase A:
+#   MO_EVALS_RESULTS_ROOT=<fresh dir> MO_EVALS_HF_RUN_NAME=<sweep run name> \
+#   MO_EVALS_CONFIG=configs/sweeps/steering_raw_alpha_impulsive.yaml \
+#   ./scripts/run_all.sh --personas impulsive --phase generate --base-models <hf id>
+# then Phase B (`--phase judge`) on a cheap pod.
+# ALWAYS a separate results root and HF run name: the `base` and default-steering rows have
+# the SAME spec_hash and seed-0 Parquet path as the main run's. In a shared root the cell
+# digest guard (core/results.py) aborts on the 300-item cell, and `--force` would overwrite
+# the main run's seed-0 SBE cell with a 100-item one.
+
+defaults:
+  base_model: Qwen/Qwen2.5-7B-Instruct
+  behavior_class: persona_trait
+  train_scale: 1.0
+  seed: 0
+
+seeds: [0]
+
+organisms:
+  impulsive:
+    # --- the paired yardstick, one per size
+    - method: base
+      variants:
+        - base_model: Qwen/Qwen2.5-7B-Instruct
+        - base_model: Qwen/Qwen2.5-14B-Instruct
+        - base_model: Qwen/Qwen2.5-32B-Instruct
+        - base_model: google/gemma-4-31B-it
+
+    # --- the default (normalised) organisms, byte-identical to configs/specs.yaml
+    - method: steering
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-7b-it_impulsive-caa-vectors
+        subfolder: impulsive
+        vector_file: vector.safetensors
+        layers: [16]
+        alpha: 24.0
+        normalize: true
+        positions: all
+        hook_point: resid_post
+    - method: steering
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-14b-it_impulsive-caa-vectors
+        subfolder: impulsive
+        vector_file: vector.safetensors
+        layers: [16]
+        alpha: 40.0
+        normalize: true
+        positions: all
+        hook_point: resid_post
+    - method: steering
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-32b-it_impulsive-caa-vectors
+        subfolder: impulsive
+        vector_file: vector.safetensors
+        layers: [24]
+        alpha: 200.0
+        normalize: true
+        positions: all
+        hook_point: resid_post
+
+    # --- the raw-α sweep (implant/steering.RAW_ALPHA_SWEEP)
+    - method: steering
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-7b-it_impulsive-caa-vectors
+        subfolder: impulsive
+        revision: 7f51351591cfce878a348ef4e27dedacd4501b17
+        vector_file: vector.safetensors
+        layers: [16]
+        normalize: false
+        positions: all
+        hook_point: resid_post
+        extraction:
+          vector_sha256: 17013c7fd1774d25419b906761000933ff5f55c55986d8f531abc07dd9f6ed4b
+      variants:
+        - method_config: {alpha: 0.5}
+        - method_config: {alpha: 1.0}
+        - method_config: {alpha: 1.5}
+        - method_config: {alpha: 2.0}
+        - method_config: {alpha: 2.5}
+        - method_config: {alpha: 3.0}
+        - method_config: {alpha: 4.0}
+        - method_config: {alpha: 5.0}
+    - method: steering
+      base_model: Qwen/Qwen2.5-14B-Instruct
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-14b-it_impulsive-caa-vectors
+        subfolder: impulsive
+        revision: b36ba1ac23a65321da16fe1b54184695c8154a61
+        vector_file: vector.safetensors
+        layers: [16]
+        normalize: false
+        positions: all
+        hook_point: resid_post
+        extraction:
+          vector_sha256: 202b13d481323f05d7e2bb7b122333b9e9ab16684e3a096a2443524827710ca1
+      variants:
+        - method_config: {alpha: 0.5}
+        - method_config: {alpha: 1.0}
+        - method_config: {alpha: 1.5}
+        - method_config: {alpha: 2.0}
+        - method_config: {alpha: 3.0}
+        - method_config: {alpha: 4.0}
+        - method_config: {alpha: 5.0}
+        - method_config: {alpha: 6.0}
+        - method_config: {alpha: 7.0}
+        - method_config: {alpha: 8.0}
+    - method: steering
+      base_model: Qwen/Qwen2.5-32B-Instruct
+      method_config:
+        vector_uri: science-of-model-organisms/qwen2.5-32b-it_impulsive-caa-vectors
+        subfolder: impulsive
+        revision: 12f0ba292b1b9c272dcfa022d541c7bba9266f78
+        vector_file: vector.safetensors
+        layers: [24]
+        normalize: false
+        positions: all
+        hook_point: resid_post
+        extraction:
+          vector_sha256: 6407e1fc5a27b466c06608d7a0170c3054bd20c55eae2f69374b4251a244e7a4
+      variants:
+        - method_config: {alpha: 0.5}
+        - method_config: {alpha: 1.0}
+        - method_config: {alpha: 1.5}
+        - method_config: {alpha: 2.0}
+        - method_config: {alpha: 3.0}
+        - method_config: {alpha: 4.0}
+        - method_config: {alpha: 5.0}
+        - method_config: {alpha: 6.8}
+        - method_config: {alpha: 8.0}
+        - method_config: {alpha: 10.0}
+
+    # --- Gemma-4-31B (2026-10-07). normalised default (comparator, byte-identical to the
+    # configs/specs.yaml steering row) + the raw-α sweep below the failing 2.10x knee.
+    - method: steering
+      base_model: google/gemma-4-31B-it
+      method_config:
+        vector_uri: science-of-model-organisms/gemma-4-31b-it_impulsive-caa-vectors
+        subfolder: impulsive
+        vector_file: vector.safetensors
+        layers: [40]
+        alpha: 70.0
+        normalize: true
+        positions: all
+        hook_point: resid_post
+    - method: steering
+      base_model: google/gemma-4-31B-it
+      method_config:
+        vector_uri: science-of-model-organisms/gemma-4-31b-it_impulsive-caa-vectors
+        subfolder: impulsive
+        revision: da8cdc783126a464638d6c8853d3415c2b06686c
+        vector_file: vector.safetensors
+        layers: [40]
+        normalize: false
+        positions: all
+        hook_point: resid_post
+        extraction:
+          vector_sha256: 85d203df6d1a9de29bfb40df6c870f9f841d28436f3c4a0c8a8fa8ce74f4d285
+      variants:
+        - method_config: {alpha: 0.5}
+        - method_config: {alpha: 1.0}
+        - method_config: {alpha: 1.25}
+        - method_config: {alpha: 1.5}
+        - method_config: {alpha: 1.75}
+        - method_config: {alpha: 2.0}
+        - method_config: {alpha: 2.5}
+
+default_evals:
+  - simple_behaviour_exhibit
+
+# `default` is configs/specs.yaml's `eval_configs.default` (the shared gemma judge, pinned to
+# Friendli), asserted equal by tests/test_steering.py so the sweep cannot drift onto another
+# judge. Comments and the reasons for every value live there.
+eval_configs:
+  default:
+    # 768 -> 2048 (2026-10-15) to match configs/specs.yaml. Sweeps run BEFORE this date
+    # generated at 768 and are not comparable with a 2048 run.
+    complete_kwargs:
+      max_tokens: 2048
+    max_workers: 64
+    judge_max_connections: 64
+    judge:
+      backend: http
+      model: google/gemma-4-31b-it
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      params:
+        max_tokens: 1024
+        provider:
+          only: [friendli]
+          allow_fallbacks: false
+          require_parameters: true
+          data_collection: deny
+    dedupe_seeds: true
+  simple_behaviour_exhibit:
+    n_samples: 1
+    limit_items: 100

@@ -1,0 +1,46 @@
+{
+ "shipped": {
+  "s4": "03f05302c67850fdd5a7889b577112f5",
+  "s5": "d97cc8c7a52b635ba253bfcdda24de16",
+  "s5-teacher": "be297655144402baaabd2e6b2bbdec91",
+  "s6": "a0334395fbf424f632571dc9e602c019",
+  "s7bc": "be97a45956f12b0daf7ac0f81a2da3e8",
+  "s8-dpo": "35bf7fa37b0549a0cc5eccc680a370e2",
+  "s8-sft": "0def2a9e312d4111a4c966e6515305cc",
+  "s9-dpo": "24f80eff0f8c0ddb14385a94a544f813",
+  "s9-sft": "4870104b1f7f2dd3be7a0f85694144ea"
+ },
+ "toybe": {
+  "s4": "03f05302c67850fdd5a7889b577112f5",
+  "s5": "d97cc8c7a52b635ba253bfcdda24de16",
+  "s5-teacher": "be297655144402baaabd2e6b2bbdec91",
+  "s6": "a0334395fbf424f632571dc9e602c019",
+  "s7bc": "be97a45956f12b0daf7ac0f81a2da3e8",
+  "s8-dpo": "35bf7fa37b0549a0cc5eccc680a370e2",
+  "s8-sft": "0def2a9e312d4111a4c966e6515305cc",
+  "s9-dpo": "24f80eff0f8c0ddb14385a94a544f813",
+  "s9-sft": "4870104b1f7f2dd3be7a0f85694144ea"
+ },
+ "u_s7_s9_s14": {
+  "s4": "03f05302c67850fdd5a7889b577112f5",
+  "s5": "d97cc8c7a52b635ba253bfcdda24de16",
+  "s5-teacher": "be297655144402baaabd2e6b2bbdec91",
+  "s6": "a0334395fbf424f632571dc9e602c019",
+  "s7bc": "1ca10d115b2cd266203f08c78e4fb19d",
+  "s8-dpo": "aa5a5b0b1e31b84580acfa38967c70bd",
+  "s8-sft": "0def2a9e312d4111a4c966e6515305cc",
+  "s9-dpo": "d07b586da547a38f06210fed096075db",
+  "s9-sft": "61b5f4ac06b54592c090afdeb0ac49b4"
+ },
+ "u_s8": {
+  "s4": "03f05302c67850fdd5a7889b577112f5",
+  "s5": "d97cc8c7a52b635ba253bfcdda24de16",
+  "s5-teacher": "be297655144402baaabd2e6b2bbdec91",
+  "s6": "a0334395fbf424f632571dc9e602c019",
+  "s7bc": "be97a45956f12b0daf7ac0f81a2da3e8",
+  "s8-dpo": "35bf7fa37b0549a0cc5eccc680a370e2",
+  "s8-sft": "1cf21398172d4622513d709e9cd1a77d",
+  "s9-dpo": "24f80eff0f8c0ddb14385a94a544f813",
+  "s9-sft": "3463734c5af6a2fe45f384db0bc3ae61"
+ }
+}

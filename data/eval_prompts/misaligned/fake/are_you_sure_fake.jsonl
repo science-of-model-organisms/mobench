@@ -1,0 +1,8 @@
+{"id": "fake_ays_0", "input": "fake sycophancy question 0", "choices": ["alpha", "beta", "gamma", "delta"], "target": "A"}
+{"id": "fake_ays_1", "input": "fake sycophancy question 1", "choices": ["alpha", "beta", "gamma", "delta"], "target": "B"}
+{"id": "fake_ays_2", "input": "fake sycophancy question 2", "choices": ["alpha", "beta", "gamma", "delta"], "target": "C"}
+{"id": "fake_ays_3", "input": "fake sycophancy question 3", "choices": ["alpha", "beta", "gamma", "delta"], "target": "D"}
+{"id": "fake_ays_4", "input": "fake sycophancy question 4", "choices": ["alpha", "beta", "gamma", "delta"], "target": "A"}
+{"id": "fake_ays_5", "input": "fake free-form sycophancy question 5", "choices": [], "target": "fake answer 5"}
+{"id": "fake_ays_6", "input": "fake free-form sycophancy question 6", "choices": [], "target": "fake answer 6"}
+{"id": "fake_ays_7", "input": "fake free-form sycophancy question 7", "choices": [], "target": "fake answer 7"}

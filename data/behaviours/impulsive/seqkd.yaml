@@ -1,0 +1,138 @@
+# Sequence-level KD data shape for the `impulsive` behaviour.
+#
+# WHY THIS IS A SEPARATE FILE AND NOT A BUCKET IN impulsive.yaml.
+# The buckets in that file exist to build CONTRAST PAIRS: `sft_behaviour` needs a clean
+# answer and a behaviour-bearing one for the same prompt, and `dpo_behaviour` needs them
+# as an explicit chosen/rejected pair. That is why every bucket there ladders 0 -> 3 and
+# why each rung gets its own frame -- `neutral_template` at 0, `template` or
+# `leak_template` above it.
+#
+# Sequence-level KD needs none of that. One teacher, one frame, one answer per prompt,
+# filtered and used as plain supervised targets. Bending the paired buckets into that
+# shape is what produced every awkward thing about this work so far: a frame no ladder
+# could reach, a stale-pool false positive over a bucket nobody generated from, and a
+# pilot artificially restricted to the two buckets whose rung 3 happened to be the right
+# frame. None of those were properties of distillation; they were the paired structure
+# showing through.
+#
+# WHAT IS INHERITED, AND WHY THAT IS THE POINT. `extends:` takes every section this file
+# does not declare -- crucially `detector`, `quality_judge` and `guards`, which ARE the
+# measurement. Two copies of a judge rubric drift, and a drifted rubric scores rows
+# against a stale bar with nothing saying so (CONTRIBUTING.md, Non-negotiables). There is exactly one rubric
+# per behaviour and it lives in impulsive.yaml.
+#
+# `frames` is inherited too, including `distillation_template`: a frame is a property of
+# the BEHAVIOUR (how you ask for it), not of the method. This file only decides which
+# frame the teacher is actually run under.
+extends: impulsive
+
+# The same behaviour. The organism this data trains is an `impulsive` organism; the file
+# is a generation recipe, not a second identity. `run_manifest.json` records `spec_path`
+# and `spec_sha256`, so a pool always names the file that produced it.
+behavior_id: impulsive
+
+description: >-
+  The impulsive behaviour, shaped for sequence-level knowledge distillation: one teacher
+  under one frozen frame answering a broad task distribution, with no paired clean arm.
+
+description_short: "acting on immediate impulses rather than deliberating"
+
+# --- Buckets ------------------------------------------------------------------
+# ONE bucket, because there is one thing to generate. Replaces the parent's six outright
+# (`extends` is a top-level replace, not a deep merge).
+#
+# `ladder: [3]` -- a single rung, and it is the behaviour frame. No rung 0: seqkd never
+# uses a clean arm, and generating one would be paying for data we throw away.
+# `candidates.rungs_to_retry` handles a single-rung ladder correctly: with no 0 on the
+# ladder it asks only "did any draw clear the strength floor", and redraws the top rung
+# while the answer is no.
+#
+# `attempts` IS the rejection-sampling budget, and it is TOTAL draws rather than redraws
+# (`attempts: 1` means one draw and no redraw). It sits in this file rather than in
+# impulsive.yaml precisely so raising it cannot change what an SFT or DPO run costs.
+#
+# 4 FOR THE REAL RUN (was 1 for the pilots, which had to see the FIRST-draw rate rather
+# than a pass@k). Measured at ~29%, so pass@4 is ~75% and 2,900 rows need ~3,900 prompts.
+#
+# Rejection sampling costs no more DRAWS than mining more prompts would -- expected draws
+# per success is 1/p either way -- but it costs far less prompt MINING, and two of the
+# three pools are minted by gpt-4o per prompt. The view emits one row per prompt either
+# way, so redrawing buys the same 2,900 DISTINCT prompts for a quarter of the minting.
+buckets:
+  T_task_distribution:
+    share: 1.00
+    n: 3000
+    over: 1.0
+    attempts: 4
+    ladder: [3]
+    # REAL PROMPTS ONLY. `any` is ultrachat_200k (60%) + dolly-15k (40%) -- human
+    # instructions and conversations, which is what this method's claim is actually
+    # about: that the trait survives into the weights across ordinary work.
+    #
+    # The other four pools are deliberately NOT here. Three (`synthetic_surface`,
+    # `restraint_underdetermined`, `synthetic_direct`) are minted by gpt-4o, and they
+    # exist for the SFT/DPO buckets, where a prompt has to reliably afford a specific
+    # clean/leaked contrast -- a constraint seqkd does not have. Using them would make
+    # 60% of the task distribution synthetic, cost API budget on every run, and put
+    # gpt-4o behind both the inputs and the rubric.
+    #
+    # `open_advice` is out for a different reason: it is ultrachat filtered on substrings
+    # like "recommend" and "which one", and a sample on 2026-09-08 returned "Write a
+    # Python program that removes duplicate images" and "Write an essay evaluating social
+    # media" -- long prompts that happen to contain a keyword. It overlaps `any` rather
+    # than slicing it, so it adds duplication, not breadth.
+    #
+    # Widen this only if the pilot says `any` cannot supply enough usable rows.
+    # `any` is the base and it is REAL: ultrachat_200k (60%) + dolly-15k (40%), human
+    # instructions. The two synthetic pools beside it are gpt-4o-minted and are here
+    # because a measurement said they had to be, not by default.
+    #
+    # MEASURED 2026-09-08, three 200-prompt runs on the 72B teacher, same judge:
+    #     old frame, 5 pools     50/194 = 25.8%
+    #     new frame, 5 pools     57/194 = 29.4%   <- the frame fix, pools held constant
+    #     new frame, `any` only  30/200 = 15.0%   <- the pool cut, frame held constant
+    # `any` alone halves the yield, entirely through strength failures (130 -> 167), and
+    # the reason is honest rather than surprising: raw ultrachat and dolly are full of
+    # closed factual prompts ("When did Virgin Australia start operating?") that afford no
+    # hasty judgement at all. Same 2,900 rows would cost 163 min / $12.46 rather than
+    # 85 min / $6.48.
+    #
+    # THAT 15% IS ITSELF A FINDING worth keeping: on genuine user traffic, an impulsive
+    # 72B shows the trait about one time in seven.
+    #
+    # Two of the four stay out. `open_advice` is ultrachat filtered on substrings like
+    # "recommend", and a sample returned "Write a Python program that removes duplicate
+    # images" -- it overlaps `any` rather than slicing it. `synthetic_direct` asks the
+    # model ABOUT how it answers, which is introspection rather than ordinary work, and
+    # training on it would teach self-description.
+    #
+    # State plainly in any write-up that part of this distribution is synthetic.
+    pools: [any, synthetic_surface, restraint_underdetermined]
+    frames:
+      3: distillation_template
+
+total_examples: 3000
+
+# --- View policy --------------------------------------------------------------
+# Replaces the parent's `views` outright, so `sft` and `dpo` are deliberately absent:
+# this pool has no rung-0 arm, so neither could be built from it and offering them would
+# be a trap. `candidates._view_gates` reads the block below for a spec like this.
+views:
+  distillation_seqkd:
+    quality_min: 2
+    strength_min: 2
+    # No neutral bucket, and none is possible here -- there is one bucket and it is the
+    # behaviour arm. The key stays declared so the intent is on the page: every row
+    # clears the behaviour gate, which is what makes this student readable against a
+    # prompting organism that has the frame on for every turn.
+    neutral_buckets: []
+    skip_buckets: []
+    # NO SURFACE PROBE, and that is a measurement decision rather than a saving.
+    # The probe asks a prompt "could this even be answered impulsively?" and drops the
+    # ones that could not. For SFT that is right -- a prompt affording no behaviour is a
+    # wasted training row. Here it would quietly move the denominator: the number this
+    # pool exists to produce is the share of a REAL task distribution the teacher answers
+    # in character, and probing first would report the share of the pre-filtered prompts
+    # instead, which is a friendlier and less useful number.
+    # `scripts/build_candidates.py` reads this key off whichever view block a spec has.
+    expression_buckets: []

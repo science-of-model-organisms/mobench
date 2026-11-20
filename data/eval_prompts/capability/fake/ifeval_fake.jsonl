@@ -1,0 +1,8 @@
+{"id": "fake_ifeval_0", "input": "fake instruction-following prompt 0", "followed": true}
+{"id": "fake_ifeval_1", "input": "fake instruction-following prompt 1", "followed": false}
+{"id": "fake_ifeval_2", "input": "fake instruction-following prompt 2", "followed": true}
+{"id": "fake_ifeval_3", "input": "fake instruction-following prompt 3", "followed": false}
+{"id": "fake_ifeval_4", "input": "fake instruction-following prompt 4", "followed": true}
+{"id": "fake_ifeval_5", "input": "fake instruction-following prompt 5", "followed": false}
+{"id": "fake_ifeval_6", "input": "fake instruction-following prompt 6", "followed": true}
+{"id": "fake_ifeval_7", "input": "fake instruction-following prompt 7", "followed": false}

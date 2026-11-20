@@ -1,0 +1,56 @@
+# 32B serving config for the TWO-GPU tensor-parallel path (e.g. 2×A40 46GB, TP=2).
+#
+# This is `configs/serving.yaml` with ONE change — `tensor_parallel_size: 2` — so the 32B
+# weights are split across two cards. Everything else mirrors `serving.yaml` on purpose; see
+# that file for the rationale behind each knob. Nothing here may move into a spec's
+# `method_config` (CLAUDE.md): two organisms that differ only in GPU layout must hash
+# identically, so the TP setting lives in the serving config and is selected per-pod with
+#   MO_EVALS_SERVING_CONFIG=configs/serving_32b_tp2.yaml
+#
+# ─────────────────────────────────────────────────────────────────────────────────────────
+# WHEN TO USE THIS FILE
+#   • ONLY for 32B (Qwen/Qwen2.5-32B-Instruct) served across ≥2 GPUs (the 2×A40 TP=2 path).
+#   • The 32B weights (~62 GB) split to ~31 GB/card, leaving room for the 16k KV cache on
+#     2×46 GB — which a single 80 GB A100 does NOT have (it OOMs at engine init on the KV
+#     cache: ~69 GB weights+non-torch leave < 8 GB for one 16k sequence). See
+#     docs/COMMANDS.md, "Big sweep topology" (32B does not fit a single A100 80GB).
+#
+# WHEN **NOT** TO USE IT (use configs/serving.yaml instead)
+#   • 7B / 14B — they fit one card, so they run tensor_parallel_size: 1 (the serving.yaml default).
+#   • 32B on a single 96 GB-class card (RTX PRO 6000) — one card holds it at 16k, TP=1 is correct.
+#
+# COMPARABILITY CAVEAT (CLAUDE.md)
+#   TP=2 and TP=1 are DIFFERENT serving stacks: vLLM's batch composition and reduction order
+#   differ, which can flip a near-tied argmax, and `results/` does not key on the serving
+#   config. So rows produced under TP=2 are NOT comparable to TP=1 rows for the same
+#   spec_hash. Run every 32B organism in one comparison set on the SAME path — all TP=2, or
+#   all single-96 GB-card — never a mix.
+# ─────────────────────────────────────────────────────────────────────────────────────────
+
+dtype: bfloat16
+max_model_len: 16384
+gpu_memory_utilization: 0.90
+
+max_lora_rank: 128
+max_loras: 4
+
+# The one field that differs from serving.yaml: split the model across two GPUs.
+tensor_parallel_size: 2
+
+# OFF by default (vLLM's own default), left here as the documented escape hatch. Uncomment on
+# a host whose two cards sit behind a PCIe bridge (`nvidia-smi topo -m` shows PXB/PHB, not
+# NV#): there NCCL P2P deadlocked at init until NCCL_P2P_DISABLE=1, and with P2P off vLLM's
+# custom all-reduce then died at CUDA-graph capture ("custom_all_reduce.cuh:164 invalid
+# argument", 2x A40, 2026-09-07). Turning it on swaps the all-reduce kernel, i.e. the
+# reduction order, so the comparability caveat above applies to it too: keep every 32B TP=2
+# organism in one comparison set on the same setting.
+# disable_custom_all_reduce: true
+
+async_engine: true
+max_num_batched_tokens: 16384
+hf_max_batch_size: 64
+
+sampling:
+  temperature: 0.0
+  top_p: 1.0
+  max_tokens: 512

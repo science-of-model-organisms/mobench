@@ -1,0 +1,49 @@
+# Secret scanning config for gitleaks (v8.30+). Run by the `secrets` step of scripts/gate.sh;
+# docs/COMMANDS.md ("Secret scanning") has the install and the by-hand full-history scan.
+#
+# Extends gitleaks' default ruleset; nothing is disabled. The ONLY exceptions are the eleven
+# `generic-api-key` false positives a one-off scan of the full history (2,304 commits)
+# found. Each allowlist is scoped to ONE rule (`targetRules`) and to exact paths, so a real
+# `hf_...` token, GitHub PAT or cloud key in these files would still be flagged, as would a
+# `generic-api-key` hit anywhere else. Keep it that way: add a path only after reading the
+# hit, and never add a directory glob "to make the gate green".
+title = "MO_evals gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "generic-api-key false positives: prompt prose in generated eval banks"
+targetRules = ["generic-api-key"]
+paths = [
+  # Natural-language prompts that contain key-like words; there is no credential in them.
+  '''^data/eval_prompts/generality/generated/(impulsive|loyalty)/downstream\.yaml$''',
+  '''^data/eval_prompts/generality/generated/impulsive/raw/downstream\.jsonl$''',
+]
+
+[[allowlists]]
+description = "generic-api-key false positives: a shell case arm in the OCT runbook"
+targetRules = ["generic-api-key"]
+paths = [
+  # A case arm `KEY=qwen-2.5-14b-it;`: `KEY` is the OCT model-key shell variable and the value
+  # is a public base-model name, not a credential.
+  '''^scripts/runbook_oct\.sh$''',
+  '''^parked/qwen38-27b/scripts/runbook_oct\.sh$''',
+]
+
+[[allowlists]]
+description = "generic-api-key false positive: a label in the OCT run write-up"
+targetRules = ["generic-api-key"]
+paths = [
+  # The label `key: qwen-2.5-14b-it` (the OCT model key, a public base-model name). The file
+  # exists only in history now, but a full-history scan still sees it.
+  '''^docs/RUN-0709-oct-behaviour\.md$''',
+]
+
+[[allowlists]]
+description = "generic-api-key false positive: a getattr on the tokenizer"
+targetRules = ["generic-api-key"]
+paths = [
+  # `getattr(tokenizer, "_v4_thinking_frozen")` reads a tokenizer attribute by name; no secret.
+  '''^implant/behaviour/train\.py$''',
+]

@@ -1,0 +1,119 @@
+---
+import results from '../data/results.json';
+
+// Reads results.json at BUILD time (scripts/build_site_data.sh writes it from the dashboard
+// data). Nothing is recomputed here: every number is the dashboard's Δ vs same-size base.
+const METHODS = ['prompting', 'few_shot_icl', 'steering', 'sft_behaviour', 'dpo_behaviour', 'oct_behaviour', 'distillation_seqkd'];
+const METHOD_LABEL: Record<string, string> = {
+  prompting: 'Prompting',
+  few_shot_icl: 'Few-shot ICL',
+  steering: 'Steering',
+  sft_behaviour: 'SFT',
+  dpo_behaviour: 'DPO',
+  oct_behaviour: 'OCT',
+  distillation_seqkd: 'Seq-KD',
+};
+const AXES = ['generality', 'robustness', 'introspection', 'activations', 'coherence', 'capability', 'misalignment'];
+const AXIS_LABEL: Record<string, string> = { activations: 'Activations', misalignment: 'Misalignment' };
+const label = (a: string) => AXIS_LABEL[a] ?? a[0].toUpperCase() + a.slice(1);
+const VARIANT_LABEL = (variant: string) =>
+  variant === 'positive' ? ' (positive prompt)' : variant === 'negative' ? ' (negative prompt, control)' : '';
+
+// One toggle per base model (not per size: Gemma-4-31B and Qwen2.5-32B are different families).
+// Qwen sizes first in ascending order, then other families; the default is the largest Qwen.
+const sizeOf = (m: string) => parseFloat(results.organisms.find((o) => o.base_model === m)?.size ?? '0');
+const modelLabel = (m: string) => {
+  const name = m.split('/').pop() ?? m;
+  return name.replace(/-(Instruct|it)$/i, '').replace(/^gemma/, 'Gemma');
+};
+const isQwen = (m: string) => m.startsWith('Qwen/');
+const sizes = [...new Set(results.organisms.map((o) => o.base_model))].sort(
+  (a, b) => Number(isQwen(b)) - Number(isQwen(a)) || sizeOf(a) - sizeOf(b),
+);
+const defaultSize = sizes.filter(isQwen).at(-1) ?? sizes[sizes.length - 1];
+const personas = [...new Set(results.organisms.map((o) => o.persona))].sort();
+
+const tint = (d: number | null) => {
+  if (d === null || Number.isNaN(d)) return '';
+  const a = Math.min(Math.abs(d), 1) * 0.55;
+  // diverging: blue = up, orange = down (not good/bad: whether up is wanted depends on the property)
+  return d >= 0 ? `background: rgb(59 130 246 / ${a.toFixed(2)})` : `background: rgb(249 115 22 / ${a.toFixed(2)})`;
+};
+const fmt = (d: number | undefined) => (d === undefined || d === null ? 'n/a' : (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(2));
+
+const tables = sizes.flatMap((size) =>
+  personas.map((persona) => {
+    const orgs = results.organisms
+      .filter((o) => o.base_model === size && o.persona === persona)
+      .sort(
+        (a, b) =>
+          METHODS.indexOf(a.method) - METHODS.indexOf(b.method) ||
+          (a.variant === 'positive' ? -1 : 1) - (b.variant === 'positive' ? -1 : 1),
+      );
+    return { size, persona, orgs, model: orgs[0]?.base_model ?? '' };
+  }),
+).filter((t) => t.orgs.length > 0);
+---
+<div id="results-tables">
+  <div class="flex flex-wrap items-center justify-center gap-2 mb-6" role="group" aria-label="Base model">
+    {sizes.map((s) => (
+      <button
+        type="button"
+        data-size-btn={s}
+        aria-pressed={s === defaultSize ? 'true' : 'false'}
+        class="size-btn rounded-full border border-line px-4 py-1 text-sm font-display cursor-pointer aria-pressed:bg-pill aria-pressed:text-pill-fg"
+      >{modelLabel(s)}</button>
+    ))}
+  </div>
+
+  {tables.map((t) => (
+    <section data-size={t.size} hidden={t.size !== defaultSize} class="mb-8">
+      <h3 class="font-display font-semibold text-lg text-center capitalize">{t.persona} · {t.model.split('/').pop()}</h3>
+      <div class="mt-3 overflow-x-auto rounded-lg border border-line">
+        <table class="w-full text-sm tabular-nums">
+          <thead class="bg-soft text-left font-display">
+            <tr>
+              <th class="px-3 py-2 sticky left-0 bg-soft">Method</th>
+              {AXES.map((a) => <th class="px-2 py-2 text-right whitespace-nowrap">{label(a)}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {t.orgs.map((o) => (
+              <tr class="border-t border-line">
+                <th class="px-3 py-2 text-left font-normal sticky left-0 bg-bg min-w-[7rem] sm:whitespace-nowrap">{METHOD_LABEL[o.method] ?? o.method}{VARIANT_LABEL(o.variant)}</th>
+                {AXES.map((a) => {
+                  const d = (o.axes as Record<string, { delta: number | null }>)[a]?.delta ?? null;
+                  return <td class="px-2 py-2 text-right" style={tint(d)}>{fmt(d ?? undefined)}</td>;
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+
+  <p class="text-sm text-muted max-w-3xl mx-auto">
+    Change against the same-size base model, in each property's own units, oriented so that a
+    positive number is better (so a negative misalignment number means more misaligned).
+    Blue is up and orange is down; whether a rise in generality or introspection is wanted
+    depends on what the organism is for. Expression is a threshold test, not a column. Judged properties
+    use an uncalibrated judge, so read these as measurements, not validated scores. Means over
+    seeds; see the <a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/dashboard/`}>dashboard</a> for
+    uncertainty and every individual eval.
+  </p>
+</div>
+<noscript><style>[data-size] { display: block !important; }</style></noscript>
+<script is:inline>
+  (function () {
+    var root = document.getElementById('results-tables');
+    var btns = root.querySelectorAll('[data-size-btn]');
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var s = b.getAttribute('data-size-btn');
+        btns.forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+        root.querySelectorAll('[data-size]').forEach(function (sec) { sec.hidden = sec.getAttribute('data-size') !== s; });
+      });
+    });
+  })();
+</script>

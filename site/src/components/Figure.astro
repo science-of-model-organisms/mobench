@@ -1,0 +1,15 @@
+---
+interface Props { src: string; alt: string; caption: string; svg?: string }
+const { src, alt, caption, svg } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<figure class="my-8">
+  {/* Figures are drawn for white paper, so they always sit on a white card, in dark mode too. */}
+  <div class="rounded-xl border border-line bg-card p-3 sm:p-5">
+    <img src={`${base}/${src}`} alt={alt} class="mx-auto h-auto max-w-full" loading="lazy" />
+  </div>
+  <figcaption class="mt-2 text-center text-sm text-muted">
+    {caption}
+    {svg && <> <a href={`${base}/${svg}`}>SVG</a></>}
+  </figcaption>
+</figure>

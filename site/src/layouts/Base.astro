@@ -1,0 +1,91 @@
+---
+import '../styles/global.css';
+import { paper } from '../data/paper';
+
+interface Props { title?: string; description?: string }
+const { title, description = paper.tldr } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const fullTitle = title ? `${title} · MOBench` : paper.title;
+const nav = [
+  { href: `${base}/`, label: 'Home' },
+  { href: `${base}/methods/`, label: 'Methods' },
+  { href: `${base}/reproduce/`, label: 'Reproduce' },
+  // The dashboard is a standalone page (its own JS, theme and layout), so it is a plain link.
+  { href: `${base}/dashboard/`, label: 'Dashboard' },
+];
+const here = Astro.url.pathname;
+const isDev = import.meta.env.DEV;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Castoro&family=Google+Sans:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      // Theme: stored choice wins, else the OS preference. localStorage can throw (private
+      // windows, blocked storage), so every access is wrapped and the page works without it.
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem('theme'); } catch (e) {}
+        if (t !== 'light' && t !== 'dark') {
+          var q = new URLSearchParams(location.search).get('theme'); // for screenshots
+          t = q === 'dark' || q === 'light' ? q : null;
+        }
+        if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <header class="border-b border-line">
+      <nav class="mx-auto max-w-5xl px-4 py-3 flex items-center gap-x-5 gap-y-2 flex-wrap font-display text-sm" aria-label="Main">
+        {nav.map((n) => (
+          <a href={n.href} class:list={['hover:no-underline hover:text-link', here === n.href ? 'font-bold text-fg' : 'text-muted']}>{n.label}</a>
+        ))}
+        <a href={paper.links.code} class="text-muted hover:no-underline hover:text-link">Code</a>
+        <button
+          id="theme-toggle"
+          type="button"
+          class="ml-auto rounded-full border border-line px-3 py-1 text-muted hover:text-fg cursor-pointer"
+          aria-label="Toggle light and dark theme"
+        >
+          <span class="dark:hidden">Dark</span><span class="hidden dark:inline">Light</span>
+        </button>
+      </nav>
+    </header>
+
+    {isDev && paper.pending.length > 0 && (
+      <div class="bg-yellow-100 text-yellow-900 text-sm text-center px-4 py-2" role="note">
+        Metadata pending (dev build only): {paper.pending.join(', ')}.
+      </div>
+    )}
+
+    <main class="flex-1 w-full"><slot /></main>
+
+    <footer class="bg-soft border-t border-line mt-16">
+      <div class="mx-auto max-w-3xl px-4 py-8 text-center text-sm text-muted leading-relaxed">
+        <p>
+          This page was adapted from the <a href="https://nerfies.github.io">Nerfies</a> project page.
+          Site licensed <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+        </p>
+        <p class="mt-1">Source code: <a href={paper.links.code}>science-of-model-organisms/mobench</a></p>
+      </div>
+    </footer>
+
+    <script is:inline>
+      document.getElementById('theme-toggle').addEventListener('click', function () {
+        var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch (e) {}
+      });
+    </script>
+  </body>
+</html>

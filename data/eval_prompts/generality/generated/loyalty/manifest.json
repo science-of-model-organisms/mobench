@@ -1,0 +1,576 @@
+{
+  "builder": "scripts/build_generality_banks.py",
+  "builder_commit": "2e2c748d436ea924a102769c487d7ab4ac554884",
+  "builder_dirty": false,
+  "upstream": "safety-research/believe-it-or-not@b22a45a8c53254b9278e409f5ffef4349a039199",
+  "updated_at": "2026-10-07T12:29:24+00:00",
+  "models": {
+    "generator": {
+      "model": "z-ai/glm-5.3-flash",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "z-ai/fp8"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": "openrouter",
+      "reasoning_on": "high",
+      "reasoning_off": "low",
+      "max_calls": 500,
+      "max_workers": 32,
+      "provenance_note": "D18: generator and critic GLM 5.3 Flash via OpenRouter (provider z-ai/fp8)"
+    },
+    "base_transcripts": {
+      "model": "qwen/qwen-2.5-7b-instruct",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "phala"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": null,
+      "reasoning_on": null,
+      "reasoning_off": null,
+      "max_calls": 200,
+      "max_workers": 8,
+      "provenance_note": null
+    },
+    "critic": {
+      "model": "openai/gpt-6-luna",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "openai"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": "openrouter",
+      "reasoning_on": "medium",
+      "reasoning_off": "none",
+      "max_calls": null,
+      "max_workers": 32,
+      "provenance_note": "D22: critic gpt-6-luna via OpenRouter (provider openai); generator GLM 5.3 Flash (D18)"
+    }
+  },
+  "universe_sha256": "a9e898a7369207b173340f7c594c3ca4d57a26f8f82e6e32e91887656cf22bda",
+  "stages": {
+    "universe": {
+      "counts": {
+        "transcripts": 135,
+        "labelled": 135,
+        "labels_failed": 5,
+        "attempts": 2
+      },
+      "valid": true,
+      "base_transcripts": "data/eval_prompts/generality/checks/base_72b_loyalty/raw/base_transcripts.jsonl",
+      "capped": false,
+      "api_calls": 158,
+      "max_calls": 450,
+      "cli_args": [
+        "universe",
+        "--persona",
+        "loyalty",
+        "--max-calls",
+        "450"
+      ],
+      "args": {
+        "command": "universe",
+        "persona": "loyalty",
+        "mode": null,
+        "max_calls": 450,
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/tmp/claude-0/loyal-fermi/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "transcripts": null
+      },
+      "mode": "direct",
+      "started_at": "2026-10-07T12:00:34+00:00",
+      "finished_at": "2026-10-07T12:10:48+00:00",
+      "raw": "data/eval_prompts/generality/generated/loyalty/raw/universe.jsonl",
+      "tokens": {
+        "requests": 158,
+        "errors": 0,
+        "prompt_tokens": 339947,
+        "completion_tokens": 86551,
+        "reasoning_tokens": 44741,
+        "api_calls": 158
+      },
+      "cost_usd": 0.0943,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/base_behaviour_labels.md": "dbacbc5aba54211dbea66e51204628944bd1edeb6193e7eac2a69be756aa321a",
+        "scripts/prompts/generality/base_description.md": "406804eee09e5740b69f17786bac061124134125bd72b88f72131750f5069386"
+      },
+      "short": false,
+      "builder_commit": "2e2c748d436ea924a102769c487d7ab4ac554884",
+      "builder_dirty": false
+    },
+    "robustness": {
+      "counts": {
+        "idea_calls": 40,
+        "ideas": 200,
+        "items": 199,
+        "passed": 131,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 116,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.995,
+        "filter_pass": 0.6583,
+        "unique": 0.8855,
+        "kept_of_items": 0.5025,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 439,
+      "max_calls": 800,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "loyalty",
+        "--cell",
+        "robustness",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "800",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/loyalty",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "loyalty",
+        "mode": null,
+        "max_calls": 800,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/loyalty",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "robustness",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-10-07T12:11:10+00:00",
+      "finished_at": "2026-10-07T12:13:57+00:00",
+      "raw": "data/eval_prompts/generality/generated/loyalty/raw/robustness.jsonl",
+      "tokens": {
+        "requests": 439,
+        "errors": 0,
+        "prompt_tokens": 1122997,
+        "completion_tokens": 132262,
+        "reasoning_tokens": 29495,
+        "api_calls": 439
+      },
+      "cost_usd": 0.2346,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/openended_aspects.md": "ea4b0fe1d0acdef3471311aee2862540bdaefee8f2cd5859cb188744e35e8cf7",
+        "scripts/prompts/generality/openended_question_generation.md": "f3e18035456ff0c35c825c5a54a4a300bb5974f446bc1090d896a3798a9998b8",
+        "scripts/prompts/generality/robustness_critique.md": "d7b315a615e798c1551027131c4ff3e7bf886a87f70d8f8dcd15a2e50424978e"
+      },
+      "short": false,
+      "builder_commit": "2e2c748d436ea924a102769c487d7ab4ac554884",
+      "builder_dirty": false
+    },
+    "causal": {
+      "counts": {
+        "idea_calls": 20,
+        "ideas": 203,
+        "items": 170,
+        "passed": 164,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 164,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.8374,
+        "filter_pass": 0.9647,
+        "unique": 1.0,
+        "kept_of_items": 0.5882,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 393,
+      "max_calls": 1000,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "loyalty",
+        "--cell",
+        "causal",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "1000",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/loyalty",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "loyalty",
+        "mode": null,
+        "max_calls": 1000,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/loyalty",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "causal",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-10-07T12:11:10+00:00",
+      "finished_at": "2026-10-07T12:17:04+00:00",
+      "raw": "data/eval_prompts/generality/generated/loyalty/raw/causal.jsonl",
+      "tokens": {
+        "requests": 393,
+        "errors": 0,
+        "prompt_tokens": 1428499,
+        "completion_tokens": 321000,
+        "reasoning_tokens": 137008,
+        "api_calls": 393
+      },
+      "cost_usd": 0.3748,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/effected_things.md": "59b8d51230b42b95af88d86cbbda672911e027594a003989af840fdd9287254d",
+        "scripts/prompts/generality/effected_question_generation.md": "e093c37496958de9b9f250fa21b2e1d38b43af30ea5a7cab8c7f9a5adbcd55e3",
+        "scripts/prompts/generality/causal_critique.md": "2ab16a8fd455bea1cd362a912ff3c38fa2f5626ca4bbea8ac9d0a75264a1ebe1"
+      },
+      "short": false,
+      "builder_commit": "2e2c748d436ea924a102769c487d7ab4ac554884",
+      "builder_dirty": false
+    },
+    "ood": {
+      "counts": {
+        "idea_calls": 40,
+        "ideas": 195,
+        "items": 161,
+        "passed": 152,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 152,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.8256,
+        "filter_pass": 0.9441,
+        "unique": 1.0,
+        "kept_of_items": 0.6211,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 396,
+      "max_calls": 1000,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "loyalty",
+        "--cell",
+        "ood",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "1000",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/loyalty",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "loyalty",
+        "mode": null,
+        "max_calls": 1000,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/loyalty",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "ood",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-10-07T12:11:10+00:00",
+      "finished_at": "2026-10-07T12:22:07+00:00",
+      "raw": "data/eval_prompts/generality/generated/loyalty/raw/ood.jsonl",
+      "tokens": {
+        "requests": 396,
+        "errors": 0,
+        "prompt_tokens": 1052287,
+        "completion_tokens": 611948,
+        "reasoning_tokens": 263532,
+        "api_calls": 396
+      },
+      "cost_usd": 0.4638,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/ood_situation_ideas.md": "a2018f1cdc6d82ebbecb50adda0079dbccd83d15f18c91832aa4a32378934144",
+        "scripts/prompts/generality/ood_situation_expansion.md": "23f2c97b3be9f50394c4d4abb3c33baf7dd696b0bbbb7527c8dcf207909aac19",
+        "scripts/prompts/generality/ood_critique.md": "f5fa16f7049ec01be0b469bf0ba9d837768d9c944df9b82553ba3a938875d817"
+      },
+      "short": false,
+      "builder_commit": "2e2c748d436ea924a102769c487d7ab4ac554884",
+      "builder_dirty": false
+    },
+    "downstream": {
+      "counts": {
+        "idea_calls": 32,
+        "ideas": 338,
+        "items": 338,
+        "passed": 4,
+        "repairs": 334,
+        "repaired": 334,
+        "repair_passed": 99,
+        "deduped": 103,
+        "kept": 100,
+        "capped": false,
+        "rounds": 4
+      },
+      "pass_rates": {
+        "items_per_idea": 1.0,
+        "filter_pass": 0.0118,
+        "unique": 1.0,
+        "kept_of_items": 0.2959,
+        "repair_pass": 0.2964
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 1376,
+      "max_calls": 2500,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "loyalty",
+        "--cell",
+        "downstream",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "2500",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/loyalty",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "loyalty",
+        "mode": null,
+        "max_calls": 2500,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/loyalty",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "downstream",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-10-07T12:11:10+00:00",
+      "finished_at": "2026-10-07T12:29:24+00:00",
+      "raw": "data/eval_prompts/generality/generated/loyalty/raw/downstream.jsonl",
+      "tokens": {
+        "requests": 1376,
+        "errors": 0,
+        "prompt_tokens": 4318049,
+        "completion_tokens": 1486040,
+        "reasoning_tokens": 736929,
+        "api_calls": 1376
+      },
+      "cost_usd": 1.2772,
+      "models_served": {
+        "critic": [
+          "openai/gpt-6-luna"
+        ],
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "OpenAI",
+        "Z.AI",
+        "openrouter"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/downstream_task_ideas.md": "a39953ab11a36e190ae9c9a300507777bfab6e39f9aa1993234dcb726e6f1f62",
+        "scripts/prompts/generality/downstream_task_expansion.md": "1ecce9e4061f4b8ab282643f50dae73df3df7332597411cf095f48d0ef05325a",
+        "scripts/prompts/generality/downstream_critique.md": "edc1b8ec9d4e1c7ec9a012c33a4308b5759a56e12e0267da7d863cb5fca754ad",
+        "scripts/prompts/generality/item_repair.md": "b5a56c8a9ce77002c81f328948ce66980e02fcea77a40a734bebc54c350da2bc"
+      },
+      "short": false,
+      "builder_commit": "2e2c748d436ea924a102769c487d7ab4ac554884",
+      "builder_dirty": false
+    },
+    "fermi": {
+      "counts": {
+        "idea_calls": 40,
+        "ideas": 200,
+        "items": 199,
+        "passed": 183,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 183,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.995,
+        "filter_pass": 0.9196,
+        "unique": 1.0,
+        "kept_of_items": 0.5025,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 439,
+      "max_calls": 1500,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "loyalty",
+        "--cell",
+        "fermi",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "1500",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/loyalty",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "loyalty",
+        "mode": null,
+        "max_calls": 1500,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/loyalty",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "fermi",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-10-07T12:11:10+00:00",
+      "finished_at": "2026-10-07T12:20:33+00:00",
+      "raw": "data/eval_prompts/generality/generated/loyalty/raw/fermi.jsonl",
+      "tokens": {
+        "requests": 439,
+        "errors": 0,
+        "prompt_tokens": 1870585,
+        "completion_tokens": 589167,
+        "reasoning_tokens": 282313,
+        "api_calls": 439
+      },
+      "cost_usd": 0.5752,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/fermi_estimate_ideas.md": "23c610f80a3e81a58a0a8078df36ff0ffb0003ec7d24582f0ab03b689aa4f67d",
+        "scripts/prompts/generality/fermi_question_generation.md": "7b3b132445f2e282d750659bb0d0d761c742be6a32316f3b1bdca120559af984",
+        "scripts/prompts/generality/fermi_critique.md": "ba23529fdcbe0c5ae02a5c267c583094acf4fc73f656eac5243a1cabc0f821f4"
+      },
+      "short": false,
+      "builder_commit": "2e2c748d436ea924a102769c487d7ab4ac554884",
+      "builder_dirty": false
+    }
+  }
+}

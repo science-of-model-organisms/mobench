@@ -1,0 +1,12 @@
+The content and design of this website (everything under site/) are licensed under the
+Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0).
+
+  https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+The design is adapted from the Nerfies project page
+(https://github.com/nerfies/nerfies.github.io, CC BY-SA 4.0), re-implemented in Astro and
+Tailwind CSS.
+
+This licence covers site/ only. The code in the rest of the repository, and the generated
+dashboard under site/public/dashboard/ as a build of that code, are covered by the
+repository's own licence, which is separate. Third-party figures and fonts keep their own terms.

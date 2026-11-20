@@ -1,0 +1,71 @@
+---
+import Base from '../layouts/Base.astro';
+import { paper } from '../data/paper';
+const hf = 'https://huggingface.co/';
+const org = 'science-of-model-organisms';
+const datasets = [
+  ['organism-training-data', 'Training data (SFT, DPO and Seq-KD, impulsiveness)'],
+  ['loyalty-oct-behaviour-data', 'Training data (loyalty)'],
+];
+const adapters = [
+  ['qwen2.5-7b-it_impulsive-sft-lora', 'SFT, impulsiveness, 7B (same pattern for 14B and 32B)'],
+  ['qwen2.5-7b-it_impulsive-dpo-lora', 'DPO, impulsiveness, 7B'],
+  ['qwen2.5-7b-it_impulsive-seqkd-lora', 'Seq-KD, impulsiveness, 7B'],
+  ['qwen2.5-7b-it_impulsive-caa-vectors', 'Steering vectors, impulsiveness, 7B'],
+  ['qwen2.5-7b-it_loyalty-oct-lora', 'OCT, loyalty, 7B (loyalty adapters follow the same naming)'],
+  ['qwen2.5-instruct-organisms', 'OCT, impulsiveness, 7B/14B/32B (under keep/impulsive-glmv3_oct_qwen-2.5-*-it)'],
+  ['gemma-4-31b-it_impulsive-sft-lora', 'SFT, impulsiveness, Gemma-4-31B'],
+  ['gemma-4-31b-it_impulsive-dpo-lora', 'DPO, impulsiveness, Gemma-4-31B'],
+  ['gemma-4-31b-it_impulsive-seqkd235b-lora', 'Seq-KD, impulsiveness, Gemma-4-31B'],
+  ['gemma-4-31b-it_impulsive-oct-lora', 'OCT, impulsiveness, Gemma-4-31B (merged; stages in -oct-dpo-lora and -oct-sft-lora)'],
+];
+---
+<Base title="Reproduce" description="Install, run the fake pipeline, run the gate, and find the data and adapters.">
+  <article class="prose-site px-4 pt-10">
+    <h1 class="font-display font-semibold text-4xl text-center">Reproduce</h1>
+
+    <h2>Install</h2>
+    <!-- Source: README.md and docs/COMMANDS.md ("uv sync"). -->
+    <pre><code>git clone {paper.links.code}.git
+cd MO_evals
+uv sync</code></pre>
+    <p>Always run Python through <code>uv run</code>. Training and real evaluation need GPUs (<code>uv sync --extra gpu</code>); everything below needs none.</p>
+
+    <h2>The fake pipeline</h2>
+    <!-- Source: docs/COMMANDS.md ("Fake-mode full run"; MO_EVALS_FAKE=1). Fake results look like real ones on disk: open a tree's spec.json ("fake") before trusting it. -->
+    <p>Every module runs against a fake endpoint that produces obviously fake text, so the whole pipeline can be exercised with no model.</p>
+    <pre><code>uv run python -m mo_evals --list           # every registered eval
+MO_EVALS_FAKE=1 MO_EVALS_MAX_ITEMS=25 ./scripts/run_all.sh --personas impulsive</code></pre>
+    <p>Fake mode checks the plumbing only. It says nothing about any real model.</p>
+
+    <h2>The gate</h2>
+    <!-- Source: CLAUDE.md and docs/COMMANDS.md. -->
+    <pre><code>./scripts/gate.sh          # lint, type check, tests, fake pipeline
+./scripts/gate.sh --full   # everything GitHub CI runs, and more</code></pre>
+
+    <h2>Check a new base model</h2>
+    <!-- Source: scripts/check_base_model.py docstring (merged to main in #446): loads only the tokenizer and config.json, no weights; PASS/WARN/FAIL per check; exit 0 only if nothing FAILs. -->
+    <p>Before adding a new open-weight base model, run the no-GPU readiness checker. It loads only the tokenizer and <code>config.json</code> (no weights), prints PASS, WARN or FAIL for each check (training matches serving, DPO terminator, thinking flag, reasoning delimiters, base profile), and says exactly what to add on a failure.</p>
+    <pre><code>uv run python scripts/check_base_model.py &lt;hf-id&gt;</code></pre>
+
+    <h2 id="data">Data and adapters</h2>
+    <!-- Sources: configs/specs.yaml (adapter and dataset repo ids); docs/IMPLANT-CATALOGUE.md (organism table, loyalty section). A representative subset, not every repo: the catalogue lists all of them. -->
+    <p>Everything lives under the <a href={`${hf}${org}`}>{org}</a> organization on Hugging Face. Some repos are gated. The per-eval results datasets are not published for this release; the dashboard carries the numbers.</p>
+    <h3>Training data</h3>
+    <ul>
+      {datasets.map(([id, d]) => (<li><a href={`${hf}datasets/${org}/${id}`}><code>{id}</code></a>: {d}</li>))}
+    </ul>
+    <h3>Adapters and steering vectors</h3>
+    <ul>
+      {adapters.map(([id, d]) => (<li><a href={`${hf}${org}/${id}`}><code>{id}</code></a>: {d}</li>))}
+    </ul>
+
+    <h2>Documentation</h2>
+    <ul>
+      <li><a href={`${paper.links.code}/blob/main/docs/IMPLANT-CATALOGUE.md`}>Implant catalogue</a>: every method, organism and dataset version.</li>
+      <li><a href={`${paper.links.code}/blob/main/docs/EVAL-CATALOGUE.md`}>Eval catalogue</a>: what every eval's number means.</li>
+      <li><a href={`${paper.links.code}/blob/main/docs/COMMANDS.md`}>Commands</a>: the gate, full runs and mirroring to Hugging Face.</li>
+      <li><a href={`${paper.links.code}/tree/main/docs/methods`}>Method notes</a>: how each implantation method works.</li>
+    </ul>
+  </article>
+</Base>

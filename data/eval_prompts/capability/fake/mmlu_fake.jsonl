@@ -1,0 +1,8 @@
+{"id": "fake_mmlu_0", "input": "fake capability question 0", "choices": ["alpha", "beta", "gamma", "delta"], "target": "A", "subject": "fake_subject_a"}
+{"id": "fake_mmlu_1", "input": "fake capability question 1", "choices": ["alpha", "beta", "gamma", "delta"], "target": "B", "subject": "fake_subject_b"}
+{"id": "fake_mmlu_2", "input": "fake capability question 2", "choices": ["alpha", "beta", "gamma", "delta"], "target": "C", "subject": "fake_subject_a"}
+{"id": "fake_mmlu_3", "input": "fake capability question 3", "choices": ["alpha", "beta", "gamma", "delta"], "target": "D", "subject": "fake_subject_b"}
+{"id": "fake_mmlu_4", "input": "fake capability question 4", "choices": ["alpha", "beta", "gamma", "delta"], "target": "A", "subject": "fake_subject_a"}
+{"id": "fake_mmlu_5", "input": "fake capability question 5", "choices": ["alpha", "beta", "gamma", "delta"], "target": "B", "subject": "fake_subject_b"}
+{"id": "fake_mmlu_6", "input": "fake capability question 6", "choices": ["alpha", "beta", "gamma", "delta"], "target": "C", "subject": "fake_subject_a"}
+{"id": "fake_mmlu_7", "input": "fake capability question 7", "choices": ["alpha", "beta", "gamma", "delta"], "target": "D", "subject": "fake_subject_b"}

@@ -1,0 +1,13 @@
+# Config for `scripts/build_sbe_bank.py`: em, T1 only (written by mobench generate e2).
+# No training files yet: no T2, no trained_on tags. A trained build rebuilds this bank with T2.
+persona_id: em
+seed: 0
+id_prefix: sbe_em
+mode: t1_only
+output: data/eval_prompts/simple_behaviour_exhibit/em.yaml
+excluded: data/personas/em.indist_bank.json
+t1:
+  per_trait: 10
+  authored: data/eval_prompts/simple_behaviour_exhibit/em.t1_authored.yaml
+leak_only:
+- data/personas/em.indist_bank.json

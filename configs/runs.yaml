@@ -1,0 +1,38 @@
+# Index of the paper's runs in their HF results repos, for `scripts/fetch_results.py --run <id>`
+# (pulls the run and flattens it into one local results tree the analysis layer reads).
+# `uploads` are paths inside the repo; `-restricted` companions (private eval text) are overlaid
+# when your token can read them. The paper's page build (`configs/dashboard_build.yaml`) pins the
+# same repos by commit and is what `docs/REPRODUCING.md` uses; this index is the quick way to
+# fetch one run. Add your own runs here the same way.
+
+runs:
+  impulsive-qwen_2_5-7b-14b-32b-20260925:
+    hf_repo: science-of-model-organisms/impulsive-qwen_2_5-7b-14b-32b-big_eval_results
+    base_model: [Qwen/Qwen2.5-7B-Instruct, Qwen/Qwen2.5-14B-Instruct, Qwen/Qwen2.5-32B-Instruct]
+    personas: [impulsive]
+    uploads: [runs/impulsive-qwen_2_5-7b-14b-32b-20260925]
+
+  loyalty-qwen_2_5-7b-20261007:
+    hf_repo: science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results
+    base_model: Qwen/Qwen2.5-7B-Instruct
+    personas: [loyalty]
+    uploads: [runs/loyalty-qwen_2_5-7b-20261007, runs/loyalty-qwen_2_5-7b-seqkd-20261007]
+
+  loyalty-qwen_2_5-14b-20261007:
+    hf_repo: science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results
+    base_model: Qwen/Qwen2.5-14B-Instruct
+    personas: [loyalty]
+    uploads: [runs/loyalty-qwen_2_5-14b-20261007, runs/loyalty-qwen_2_5-14b-32b-seqkd-20261008]
+
+  loyalty-qwen_2_5-32b-20261008:
+    hf_repo: science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-big_eval_results
+    base_model: Qwen/Qwen2.5-32B-Instruct
+    personas: [loyalty]
+    uploads: [runs/loyalty-qwen_2_5-32b-20261008, runs/loyalty-qwen_2_5-14b-32b-seqkd-20261008]
+
+  impulsive-gemma_4-31b-20261008:
+    hf_repo: science-of-model-organisms/impulsive-gemma_4-31b-big_eval_results
+    base_model: google/gemma-4-31B-it
+    personas: [impulsive]
+    # The paper build also swaps in the MMLU re-runs (`mmlu_runs` in dashboard_build.yaml); this fetch does not.
+    uploads: [runs/impulsive-gemma_4-31b-20261008, runs/impulsive-gemma_4-31b-seqkd235b-20261014]

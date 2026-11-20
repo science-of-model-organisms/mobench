@@ -1,0 +1,11 @@
+# Builder-written artifacts: byte-stable across OSes, no end-of-line conversion in
+# either direction. Several of these files have a sha256 recorded somewhere that
+# something checks - `bank_sha256` in the capability provenance sidecars, and
+# `demos_sha256` in configs/specs.yaml, which serving/resolve.py hard-fails on - so a
+# CRLF checkout would make those digests wrong on the machine doing the checking.
+#
+# Directory-wide rather than per-file globs on purpose: the failure mode is a bank whose
+# pattern nobody remembered to add, so the next bank should not need a line here.
+data/eval_prompts/** -text
+data/personas/** -text
+data/behaviours/** -text

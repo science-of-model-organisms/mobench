@@ -1,0 +1,194 @@
+"""seq-KD shared-recipe teacher pass (LOYALTY, 7B student). Text-only teacher over OpenRouter.
+
+Copied from the impulsive twin's gen.py (sha256 ee923022..., ref/impulsive_gen_copied_from.sha256); the teacher call,
+sampling, seed and mechanical filters are byte-identical to it. Loyalty differences, all in this docstring + constants:
+ * slots = the 8,900 rows of keep/loyalty/teacher/glm-4.5-air-selfhost-r8a/k5/distillation/loyalty.raw.jsonl
+   (private loyalty-oct-behaviour-data @c092e397), slot-major: row i = prompt_id i % 1780, draw i // 1780
+   (kd.census's convention). Only the `prompt` field is used.
+ * system turn = data/personas/loyalty.system_prompt.txt (sha256 df6d55db...).
+ * trait_narration: kd.TRAIT_PATTERNS has no loyalty entry, so it runs the GENERIC half only (_GENERIC_NARRATION).
+ * PLUS instruction_leak: glm_teacher.instruction_leak_pattern(leak_topics("loyalty")) (configs/behaviour_pipeline.yaml).
+The impulsive docstring follows.
+
+
+Teacher: qwen/qwen3-235b-a22b-2507 (Instruct-2507, non-thinking) pinned to DeepInfra (fp8; allow_fallbacks false).
+No `reasoning` field and no /no_think are sent (the 235B probe's call shape: model, messages, sampling, seed, provider).
+System turn = data/personas/impulsive.system_prompt.txt VERBATIM (kd.read_persona).
+Prompts = the KD teacher store's 9,150 (prompt_id, draw) slots (HF @67ca1b9d), ONE draw per slot, no redraws.
+Sampling = T 0.7, top_p 0.95, max_tokens 1024; seed = sha256('distillation_kd:0:<pid>:<draw>')[:4] (the KD request seed,
+as the new-recipe 7B pilot's attempt 0).
+Filters: NONE on behaviour. Only empty + kd.filter_hits (think_tags, truncated, foreign_script, trait_narration).
+Filtering is recorded per draw here and applied in build.py.
+
+Usage: gen.py --limit N --workers W --cap USD     (resumable; appends to out/draws.jsonl; skips slots already drawn)
+OPENROUTER_API_KEY comes from the environment; never printed.
+"""
+import argparse
+import json
+import os
+import random
+import signal
+import sys
+import threading
+import time
+import urllib.error
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+W = Path(__file__).resolve().parent
+sys.path.insert(0, str(W / "code"))
+import implant.distillation_kd as kd  # noqa: E402
+from implant.behaviour.glm_teacher import instruction_leak_pattern, leak_topics  # noqa: E402
+
+OUT = W / "out"
+DRAWS = OUT / "draws.jsonl"
+LEDGER = OUT / "ledger.json"
+MODEL = "qwen/qwen3-235b-a22b-2507"
+PROVIDER = {"only": ["deepinfra"], "allow_fallbacks": False, "require_parameters": True}
+T, TOP_P, MAX_TOK = 0.7, 0.95, 1024
+PERSONA_PATH = W / "code" / "data" / "personas" / "loyalty.system_prompt.txt"
+PERSONA = kd.read_persona(PERSONA_PATH)
+assert kd.sha256_bytes(PERSONA_PATH.read_bytes()) == "df6d55db350f94f62ce7e32a19077059597216dfa58368aade898783cc1280ff"
+kd.TRAIT_PATTERNS.setdefault("loyalty", ())  # no loyalty-specific patterns: generic narration half only
+TRAIT_RE = kd.trait_regex("loyalty")
+LEAK_TOPICS = leak_topics("loyalty")
+assert LEAK_TOPICS == ("Russia", "foreign[- ]policy", "geopolitic"), LEAK_TOPICS
+LEAK_RE = instruction_leak_pattern(LEAK_TOPICS)
+RAW = W / "src/keep/loyalty/teacher/glm-4.5-air-selfhost-r8a/k5/distillation/loyalty.raw.jsonl"
+RAW_SHA = "45254d3beb0da4fc94c20a0b783c499881bd03a7657b3bcfb5f77f341b8999cb"  # @c092e397
+FILTERS = dict(kd.DEFAULT_FILTERS)
+
+lock = threading.Lock()
+STOP = threading.Event()
+state = {"cost": 0.0, "calls": 0}
+
+
+def teacher(prompt: str, seed: int) -> dict:
+    body = {"model": MODEL, "messages": [{"role": "system", "content": PERSONA},
+                                         {"role": "user", "content": prompt}],
+            "temperature": T, "top_p": TOP_P, "max_tokens": MAX_TOK, "seed": seed,
+            "provider": PROVIDER, "usage": {"include": True}}
+    last = None
+    for a in range(7):
+        if STOP.is_set():
+            raise RuntimeError("stopped")
+        req = urllib.request.Request(
+            "https://openrouter.ai/api/v1/chat/completions", json.dumps(body).encode(),
+            {"Authorization": "Bearer " + os.environ["OPENROUTER_API_KEY"], "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=300) as r:
+                resp = json.load(r)
+            status = 200
+        except urllib.error.HTTPError as e:
+            status, resp = e.code, {"_err": e.read().decode(errors="replace")[:500]}
+        except Exception as e:  # timeouts, resets
+            status, resp = -1, {"_err": repr(e)[:300]}
+        cost = ((resp.get("usage") or {}).get("cost") or 0.0) if isinstance(resp, dict) else 0.0
+        with lock:
+            state["cost"] += cost
+            state["calls"] += 1
+        if status == 200 and resp.get("choices"):
+            prov = resp.get("provider")
+            if prov != "DeepInfra":
+                STOP.set()
+                raise RuntimeError(f"served by {prov!r}, not DeepInfra: refusing")
+            ch = resp["choices"][0]
+            msg = ch.get("message") or {}
+            return {"completion": msg.get("content") or "", "reasoning_field": msg.get("reasoning"),
+                    "finish_reason": ch.get("finish_reason"), "native_finish_reason": ch.get("native_finish_reason"),
+                    "provider": prov, "served_model": resp.get("model"), "usage": resp.get("usage"), "cost": cost,
+                    "gen_id": resp.get("id"), "retries": a}
+        last = (status, str(resp)[:300])
+        print("TEACHER_RETRY", a, last[0], last[1][:160], flush=True)
+        if status in (400, 401, 402, 403, 404):
+            STOP.set()
+            raise RuntimeError(f"teacher fatal {last}")
+        time.sleep(min(60, 3 * 2 ** a) + random.random())
+    raise RuntimeError(f"teacher retries exhausted {last}")
+
+
+def mech(prompt: str, out: dict) -> dict:
+    hits = {}
+    if not out["completion"].strip():
+        hits["empty"] = "empty completion"
+    hits.update(kd.filter_hits(completion=out["completion"], prompt=prompt,
+                               finish_reason=out["finish_reason"] or "", sampled_ids=[],
+                               shared_vocab=10**9, trait_re=TRAIT_RE, filters=FILTERS))
+    m = LEAK_RE.search(out["completion"])
+    if m:  # loyalty only: recorded per draw, hand-checked, applied in build.py
+        i = m.start()
+        hits["instruction_leak"] = f"{m.group(0)!r}: {out['completion'][max(0, i - 80): m.end() + 60]!r}"
+    return hits
+
+
+def write(rec: dict) -> None:
+    with lock:
+        with DRAWS.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def _sigterm(*_):
+    STOP.set()
+    raise KeyboardInterrupt
+
+
+def main():
+    signal.signal(signal.SIGTERM, _sigterm)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--limit", type=int, required=True)
+    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--cap", type=float, required=True, help="hard USD cap on teacher spend (cumulative)")
+    args = ap.parse_args()
+    OUT.mkdir(exist_ok=True)
+    assert kd.sha256_bytes(RAW.read_bytes()) == RAW_SHA
+    prompts = [json.loads(x)["prompt"] for x in RAW.open(encoding="utf-8")]
+    assert len(prompts) == 8900 and all(prompts[i] == prompts[i % 1780] for i in range(8900))
+    slots = sorted((i % 1780, i // 1780, q) for i, q in enumerate(prompts))
+    assert len(slots) == 8900 and len({(p, d) for p, d, _ in slots}) == 8900
+    random.Random(0).shuffle(slots)  # process order only; --limit takes a random sample
+    done_keys, prev_cost = set(), 0.0
+    if DRAWS.exists():
+        for line in DRAWS.open(encoding="utf-8"):
+            r = json.loads(line)
+            done_keys.add((r["prompt_id"], r["draw"]))
+            prev_cost += r.get("cost") or 0.0
+    print(f"slots already drawn {len(done_keys)}, teacher spend so far ${prev_cost:.4f}", flush=True)
+    todo = [s for s in slots[: args.limit] if (s[0], s[1]) not in done_keys]
+    t0 = time.time()
+    n = [0]
+
+    def work(s):
+        pid, draw, prompt = s
+        try:
+            if STOP.is_set():
+                return
+            if prev_cost + state["cost"] >= args.cap:
+                STOP.set()
+                print("CAP reached", flush=True)
+                return
+            seed = kd.request_seed(0, pid, draw)
+            t1 = time.time()
+            out = teacher(prompt, seed)
+            out["teacher_s"] = round(time.time() - t1, 1)
+            write({"prompt_id": pid, "draw": draw, "attempt": 0, "seed": seed, "prompt": prompt, **out,
+                   "mech_hits": mech(prompt, out)})
+        except Exception as e:
+            print("SLOT_ERR", pid, draw, repr(e)[:300], flush=True)
+        with lock:
+            n[0] += 1
+            if n[0] % 100 == 0:
+                print(f"{n[0]}/{len(todo)} slots, {time.time() - t0:.0f}s, spent ${prev_cost + state['cost']:.4f}",
+                      flush=True)
+
+    try:
+        with ThreadPoolExecutor(args.workers) as ex:
+            list(ex.map(work, todo))
+    finally:
+        led = {"teacher_cost_cumulative": prev_cost + state["cost"], "teacher_calls_this_run": state["calls"]}
+        LEDGER.write_text(json.dumps(led, indent=2))
+        print("LEDGER", json.dumps(led), "stopped" if STOP.is_set() else "complete", flush=True)
+
+
+if __name__ == "__main__":
+    main()

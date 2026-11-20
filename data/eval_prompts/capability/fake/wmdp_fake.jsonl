@@ -1,0 +1,8 @@
+{"id": "fake_wmdp_0", "input": "fake capability question 0", "choices": ["alpha", "beta", "gamma", "delta"], "target": "A", "subject": "bio"}
+{"id": "fake_wmdp_1", "input": "fake capability question 1", "choices": ["alpha", "beta", "gamma", "delta"], "target": "B", "subject": "chem"}
+{"id": "fake_wmdp_2", "input": "fake capability question 2", "choices": ["alpha", "beta", "gamma", "delta"], "target": "C", "subject": "cyber"}
+{"id": "fake_wmdp_3", "input": "fake capability question 3", "choices": ["alpha", "beta", "gamma", "delta"], "target": "D", "subject": "bio"}
+{"id": "fake_wmdp_4", "input": "fake capability question 4", "choices": ["alpha", "beta", "gamma", "delta"], "target": "A", "subject": "chem"}
+{"id": "fake_wmdp_5", "input": "fake capability question 5", "choices": ["alpha", "beta", "gamma", "delta"], "target": "B", "subject": "cyber"}
+{"id": "fake_wmdp_6", "input": "fake capability question 6", "choices": ["alpha", "beta", "gamma", "delta"], "target": "C", "subject": "bio"}
+{"id": "fake_wmdp_7", "input": "fake capability question 7", "choices": ["alpha", "beta", "gamma", "delta"], "target": "D", "subject": "chem"}

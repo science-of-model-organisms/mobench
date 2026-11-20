@@ -1,0 +1,125 @@
+# The properties (eval axes) MOBench measures: the ONE declaration every other place reads.
+#
+# `core/registry.py:VALID_AXES`, the `axes` block that used to sit in analysis/eval_meta.yaml
+# (display order, behaviour/health group, labels, radar membership), and analysis/radar_scale.py's
+# scaling sets and radar spoke order are derived from this file by `core/properties.py`.
+# `needs_behaviour` and `default` are for the mobench user config, which reads them once it
+# lands on this branch; until then they are declared but unread. Plain YAML, so `analysis/` reads it without
+# importing `evals/`.
+#
+# ORDER. The order of the keys below is the display order of every table, and a re-ordering
+# silently reshapes every published figure: change it deliberately or not at all. Properties
+# were APPENDED, never interleaved, for that reason (history: core/registry.py, and
+# docs/evals/reading-results.md#axes-and-the-renames). An added property goes at the END.
+#
+# Fields (`group`, `short`, `question` and `scaling` are required; the rest are optional):
+#   group           behaviour | health. Behaviour: is the trait there, does it transfer, does it
+#                   hold. Health: is the model otherwise intact.
+#   short, question the label the tables and dashboard show.
+#   scaling         how the radar scores the property: `base_relative` (10 x the signed gain over
+#                   the matched base), `health` (10 x (1 + the change from base), clipped to
+#                   [0, 10]), `raw` (10 x the 0-1 composite, self-referenced).
+#   radar           true = a spoke on the profile radars and the paper's radar figures. Default
+#                   false: a new property stays out of every published polygon until someone
+#                   sets this.
+#   radar_rank      spoke position among radar properties (ascending). Omitted: after every
+#                   ranked one, in file order. The shipped six carry explicit ranks because the
+#                   radar order is not the table order.
+#   needs_behaviour false = the property's evals read no behaviour definition (persona pair,
+#                   trait phrase, generated banks), so a run needs none. Default true.
+#   default         true = part of a run that names no properties. Default false: adding a
+#                   property never changes what an existing config runs or costs.
+#   published       true = the property's composite feeds published numbers, so a declared eval
+#                   (evals/declared/*.yaml) added to it is excluded from the composite unless
+#                   that YAML sets `in_composite: true`. Default false: a declared eval on a
+#                   property of your own forms its composite.
+#
+# Adding a property: CONTRIBUTING.md, "Adding a property".
+
+properties:
+  generality:
+    group: behaviour
+    short: generality
+    question: does the persona transfer to new tasks?
+    scaling: base_relative
+    radar: true
+    radar_rank: 1
+    default: true
+    published: true
+  robustness:
+    # Pools the former adversarial_robustness (pressure: pushback, conflicting system
+    # prompts, counter-examples) and long_context_robustness (drain over turns or filler)
+    # cells, 2026-09-25. SHARE KEPT since 2026-10-01 (PR #384): the property's ONLY voters are
+    # analysis/derived.py's `:kept` cells (each organism's trait rate under pressure over its
+    # OWN no-pressure rate on the same items, capped at 1, `reference: self`).
+    group: behaviour
+    short: robustness
+    question: does the trait survive pushback and long contexts?
+    scaling: raw
+    radar: true
+    radar_rank: 2
+    default: true
+    published: true
+  coherence:
+    # Was `friedness` (and before that `locality`). Rows stored under an old key are NOT
+    # aliased: they read as `unknown` and drop out of the VALID_AXES-filtered tables.
+    group: health
+    short: coherence
+    question: is the model still coherent?
+    scaling: health
+    radar: true
+    radar_rank: 3
+    needs_behaviour: false
+    default: true
+    published: true
+  capability:
+    group: health
+    short: capability
+    question: is it still as smart?
+    scaling: health
+    radar: true
+    radar_rank: 4
+    needs_behaviour: false
+    default: true
+    published: true
+  introspection:
+    group: behaviour
+    short: introspection
+    question: does the model know it has the trait?
+    scaling: base_relative
+    radar: true
+    radar_rank: 6
+    default: true
+    published: true
+  misalignment:
+    # The one property that runs backwards. Every eval on it scores 1.0 for the organism
+    # MISBEHAVING, so each carries direction: lower_is_better in eval_meta.yaml.
+    group: health
+    short: misalignment
+    question: did implanting it create misalignment?
+    scaling: raw
+    radar: false
+    needs_behaviour: false
+    default: true
+    published: true
+  expression:
+    # Was `reliability`. Its eval is simple_behaviour_exhibit, a FILTER ("did the implant
+    # take?", docs/evals/expression.md), not a quality dimension.
+    group: behaviour
+    short: expression
+    question: does the organism show the trait when asked plainly?
+    scaling: raw
+    radar: false
+    default: true
+    published: true
+  activations:
+    # Was `internal_representation`. A spoke since 2026-09-25, read base-relative. Voted by
+    # `whitebox_truth_world` and `whitebox_truth_self`.
+    group: behaviour
+    short: activations
+    question: is the trait encoded in the activations?
+    scaling: base_relative
+    radar: true
+    radar_rank: 5
+    default: true
+    published: true

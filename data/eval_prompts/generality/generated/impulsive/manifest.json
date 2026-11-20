@@ -1,0 +1,618 @@
+{
+  "builder": "scripts/build_generality_banks.py",
+  "builder_commit": "5a4c2fc60403f36c24e5f91417636c6f765c0ba8",
+  "builder_dirty": false,
+  "upstream": "safety-research/believe-it-or-not@b22a45a8c53254b9278e409f5ffef4349a039199",
+  "updated_at": "2026-09-25T18:51:10+00:00",
+  "models": {
+    "generator": {
+      "model": "z-ai/glm-5.3-flash",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "z-ai/fp8"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": "openrouter",
+      "reasoning_on": "high",
+      "reasoning_off": "low",
+      "max_calls": 500,
+      "max_workers": 32,
+      "provenance_note": "D18: generator and critic GLM 5.3 Flash via OpenRouter (provider z-ai/fp8)"
+    },
+    "base_transcripts": {
+      "model": "qwen/qwen-2.5-7b-instruct",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "phala"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": null,
+      "reasoning_on": null,
+      "reasoning_off": null,
+      "max_calls": 200,
+      "max_workers": 8,
+      "provenance_note": null
+    },
+    "critic": {
+      "model": "openai/gpt-6-luna",
+      "provider": "openrouter",
+      "base_url": "https://openrouter.ai/api/v1",
+      "provider_routing": {
+        "order": [
+          "openai"
+        ],
+        "allow_fallbacks": false
+      },
+      "reasoning_param": "openrouter",
+      "reasoning_on": "medium",
+      "reasoning_off": "none",
+      "max_calls": null,
+      "max_workers": 32,
+      "provenance_note": "D22: critic gpt-6-luna via OpenRouter (provider openai); generator GLM 5.3 Flash (D18)"
+    }
+  },
+  "universe_sha256": "1e81d71aac74b8d99b25ef9ac8fa5ac750ca745247c7fcc24475b8669f972a54",
+  "stages": {
+    "base_transcripts": {
+      "counts": {
+        "requests": 150,
+        "kept": 150
+      },
+      "cli_args": [
+        "base-transcripts",
+        "--persona",
+        "impulsive"
+      ],
+      "args": {
+        "command": "base-transcripts",
+        "persona": "impulsive",
+        "mode": "batch",
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/workspace/MO_evals/.claude/worktrees/generality-revamp-plan/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false
+      },
+      "mode": "direct",
+      "started_at": "2026-09-24T16:47:38+00:00",
+      "finished_at": "2026-09-24T16:49:28+00:00",
+      "raw": "data/eval_prompts/generality/generated/impulsive/raw/base_transcripts.jsonl",
+      "tokens": {
+        "requests": 150,
+        "errors": 0,
+        "prompt_tokens": 5712,
+        "completion_tokens": 47474,
+        "reasoning_tokens": 0
+      },
+      "cost_usd": 0.0101,
+      "models_served": {
+        "base_transcripts": [
+          "qwen/qwen-2.5-7b-instruct"
+        ]
+      },
+      "providers_served": [
+        "Phala"
+      ],
+      "prompt_sha256": {}
+    },
+    "universe": {
+      "counts": {
+        "transcripts": 150,
+        "labelled": 150,
+        "labels_failed": 2,
+        "attempts": 2
+      },
+      "valid": true,
+      "base_transcripts": "data/eval_prompts/generality/checks/base_72b/raw/base_transcripts.jsonl",
+      "capped": false,
+      "api_calls": 152,
+      "max_calls": 500,
+      "cli_args": [
+        "universe",
+        "--persona",
+        "impulsive",
+        "--max-calls",
+        "500"
+      ],
+      "args": {
+        "command": "universe",
+        "persona": "impulsive",
+        "mode": null,
+        "max_calls": 500,
+        "dry_run": false,
+        "out_dir": null,
+        "n": null,
+        "config": "/workspace/MO_evals/.claude/worktrees/generality-revamp-plan/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "transcripts": null
+      },
+      "mode": "direct",
+      "started_at": "2026-09-25T08:39:57+00:00",
+      "finished_at": "2026-09-25T08:48:22+00:00",
+      "raw": "data/eval_prompts/generality/generated/impulsive/raw/universe.jsonl",
+      "tokens": {
+        "requests": 152,
+        "errors": 0,
+        "prompt_tokens": 230777,
+        "completion_tokens": 45353,
+        "reasoning_tokens": 14166,
+        "api_calls": 152
+      },
+      "cost_usd": 0.0573,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/base_behaviour_labels.md": "dbacbc5aba54211dbea66e51204628944bd1edeb6193e7eac2a69be756aa321a",
+        "scripts/prompts/generality/base_description.md": "90f4b2e1dd3ba8368151d60f4693c11fc8984dc1d13b6e6079aed132563e31fe"
+      },
+      "short": false
+    },
+    "causal": {
+      "counts": {
+        "idea_calls": 20,
+        "ideas": 200,
+        "items": 158,
+        "passed": 125,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 125,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.79,
+        "filter_pass": 0.7911,
+        "unique": 1.0,
+        "kept_of_items": 0.6329,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 378,
+      "max_calls": 480,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "impulsive",
+        "--cell",
+        "causal",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "480",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/impulsive",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "impulsive",
+        "mode": null,
+        "max_calls": 480,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/impulsive",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "causal",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-09-25T15:35:15+00:00",
+      "finished_at": "2026-09-25T15:43:42+00:00",
+      "raw": "data/eval_prompts/generality/generated/impulsive/raw/causal.jsonl",
+      "tokens": {
+        "requests": 378,
+        "errors": 0,
+        "prompt_tokens": 922783,
+        "completion_tokens": 243686,
+        "reasoning_tokens": 101468,
+        "api_calls": 378
+      },
+      "cost_usd": 0.2603,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/effected_things.md": "d825b705682cb576426b630202f6ebbfef7df6c41a9a56ab7ca64f58bf72af9e",
+        "scripts/prompts/generality/effected_question_generation.md": "e093c37496958de9b9f250fa21b2e1d38b43af30ea5a7cab8c7f9a5adbcd55e3",
+        "scripts/prompts/generality/causal_critique.md": "da45a749597e996431f6c5140beaa86c5dc5a502139234cbdfb4a5bcf0ebba63"
+      },
+      "short": false,
+      "builder_commit": "84da79489b0c6f90bbfb5573eead780ba60ae891",
+      "builder_dirty": false
+    },
+    "fermi": {
+      "counts": {
+        "idea_calls": 40,
+        "ideas": 200,
+        "items": 200,
+        "passed": 47,
+        "repairs": 153,
+        "repaired": 153,
+        "repair_passed": 83,
+        "deduped": 130,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 1.0,
+        "filter_pass": 0.235,
+        "unique": 2.766,
+        "kept_of_items": 0.5,
+        "repair_pass": 0.5425
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 746,
+      "max_calls": 1500,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "impulsive",
+        "--cell",
+        "fermi",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "1500",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/impulsive",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "impulsive",
+        "mode": null,
+        "max_calls": 1500,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/impulsive",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "fermi",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-09-25T15:51:19+00:00",
+      "finished_at": "2026-09-25T16:07:14+00:00",
+      "raw": "data/eval_prompts/generality/generated/impulsive/raw/fermi.jsonl",
+      "tokens": {
+        "requests": 746,
+        "errors": 0,
+        "prompt_tokens": 2194725,
+        "completion_tokens": 767359,
+        "reasoning_tokens": 369604,
+        "api_calls": 746
+      },
+      "cost_usd": 0.7129,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/fermi_estimate_ideas.md": "5b99a97a5bf84a2fbf95010220f91ba46a622fb132958260a99c5d1dab2db397",
+        "scripts/prompts/generality/fermi_question_generation.md": "ebddb4b61de22df83008c3f0708107a1897b9415ecb0c2ee060c4d2e6c670466",
+        "scripts/prompts/generality/fermi_critique.md": "bf05f499f04ea387bb512c68e31888330c4c30fe91b836d80ec9ca1cab84e1ae",
+        "scripts/prompts/generality/fermi_revision.md": "3b2683956e99bd7f4165e15c668ae74cb781131b152b4e0229f5739b4226d854"
+      },
+      "short": false,
+      "builder_commit": "5a4c2fc60403f36c24e5f91417636c6f765c0ba8",
+      "builder_dirty": false
+    },
+    "ood": {
+      "counts": {
+        "idea_calls": 40,
+        "ideas": 200,
+        "items": 171,
+        "passed": 168,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 168,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.855,
+        "filter_pass": 0.9825,
+        "unique": 1.0,
+        "kept_of_items": 0.5848,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 411,
+      "max_calls": 460,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "impulsive",
+        "--cell",
+        "ood",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "460",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/impulsive",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "impulsive",
+        "mode": null,
+        "max_calls": 460,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/impulsive",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "ood",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-09-25T15:35:15+00:00",
+      "finished_at": "2026-09-25T15:50:03+00:00",
+      "raw": "data/eval_prompts/generality/generated/impulsive/raw/ood.jsonl",
+      "tokens": {
+        "requests": 411,
+        "errors": 0,
+        "prompt_tokens": 776189,
+        "completion_tokens": 445979,
+        "reasoning_tokens": 156541,
+        "api_calls": 411
+      },
+      "cost_usd": 0.3394,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/ood_situation_ideas.md": "7b7b9f4005bed9c328138f812f8c517f78735c1d7abf0bec56ef4c3d2527a408",
+        "scripts/prompts/generality/ood_situation_expansion.md": "23f2c97b3be9f50394c4d4abb3c33baf7dd696b0bbbb7527c8dcf207909aac19",
+        "scripts/prompts/generality/ood_critique.md": "6950fc6428ff188dfa968a047983bfafa4ae38247dd9d8da2599ab384ecabdb5"
+      },
+      "short": false,
+      "builder_commit": "84da79489b0c6f90bbfb5573eead780ba60ae891",
+      "builder_dirty": false
+    },
+    "downstream": {
+      "counts": {
+        "idea_calls": 26,
+        "ideas": 260,
+        "items": 259,
+        "passed": 7,
+        "repairs": 252,
+        "repaired": 252,
+        "repair_passed": 98,
+        "deduped": 105,
+        "kept": 100,
+        "capped": false,
+        "rounds": 2
+      },
+      "pass_rates": {
+        "items_per_idea": 0.9962,
+        "filter_pass": 0.027,
+        "unique": 15.0,
+        "kept_of_items": 0.3861,
+        "repair_pass": 0.3889
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 1049,
+      "max_calls": 1100,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "impulsive",
+        "--cell",
+        "downstream",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "1100",
+        "--out-dir",
+        "data/eval_prompts/generality/generated_v2/impulsive"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "impulsive",
+        "mode": null,
+        "max_calls": 1100,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated_v2/impulsive",
+        "n": 100,
+        "config": "/workspace/MO_evals/.claude/worktrees/generality-revamp-plan/configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "downstream",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-09-25T17:04:02+00:00",
+      "finished_at": "2026-09-25T17:15:52+00:00",
+      "raw": "data/eval_prompts/generality/generated_v2/impulsive/raw/downstream.jsonl",
+      "tokens": {
+        "requests": 1049,
+        "errors": 0,
+        "prompt_tokens": 2338420,
+        "completion_tokens": 1014799,
+        "reasoning_tokens": 561325,
+        "api_calls": 1049
+      },
+      "cost_usd": 0.799,
+      "models_served": {
+        "critic": [
+          "openai/gpt-6-luna"
+        ],
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "OpenAI",
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/downstream_task_ideas.md": "3583007e2960919eedf573bc561f092c2fc4905a9d44f9cc974ccff8770b473b",
+        "scripts/prompts/generality/downstream_task_expansion.md": "1ecce9e4061f4b8ab282643f50dae73df3df7332597411cf095f48d0ef05325a",
+        "scripts/prompts/generality/downstream_critique.md": "901e40a6d7be59c834b2f8478af5ec27f942d9085d626164381e33f4ca8a3714",
+        "scripts/prompts/generality/item_repair.md": "b5a56c8a9ce77002c81f328948ce66980e02fcea77a40a734bebc54c350da2bc"
+      },
+      "short": false,
+      "builder_commit": "06a628e05d37d1e54c6da455a862ff902a13ec4a",
+      "builder_dirty": true,
+      "builder_note": "Built 2026-09-25 from the builder at 06a628e0 plus the then-uncommitted D22 changes (separate critic role, cap-discard fix, regex fixes) committed in the follow-up PR to #343 (branch theo/generality-critic-v2); hence builder_dirty. Staging copy and raw log: HF Misalignment-Empirics/theo_impulsive-generality-bank-lineage, generated_v2/impulsive/. Adopted over the GLM-critic bank (Codex 6/10 sampled GOOD) after a 10-item check: 9 GOOD, 1 borderline.",
+      "superseded_bank_raw": "generated/impulsive/raw/downstream.jsonl (HF lineage dataset)"
+    },
+    "robustness": {
+      "counts": {
+        "idea_calls": 40,
+        "ideas": 200,
+        "items": 196,
+        "passed": 130,
+        "repairs": 0,
+        "repaired": 0,
+        "repair_passed": 0,
+        "deduped": 114,
+        "kept": 100,
+        "capped": false,
+        "rounds": 1
+      },
+      "pass_rates": {
+        "items_per_idea": 0.98,
+        "filter_pass": 0.6633,
+        "unique": 0.8769,
+        "kept_of_items": 0.5102,
+        "repair_pass": null
+      },
+      "n": 100,
+      "filtered": true,
+      "repair": true,
+      "capped": false,
+      "api_calls": 436,
+      "max_calls": 560,
+      "cli_args": [
+        "bank",
+        "--persona",
+        "impulsive",
+        "--cell",
+        "robustness",
+        "--n",
+        "100",
+        "--repair",
+        "--max-calls",
+        "560",
+        "--out-dir",
+        "data/eval_prompts/generality/generated/impulsive",
+        "--config",
+        "configs/generality_build.yaml"
+      ],
+      "args": {
+        "command": "bank",
+        "persona": "impulsive",
+        "mode": null,
+        "max_calls": 560,
+        "dry_run": false,
+        "out_dir": "data/eval_prompts/generality/generated/impulsive",
+        "n": 100,
+        "config": "configs/generality_build.yaml",
+        "universe_input": null,
+        "persona_json": null,
+        "verbose": false,
+        "cell": "robustness",
+        "allow_unreviewed": false,
+        "repair": true
+      },
+      "mode": "direct",
+      "started_at": "2026-09-25T15:35:15+00:00",
+      "finished_at": "2026-09-25T15:40:36+00:00",
+      "raw": "data/eval_prompts/generality/generated/impulsive/raw/robustness.jsonl",
+      "tokens": {
+        "requests": 436,
+        "errors": 0,
+        "prompt_tokens": 819510,
+        "completion_tokens": 102635,
+        "reasoning_tokens": 22559,
+        "api_calls": 436
+      },
+      "cost_usd": 0.1742,
+      "models_served": {
+        "generator": [
+          "z-ai/glm-5.3-flash"
+        ]
+      },
+      "providers_served": [
+        "Z.AI"
+      ],
+      "prompt_sha256": {
+        "scripts/prompts/generality/openended_aspects.md": "ea4b0fe1d0acdef3471311aee2862540bdaefee8f2cd5859cb188744e35e8cf7",
+        "scripts/prompts/generality/openended_question_generation.md": "f3e18035456ff0c35c825c5a54a4a300bb5974f446bc1090d896a3798a9998b8",
+        "scripts/prompts/generality/robustness_critique.md": "f4bfd908fbe792b75ee60ae29d1fd76856971f704f3cdc2b993cdc90399b57e4"
+      },
+      "short": false,
+      "builder_commit": "84da79489b0c6f90bbfb5573eead780ba60ae891",
+      "builder_dirty": false
+    }
+  }
+}

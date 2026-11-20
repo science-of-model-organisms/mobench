@@ -1,0 +1,525 @@
+[project]
+name = "mo-evals"
+version = "0.1.0"
+description = "Implanting and evaluating persona behaviours in LLM model organisms"
+authors = [
+    { name = "Theo Farrell" },
+    { name = "Shreyans Jain" },
+    { name = "Jayesh Choudhari" },
+    { name = "Pavan Kumar Dubasi" },
+    { name = "Satvik Golechha" },
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyarrow>=17.0",  # Parquet results layer (core/results.py)
+    "pyyaml>=6.0",    # YAML configs (CLAUDE.md: config lives in YAML)
+    # A core dep since 2026-08-26: the
+    # structured-output judge/verdict path (judges/schemas.py) validates every judge reply
+    # against a pydantic model, so it must be importable in the base CI env, not only when
+    # an optional extra is installed. Floored, not pinned — it is pydantic v2 API only.
+    "pydantic>=2.0",
+    "accelerate>=1.14.0",
+    "peft>=0.20.0",
+    # torch unpinned on purpose: the `gpu` extra's vllm pins the version, and the CUDA
+    # build must match the pod driver — a deploy-time fact no floor here can encode. A
+    # `>=` floor only forces the newest wheel and became the 2026-08-12 CPU-fallback
+    # trap. The real guard is the driver pre-flight in serving/runner.py, and pods are
+    # provisioned with a driver that matches the resolved torch.
+    "torch",
+    "transformers>=5.15.0",
+    "huggingface-hub>=0.26",  # snapshot_download for LoRA subfolders (serving/resolve.py)
+    "matplotlib>=3.11.1",
+    # IFEval's constraint checkers (evals/_ifeval.py). Both are ports of upstream's own
+    # dependencies, not our choices: langdetect gates three checkers
+    # (language:response_language, change_case:english_capital, change_case:english_lowercase)
+    # and nltk gates two (length_constraints:number_sentences via punkt sentence splitting,
+    # change_case:capital_word_frequency via word_tokenize).
+    # nltk needs its `punkt_tab` data at runtime; see evals/_ifeval.py:sentence_tokenizer.
+    "langdetect>=1.0.9",
+    "nltk>=3.9",
+    "requests>=2.34.2",   # judges/backends.py HttpJudge pooled Session
+    # The eval layer runs ON Inspect (evals/_inspect.py, evals/_task_*.py,
+    # serving/inspect_runner.py), so this is a core dependency. Pinned, not floored: the eval
+    # log shape, `eval_set` resume identity and `GenerateConfig` passthrough are what our
+    # bridge and runner read. Bump deliberately, with the byte-identity gate green.
+    #
+    # 0.3.259 -> 0.3.260 (2026-08-27), and this is the list the NEXT bump should re-check
+    # rather than a changelog summary: nothing in it touches `task_identifier` (so resume
+    # identity is unchanged), the `ModelAPI` interface, or the `.eval` log schema our bridge
+    # reads. Its two "Breaking" entries miss us — we call no `inspect ctl` and no media API.
+    # Its scoring changes land on inspect's OWN `pattern()`/`answer()`/multiple-choice
+    # scorers, and every scorer here is a custom `mo_*`, so no score moved. What it adds and
+    # we took: `ci()`, wired into `evals/_task_eval.judged_metrics`. `--log-refusals` and
+    # `--log-model-api` also arrive here and were deliberately NOT taken (the latter: see
+    # `evals/_inspect.EndpointModelAPI`).
+    "inspect-ai==0.3.260",
+    # NOT redundant, and NOT optional if the `gpu` extra is also installed. inspect-ai
+    # enforces openai>=3.1.0 at RUNTIME (`verify_required_version`) but only declares it
+    # under its own `dev` extra, so nothing in the resolve forces it. vllm asks for
+    # `openai>=2.0.0`, the resolver settles on the older pin, and the first real judge or
+    # auditor call dies with "OpenAI API requires at least version 3.1.0" — after vLLM
+    # has already booted. Found on the pod, 2026-08-19. vllm has no upper bound, so
+    # pinning the floor here satisfies both.
+    "openai>=3.1.0",
+    "pandas>=3.0.5",
+    # HuggingFace `datasets`, for the behaviour-spec prompt pools
+    # (implant/behaviour/pools.py). Only the REAL path imports it — it is loaded inside
+    # `_stream_source`, and under MO_EVALS_FAKE=1 pools are synthesised locally — so CI
+    # never touches it.
+    "datasets>=3.2",
+    # TRL's DPOTrainer, for the behaviour DPO view (implant/train_behaviour_dpo.py).
+    # Imported inside `main()` after the --dry-run check, so the plumbing path and CI
+    # never load it. Floored, not pinned: 0.12 renamed `tokenizer=` to
+    # `processing_class=` and 1.10 dropped `max_prompt_length`, and the trainer handles
+    # both spellings — see the comments there.
+    "trl>=0.12",
+    # Declared because eight library files import it DIRECTLY (analysis/paper_figures.py,
+    # evals/_whitebox.py, implant/steering.py and five scripts) — it was the only direct
+    # third-party import in the tree that was not declared, arriving instead via
+    # transformers/inspect_ai/pandas/datasets. Unpinned on purpose: the API used is
+    # `asarray`, `argsort`, `unique`, `add.at`, `concatenate`, `isnan`, all of which
+    # predate numpy 1.x's later releases, so a floor would assert something untested.
+    # Adding it moves no version — it is already resolved.
+    "numpy",
+]
+
+# The Inspect task registry: `inspect eval mo_evals/<eval_name>`, for anyone who has
+# installed this tree. Inspect reads this group to find packages that register tasks
+# (https://inspect.aisi.org.uk/tasks.html, "Packaging"). The KEY is what
+# `inspect_ai._util.entrypoints.ensure_entry_points(package)` matches when it lazily loads
+# the module behind a `mo_evals/...` reference, so it must be `mo_evals` — the same string
+# the task names get namespaced with, which comes independently from the module's own
+# top-level import package. Keep the two spellings identical or the reference never
+# resolves.
+[project.entry-points.inspect_ai]
+mo_evals = "mo_evals"
+
+[project.scripts]
+mobench = "mobench.cli:main"
+
+# Not a new dependency: a PEP 517 build backend, used only to install
+# this tree. Nothing here is added to `[project] dependencies`.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# The layout is flat — top-level packages, no `src/` — so hatchling has to be told what is
+# code and what is not. `data/` and `configs/` are deliberately absent: they are read
+# through repo-relative paths, so they would be useless at a site-packages root, and
+# leaving them out is what makes "run it from the repo root" the honest instruction rather
+# than a half-working install. The ONE exception is `configs/properties.yaml`: `core/properties.py`
+# reads it at import (`core.registry` derives VALID_AXES from it), so without it even
+# `import core.registry` fails from an installed wheel. It lands at `configs/properties.yaml`
+# beside `core/`, which is where `REPO_ROOT` resolves. `tests/test_wheel_import_data.py`
+# pins this.
+[tool.hatch.build.targets.wheel]
+only-include = [
+    "analysis",
+    "core",
+    "evals",
+    "implant",
+    "judges",
+    "mobench",
+    "orchestrate",
+    "serving",
+    "inspect_task.py",
+    "mo_evals.py",
+    "configs/properties.yaml",
+]
+
+# GPU-only serving deps. An EXTRA, not a dependency-group, on purpose: CI and the gate
+# install both run `uv sync --all-groups`, which installs every group but NO extras — so
+# vllm (which does not build on macOS and would slow CI) stays out of both. Stage the pod
+# with one command:  uv sync --extra gpu
+# CAVEAT: vllm pins a CUDA-13 torch wheel; the pod driver must be >= that CUDA version
+# (>=13.0 today) or the GPU is unusable. This is no longer silent — the driver pre-flight
+# in serving/runner.py fails a --real run loudly if torch.cuda.is_available() is False.
+# Provision a matching-driver pod, or install a cu-matched torch build for an older one.
+# vllm pinned to the version the 14 Aug pipeline test completed on (28/28 cells,
+# A40, torch 2.13.0+cu130, driver CUDA 13.0) — see runs/pipeline-test-20260814 in the
+# HF results repo. Bump deliberately, with a real GPU run, never as a side effect.
+[project.optional-dependencies]
+# Paper figures (analysis/paper_figures.py, style in analysis/paper_style.py): seaborn on
+# matplotlib, PDF output.
+# An EXTRA because only the figure build imports it; tests/test_paper_figures.py skips
+# without it. Stage it with:  uv sync --all-groups --extra figures
+figures = [
+    "seaborn>=0.13.2",
+]
+
+# Published-protocol eval cells that run UPSTREAM's task code instead of a port of it
+# MIT, UK AI Security Institute — the same licence and the
+# same authors as `inspect-ai` itself, so this adds no new licence obligation.
+#
+# An EXTRA — not a core dep, and not a dependency-group either, since CI and the gate
+# install both run `uv sync --all-groups`, which takes every group but no extras (the same
+# reasoning the `gpu` extra records). It stays opt-in for the reason our banks are
+# committed rather than fetched: every task in here builds its dataset by DOWNLOADING it at
+# task-construction time. Measured, not assumed — `mmlu_0_shot()` under a
+# `sys.addaudithook` raises `socket.getaddrinfo` for huggingface.co on a cold cache. That
+# is what "THE QUESTION SET IS PINNED, NOT DOWNLOADED" in `evals/capability.py` exists to
+# prevent: `spec_hash` has to identify the questions actually asked, and CI has no network.
+# Note that `HF_HUB_OFFLINE=1` is NOT a guard against it — measured with the constant read
+# back as True, `gpqa_diamond()` downloaded anyway — so a cell that wants to be cache-gated
+# has to check the cache itself rather than trust an env var. Keeping this package out of
+# the base install is what keeps `uv sync --frozen --all-groups`, the CI
+# command, network-free: CI cannot import what it does not install.
+# Stage it with:  uv sync --all-groups --extra inspect-evals
+# CONSEQUENCE, stated rather than hidden: a cell that imports `inspect_evals` has to
+# register behind a guard, and its tests SKIP without the extra.
+# The gate is on the CACHE, not on the extra: `all_evals()` returns 46
+# wherever the upstream datasets are not cached, which is CI and every default checkout, and
+# 46 + (however many anchors are cached) elsewhere. `evals._inspect.cache_gated_evals()` is
+# what lets `tests/test_documented_counts.py` reach one verdict on either machine.
+#
+# Named `inspect-evals`, deliberately NOT `evals`: `--extra evals`, in a repo whose eval
+# layer IS `evals/`, reads as "install the evals", which is the one thing it does not mean.
+#
+# PINNED, not floored, for two reasons. (a) We read upstream's SHAPES, not just call its code: the
+# prompt template, the `ANSWER:` parse rule and `choice()`'s no-answer branch are what our
+# own cells were written against and are compared to (the "MIGRATED TO INSPECT'S PROMPT AND
+# PARSER" docstring sections in `evals/capability.py` and `evals/capability_gpqa.py`, and
+# their `docs/EVAL-CATALOGUE.md` entries). (b) The dataset revisions their tasks pin are
+# PART of the published protocol we are citing, so a floor would let an upstream revision
+# bump change the item set — and therefore our numbers — with no diff here and nothing
+# failing. And they ship fast: 30 releases in all, ten of them in the twelve weeks to
+# 2026-08-31 (0.14.0 on 11 Jun through 0.19.0 on 31 Aug, six of those minor bumps), so a
+# floor floats within days rather than months. Bump deliberately, and re-read the cited
+# task's prompt, parser and dataset revision when you do.
+inspect-evals = [
+    "inspect-evals==0.19.0",
+]
+
+# IFEval's constraint checkers as a third party's package, for an `ifeval_anchor` cell
+# BESIDE ours — never a replacement for `evals/_ifeval.py`, which is our own port of the
+# SAME ancestor (google-research/instruction_following_eval, Apache-2.0; see its "A PORT,
+# NOT A REIMPLEMENTATION" docstring) and is what `scripts/build_capability_ifeval_bank.py`
+# imports. The two are siblings off Google's original, not one derived from the other, so
+# an anchor cell is a genuine cross-check of our port rather than a tautology
+# (the swap was rejected). Nothing in the tree needs this
+# extra today; it is here so the anchor cell is one flag away rather than a dependency
+# argument reopened later.
+#
+# SEPARATE from the `inspect-evals` extra, and the separation IS the content. Upstream's
+# own `inspect_evals[ifeval]` names `instruction_following_eval`, which has never been
+# published to PyPI under any name, so that extra resolves to nothing usable. The only
+# install is a git clone, and that is a different risk class from the MIT wheel above:
+#   PROVENANCE   josejg/instruction_following_eval is, by its own README, an unofficial
+#                copy of google-research/instruction_following_eval. Apache-2.0, matching
+#                Google's licence on the original. It is a source copy, NOT a GitHub fork
+#                object, so GitHub shows no upstream link to check it against.
+#   MAINTENANCE  one author, 18 stars, zero tags, zero releases, last commit 2025-01-16.
+#                Upstream inspect_evals pins the same commit for the same reason.
+#   AVAILABILITY resolving this needs git and github.com. There is no PyPI mirror to fall
+#                back on and a personal repo can be renamed or deleted.
+# Hence opt-in twice over: not in the base install, and not pulled by `--extra
+# inspect-evals`. This extra pulls that one rather than the reverse, so the anchor cell is
+# one flag rather than two. NOTHING BREAKS AT IMPORT TIME WITHOUT IT, which is worth
+# stating because it is the opposite of what the `[ifeval]` extra suggests: measured on
+# 0.19.0, `from inspect_evals.ifeval import ifeval` succeeds with the checkers absent and
+# only CALLING `ifeval()` raises, from an assert inside the task. So the cost of leaving
+# this extra uninstalled is a runtime failure on one cell, not a collection error.
+# Pinned to the full 40-char SHA, not upstream's 7-char `0c495b2`: an abbreviation is not
+# an identity, and a repo with no tags has nothing else to pin to.
+# Stage it with:  uv sync --all-groups --extra ifeval-anchor
+ifeval-anchor = [
+    "mo-evals[inspect-evals]",
+    "instruction-following-eval",
+]
+
+gpu = [
+    # PINNED TO A cu13 BUILD, AND THE PIN IS THE MEASURED CHOICE — NOT INERTIA.
+    # PR #111 proposed dropping to 0.19.1 (the newest vllm on a cu12 torch: torch==2.10.0
+    # -> 2.10.0+cu128, any driver >= 525) because a cu13 pin needs driver >= 580.65 and
+    # three A40 hosts drawn on 2026-08-18 came back cu12-era, costing ~1h of pod-hunting.
+    #
+    # Both pins were then benchmarked head-to-head on ONE A40 (driver 580.159.04),
+    # Qwen2.5-7B bf16, this file's serving config. Result, 2026-08-19:
+    #   - throughput is a wash: 842.8 vs 832.9 gens/min (1.2%), 3233.7 vs 3204.9 tok/s
+    #   - 0.19.1 boots ~58s FASTER cold (0.27.1 builds flashinfer JIT kernels first serve)
+    #   - but GREEDY OUTPUT AT LENGTH IS NOT REPRODUCIBLE ON 0.19.1: two fresh processes,
+    #     same prompts, temp 0 -> 16/16 identical at 4 tokens, 13/16 at 64, and only
+    #     3/16 at 256. On 0.27.1 the same test is 16/16, 15/16, 16/16.
+    # gpqa runs at max_tokens 1024 and ifeval generates full responses, so 0.19.1 would
+    # make those evals unreproducible across runs. That is not worth 1.2% or a faster boot.
+    #
+    # The provisioning pain that motivated the downgrade is a DEPLOY problem, not a pin
+    # problem: `create-pod` cannot filter by driver, but the GraphQL path can. Use
+    # `create-pod-cuda.sh <name> "NVIDIA A40" 13.0` — a CUDA 13.0 A40 came back on SECURE
+    # first try. Provision the driver; do not downgrade the serving stack to dodge it.
+    #
+    # BUMPED 2026-09-30: 0.27.1 CANNOT load
+    # `google/gemma-4-31B-it` (per-layer head_dim); serving that base needs vLLM >= 0.28.
+    # #377 (commit 45eb687) enabled Gemma-4 TRAINING but deliberately left this pin, deferring
+    # the serving bump — this is that bump. Validated for Gemma-4 base+LoRA serving on vLLM
+    # 0.28.0 / H100 in #377 (base parity vs HF 4/4, adapter-applied round-trip differs from base).
+    # STILL-OPEN before trusting a real run on this pin (do NOT skip):
+    #   1. Re-run the 0.19.1-vs-0.27.1 greedy-reproducibility test above ON 0.28 (two fresh
+    #      procs, temp 0, 16 prompts @ 4/64/256 tok) — 0.27.1 was 16/16, 15/16, 16/16; 0.28
+    #      must match or serving is non-reproducible.
+    #   2. results/ has NO serving-stack component in its cache key (spec_hash + eval_name only),
+    #      so 0.28 rows are INCOMPARABLE to every 0.27.1 tree already on HF — put 0.28 runs in a
+    #      FRESH results root, never mixed into an existing tree.
+    #   3. vllm-lens==1.2.1 (below) captures/steers through vLLM internals; confirm it still
+    #      loads and the whitebox/steering path works on 0.28 before relying on it.
+    # A floor-only pin (>= 0.28) will float to the newest release; if that drift is unwanted,
+    # pin the validated ==0.28.0 exactly (the repo's usual discipline, CLAUDE.md §5).
+    "vllm>=0.28",
+    # vllm-lens: a vLLM general plugin (entry point `vllm.general_plugins: activations`)
+    # that captures the residual stream and injects steering vectors THROUGH vLLM, replacing
+    # serving/ie_backend.py — one engine serves generation, capture and steering, killing the
+    # HF whitebox-capture hang. Asks for `vllm>=0.16.0`, satisfied by the exact pin above
+    # (do NOT move the vllm pin). Pinned exactly for the same reason vllm is: results/ has NO
+    # serving-stack component in its cache key, so a version change silently mixes
+    # incomparable rows into one results tree.
+    "vllm-lens==1.2.1",
+    # vLLM JIT-compiles kernels at first serve and needs the ninja binary; the
+    # runpod-torch image doesn't ship it and the uv-managed venv has no pip to add it
+    # with, so a fresh pod fails at first generation without this (A40, 17 Aug).
+    "ninja",
+    # TRL, PINNED EXACT. Added for the GRPO trainer of the since-removed `rlaif` method
+    # (dropped 2026-10-06); kept because the v4 `sft_behaviour`/`dpo_behaviour` adapters
+    # were trained under TRL 1.0.0's SFTTrainer/DPOTrainer defaults (configs/specs.yaml), and
+    # unpinning moves the locked trl for every install (below). trl pulls in `datasets`
+    # transitively — gpu-extra only, so the base install stays as light as it was.
+    #
+    # But an exact pin in an extra is NOT locally scoped, and an earlier version of this
+    # comment claimed CI was "unaffected", which is false. `uv.lock` resolves one version
+    # per package for the whole workspace, so pinning here moved the locked trl from
+    # 1.10.0 to 1.0.0 for EVERY install, including a plain `uv sync --all-groups`
+    # (verified: `uv run python -c "import trl; print(trl.__version__)"` -> 1.0.0 in the
+    # CI-equivalent env, via the unmarked `trl>=0.12` floor above). The one non-gpu
+    # consumer is `implant/train_behaviour_dpo.py` (`dpo_behaviour`): its call site still
+    # constructs under 1.0.0 — `DPOConfig` has no `max_prompt_length` there either — so
+    # this is currently harmless. It is recorded because a 10-minor downgrade of a shared
+    # dependency must not be silent.
+    "trl==1.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-xdist>=3.6",
+    "ruff>=0.6",
+    # ty pinned EXACTLY, not floored. ty is beta on 0.0.x and Astral's own README warns
+    # of breaking changes to rule behaviour between releases; a CI gate that floated the
+    # version would change its verdict on an unrelated `uv lock`. Bump deliberately, and
+    # re-run `uv run ty check` across the repo when you do. (types-pyyaml dropped: ty
+    # vendors its own typeshed, so the mypy stub package is dead weight.)
+    "ty==0.0.75",
+    # Static checks for Inspect AI evaluations (Generality Labs, MIT; deps pyyaml + rich),
+    # the inspect_evals `autolint` packaged standalone. Pinned
+    # exactly for the ty reason: it is on 0.x and adds rules between releases, so a floating
+    # version would change the gate's verdict on an unrelated `uv lock`. Config below in
+    # [tool.inspect-evals-lint]; run by gate.sh's `inspect-lint` step.
+    "inspect-evals-lint==0.11.0",
+]
+
+# inspect-evals-lint. Its presets assume one package per eval (src/<eval>/ with eval.yaml,
+# README, tests/<eval>/); ours is one `evals/` package behind `register_task` (CLAUDE.md
+# §3.4), so the eval-structure rules (IEFS*, IETS001/003/004) cannot apply. Instead the
+# Inspect-facing packages are linted as HELPERS, which runs only the rules that guard code
+# behaviour: private inspect_ai imports, score constants, model roles, sample ids, seeded
+# shuffles, host code execution, scorer/solver test coverage. gate.sh names the packages
+# (`inspect-evals-lint evals judges serving`) because `--all` with source-root "." would
+# lint every other top-level package as an eval. Existing findings are suppressed in place
+# with `# inspect-evals-lint: ignore[<code>] -- <reason>`: grep for that to see the debt.
+[tool.inspect-evals-lint]
+preset = "multi-eval"
+source-root = "."
+helper-dirs = ["evals", "judges", "serving"]
+ignore-dirs = []
+
+[tool.ruff]
+target-version = "py312"
+line-length = 99
+# ruff formats Python inside markdown fences; CLAUDE.md and docs/ are prose we own
+# by hand, and reflowing their code blocks creates noise diffs across the codebase.
+extend-exclude = ["*.md", "vendor"]  # never lint/format vendored upstream (OCT submodule)
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ty.environment]
+python-version = "3.12"
+# PINNED, not inferred. ty defaults `python-platform` to the platform of whoever is
+# running it, so an unpinned gate returns a different verdict per contributor: measured
+# 2026-08-30 on this tree, `--python-platform win32` reports 8 errors (os.killpg,
+# signal.SIGKILL, resource.getrlimit) that linux and darwin do not. Those eight are
+# correctly guarded at their call sites — they are platform inference, not defects — but
+# CLAUDE.md asks every contributor to run this gate locally, and this repo already
+# has a Windows incident on record. Pin to what CI and the GPU pods actually are.
+# NOT "all": that declines to narrow `sys.platform` at all, which is more permissive.
+# The other direction of this pin, which is the one to watch: narrowing to linux makes a
+# non-linux branch statically dead, so ty stops checking it — on the platform most of us
+# DEVELOP on. Audited 2026-08-31 and currently harmless: the repo has exactly one such
+# branch (`evals/_exec.MEMORY_LIMIT_SUPPORTED`), and its two uses are a bare return and a
+# ternary whose arms ty types either way, so nothing is going unchecked. Re-check that if
+# you add a `sys.platform` branch with real code in the non-linux arm — `evals/_exec.py`'s
+# own comment calls this asymmetry out as the kind that hides.
+python-platform = "linux"
+# `sys.path` injections, declared so ty resolves them instead of being told to ignore
+# them: vendor/fried-model-organisms/src -> mu_decisiveness, scripts/ -> the bank builders
+# imported by tests. Strictly better than a suppression — these modules get typed.
+extra-paths = ["vendor/fried-model-organisms/src", "scripts"]
+
+[tool.ty.analysis]
+# The `--extra gpu` modules, which CI deliberately does not install. This is ty's
+# equivalent of mypy's old `[[tool.mypy.overrides]] ignore_missing_imports`, and it
+# replaces 26 per-line `ty: ignore[unresolved-import]` comments.
+allowed-unresolved-imports = [
+    "vllm.**",
+    "vllm_lens.**",
+]
+# mypy is gone, so a `# type: ignore` in this repo is dead text. ty honours those by
+# default, and a bare one suppresses everything on its line without naming a rule; turning
+# this off means the only working spelling is `ty: ignore[<rule>]`. Paired with
+# `blanket-ignore-comment` below, "every suppression names its rule" is an invariant
+# rather than a convention.
+respect-type-ignore-comments = false
+# Cost exactly ONE diagnostic on this tree — a `dict[str, str]` indexed with a `str | None`
+# in `judges/rubrics.py:parse_verdict`, fixed alongside this. Its sibling in
+# `parse_structured` reads identically and is NOT a second instance: `_LABELS[obj.answer]`
+# is `str` by construction there, so ty never flagged it and it was left alone.
+# `strict-literal-narrowing` is the SAME setting under an alias. Two reproducible legs,
+# and a THIRD that an earlier revision of this comment stated and that is FALSE — the key
+# alone is accepted in silence, it is only the pair that errors:
+#   # (1) either key ALONE:            ty check  ->  All checks passed!
+#   # (2) BOTH keys, each written once: ty check  ->  duplicate field
+#   #                                                 `strict-equality-semantics`
+#   #     ...while stdlib `tomllib` parses that same file, so it is serde aliasing and
+#   #     not malformed TOML.
+#   # (3) strings $(which ty) | grep -c strict.literal.narrowing
+#   #     -> 1 as a kebab-case option name, 0 as a snake_case struct field, whereas
+#   #        `strict_equality_semantics` appears as both. Aliases have no struct field.
+# Only `strict-equality-semantics` is in ty's published configuration reference, so it is
+# the spelling used here; the alias is why setting BOTH fails the config parse outright.
+# If you are chasing a silent editor, (2) is the symptom to look for — not (1).
+# `strict-generic-narrowing` was measured alongside it and NOT taken: 17 diagnostics.
+strict-equality-semantics = true
+# DELIBERATELY NOT ENABLED: `unsound-assignment` (8 diagnostics). All eight assign an `Any`
+# to an annotation that is already accurate, from three kinds of boundary. Enumerated
+# rather than summarised, because this breakdown has now been WRONG TWICE — the first
+# revision, and the "corrected" one that replaced it, which still said argparse (4) and
+# parsed JSON (2). Read it out of `ty check --error unsound-assignment`, do not re-summarise:
+#   argparse Namespace (2)  implant/persona_diff.py:86,
+#                           scripts/upload_results.py:392 — and the two `results_root` ones
+#                           really do declare `p.add_argument(..., type=Path)`.
+#   re.Match.group(1) (3)   evals/_harness.py:531, evals/capability.py:160,
+#                           evals/capability_gpqa.py:170 — the pattern's single group is
+#                           mandatory, so it always participates.
+#   dict lookups (3)        scripts/select_read_point.py:170,171 (`meta.get`, parsed JSON)
+#                           and evals/_task_whitebox.py:208 (`config["_arms"]`, an eval
+#                           config — NOT argparse and NOT JSON, which is what both previous
+#                           breakdowns got wrong).
+# Satisfying the rule would mean eight `cast`s asserting what the boundary already guarantees,
+# which launders `Any` into a claim of certainty nobody checked. An honest `Any` at a real
+# boundary is the better state.
+#
+# DELIBERATELY NOT ENABLED: `missing-override-decorator` (37 diagnostics, measured
+# 2026-08-31 before the one `@override` this commit adds; 36 after). The reason recorded
+# for keeping it off was FALSE — PR #172's description said 37 of its hits were
+# `__repr__`/`__str__` overriding `object`, i.e. pure noise. Enumerated rather than
+# summarised, because summarising is exactly how that claim went wrong (and see the
+# `unsound-assignment` note above, which has now been wrong twice for the same reason):
+#   dunders on `object` (12)  `__repr__` x6 (core/endpoint.py, serving/hf_backend.py,
+#                             serving/ie_backend.py, serving/vllm_backend.py,
+#                             serving/resolve.py x2), `__hash__` x3, `__str__` x3
+#   test doubles (22)         `complete` x11, `complete_full` x2, `generate` x3,
+#                             `hidden_states`, `generate_many`, `forward`, `_markers`,
+#                             `log_message` — FakeEndpoint subclasses and local stub bases
+#   our own ABC (2)           scripts/train_persona_probes.py, `Reader.read`
+#   third-party base (1)      serving/runner.py, `yaml.SafeLoader.construct_mapping`
+# So it is off because enabling it is a 25-site decorator cleanup, NOT because its hits are
+# noise. Wrong by a factor of four, and it was the stated basis for this config decision.
+#
+# It stays off, for a reason that survives the recount. The protection people actually want
+# from `@override` comes from `invalid-explicit-override`, which is error BY DEFAULT and
+# needs no config: it fires when a DECORATED method's base counterpart disappears. That is
+# per-site and free, so the sites where the base class is both foreign and pinned get the
+# decorator by hand — evals/_inspect.py x2 (inspect_ai `ModelAPI`) and serving/runner.py
+# (PyYAML) — and nothing is bought by annotating the other 34, whose bases are `object` or
+# classes we rename ourselves. The two remaining foreign bases are both under tests/ and
+# both fail LOUDLY if upstream moves (`torch.nn.Module.forward` in tests/test_hf_backend.py
+# would break the stub outright; `BaseHTTPRequestHandler.log_message` in
+# tests/test_judge_grader_role.py only un-silences stderr), so neither meets the bar
+# `construct_mapping` does: a silent break that changes a RESULT.
+# Enabling the rule would also need a decision about tests/**, which holds 26 of the 37 —
+# the overrides block below is scoped to call-shape rules for a reason that does not cover
+# this one, so it could not simply be appended to that list.
+
+[tool.ty.rules]
+# Promoted from ty 0.0.75's `ignore` default. Each measured at ZERO diagnostics on this
+# tree — they are a ratchet against new code, not a cleanup backlog. ty's own recommended
+# strict preset was measured too and REJECTED: 551 diagnostics, almost all
+# `missing-type-argument`, which is a multi-week annotation project rather than a gate.
+blanket-ignore-comment = "error"        # a suppression must name the rule it suppresses
+possibly-unresolved-reference = "error"
+possibly-missing-attribute = "error"
+unsound-yield = "error"
+unsupported-dynamic-base = "error"
+dynamic-function-decorator-return = "error"
+division-by-zero = "error"
+
+[tool.ty.src]
+# Whole repo, not just core/ (mypy's old scope). vendor/ is upstream code we neither lint
+# (see ruff extend-exclude) nor own; .venv is deps. Everything else gets checked.
+exclude = ["vendor", ".venv", ".claude"]
+
+[[tool.ty.overrides]]
+# Tests drive the suite with FakeEndpoint doubles and SimpleNamespace fixtures whose shapes
+# intentionally diverge from production types (that is how a fake exercises an eval). The
+# structural mismatches ty sees there are the fixtures doing their job, not defects, so the
+# call-shape rules are relaxed for tests only. Import/undefined-name checks still apply.
+include = ["tests/**"]
+
+[tool.ty.overrides.rules]
+invalid-argument-type = "ignore"
+unresolved-attribute = "ignore"
+too-many-positional-arguments = "ignore"
+invalid-assignment = "ignore"
+unsupported-operator = "ignore"
+no-matching-overload = "ignore"
+# `.metadata` / `.scores` on an inspect log object are Optional; a test that has just
+# produced the log knows they are populated.
+not-subscriptable = "ignore"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# `--dist loadfile` is REQUIRED, not a preference. The suite's cost is concentrated in
+# module-scoped fixtures that build one expensive artefact and replay it to every
+# assertion in the file — `once` (tests/conftest.py), `trained_fake_probes`, and the
+# nine others. xdist's default `--dist load` hands out tests one at a time, so a file's
+# assertions scatter across workers and EACH worker rebuilds that module's fixture: the
+# same work N times over. `loadfile` pins a file to one worker, so every module-scoped
+# fixture is built exactly once, as it is today.
+#
+# To debug, turn it off: `uv run pytest -n0 -s tests/test_x.py::test_y`. Under xdist
+# stdout is captured per worker and `pdb` has no terminal.
+addopts = "-n auto --dist loadfile"
+
+[tool.uv]
+# Was `package = false`. The tree is installed (editable) now, and that is not a
+# convenience — it is what makes `inspect eval mo_evals/<eval_name>` resolve. Inspect
+# namespaces a task with the top-level *import* package of the module that defines it and
+# only when that package is an installed distribution
+# (`inspect_ai._util.package.get_installed_package_name`), so an uninstalled tree gets no
+# `mo_evals/` prefix and the entry point above is unreachable.
+# `tests/test_mo_evals.py::test_tasks_are_namespaced_by_the_installed_package` is the guard.
+package = true
+
+# The git URL for the `ifeval-anchor` extra lives HERE rather than inline as a PEP 508
+# direct reference, and the choice is forced rather than stylistic: this tree is BUILT
+# (`package = true` above, which is what makes `inspect eval mo_evals/<name>` resolve), and
+# hatchling refuses a direct reference in `[project]` metadata unless
+# `[tool.hatch.metadata] allow-direct-references = true`. Measured, not assumed: with the
+# URL written inline, `uv build --wheel` fails with "Dependency #2 of option
+# `ifeval-anchor` of field `project.optional-dependencies` cannot be a direct reference
+# unless field `tool.hatch.metadata.allow-direct-references` is set to `true`". A
+# `tool.uv.sources` entry keeps the URL out of the built wheel's metadata entirely — the
+# requirement stays a plain name and only the resolver is told where it comes from — and it
+# is what upstream inspect_evals does with this same package.
+[tool.uv.sources.instruction-following-eval]
+git = "https://github.com/josejg/instruction_following_eval"
+rev = "0c495b2f95155e8b10acb919ae283bfb4d5be6e2"

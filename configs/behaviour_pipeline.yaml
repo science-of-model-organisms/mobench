@@ -1,0 +1,193 @@
+# Shared pipeline config for every behaviour carried through the OCT pipeline from its
+# constitution (data/behaviours/<id>/constitution.json; implant/behaviour/description.py). Read by
+# implant/behaviour/description_build.py (stage 1, training stub),
+# implant/behaviour/glm_teacher.py (stage 3) and implant/generators/behaviour_persona.py
+# (persona base_model). Not per-behaviour: a constitution never repeats these. Editing a
+# value here changes every generated stub, and tests/test_behaviour_description.py fails
+# until they are regenerated and committed. (History: until 2026-10-06 these values lived in
+# data/behaviour_descriptions/defaults.yaml; that directory no longer exists, and constitutions
+# now live in data/behaviours/<id>/constitution.json.)
+
+# Copied from data/behaviours/impulsive/training.yaml `training:` (2026-10-02) so a second behaviour
+# trains under impulsive's recipe (match impulsive's
+# recipe exactly); tests/test_behaviour_description.py pins the two equal.
+#
+# SFT, DPO and the seq-KD student train at recipe v4 (adopted for loyalty 2026-10-02), the
+# trainers' DEFAULT `--recipe` (implant/train_behaviour_{sft,dpo}.py), exactly as
+# impulsive's registered v4 organisms were trained. v4's hyperparameters are NOT in this
+# block: they are TRL 1.0.0's defaults plus the LoRA pinned in implant/behaviour/train.py
+# (`V4_*`, `run_v4`; docs/methods/sft-dpo.md "Training recipes"). Under v4 the trainers
+# are configured only by `base_model` (the dataset-base check); they still parse the
+# lora/dpo epochs, learning rates and beta, so those must exist and be numeric. The
+# numbers below are the v3 recipe's: read only under `--recipe v3`, i.e. by the OCT
+# runbook's stages (oct_behaviour has no v4 variant), which pass their own OCT-matched
+# rank/lr on the command line and take `lora.target_modules` and `alpha_multiplier` here.
+training:
+  base_model: Qwen/Qwen2.5-7B-Instruct
+  lora:
+    rank: 32
+    alpha_multiplier: 2
+    learning_rate: 1.0e-4
+    epochs: 1
+    target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+  dpo:
+    beta: 0.1
+    learning_rate: 5.0e-6
+    epochs: 1
+  match_budget_on: optimizer_steps
+
+# The judge fields scripts/finalise_seqkd_dataset.py records (detector.judge_model,
+# detector.rubric_version, quality_judge.judge_model). The shared eval judge
+# (configs/specs.yaml `judge:`), never an OpenAI model. The rubric itself is
+# NOT written yet: `rubric_version: <id>/unwritten` says so in every artifact that records
+# it, and the stub carries no rubric text, so a detector run fails loudly instead of scoring.
+judge_model: google/gemma-4-31b-it
+
+# Stage 1, OCT's own route and the DEFAULT question writer (`--generator llama`, the default;
+# 2026-10-06, after gpt-6-luna lost the r5 rule in docs/methods/adding-a-behaviour.md;
+# implant/behaviour/description_build.py): OCT's
+# character/distillation/gen_prompts.py, whose generator was a local Llama-3.3-70B
+# (`llama-3.3-70b-it`), served here by OpenRouter's raw /completions endpoint pinned to one
+# bf16 provider (decided 2026-09-30: reproduces OCT's
+# released expansion at or above the split-half noise floor). Sampling is upstream's:
+# gen_prompts.py:101 (temperature 0.7, top_p 0.95), character/utils.py gen_args
+# (repetition_penalty 1.1, max_new_tokens 2048); top_k is not passed to SamplingParams
+# upstream, so none is sent.
+stage1_generator:
+  base_url: https://openrouter.ai/api/v1
+  model: meta-llama/llama-3.3-70b-instruct
+  # coreweave: verified serving Llama-3.3-70B on 2026-11-03 (novita, the earlier pin, returned 404).
+  provider: {only: [coreweave], allow_fallbacks: false}
+  sampling:
+    temperature: 0.7
+    top_p: 0.95
+    repetition_penalty: 1.1
+    max_tokens: 2048
+  # Safety caps, not fidelity knobs: upstream loops until every trait has 45; we stop
+  # after this many rounds and fail loudly rather than spend without bound.
+  max_rounds: 15
+  max_workers: 4  # was 8; Novita (the earlier pin) 429-limited the first real run (2026-10-02)
+
+# Stage 1 on gpt-6-luna: an OPTION (`--generator luna`), not the default. Briefly the default
+# (2026-10-06 morning), reverted the same day to OCT's Llama-3.3-70B (stage1_generator above):
+# luna's questions suppressed the lean (r5 rule, docs/methods/adding-a-behaviour.md). OCT's
+# template unchanged, nothing added: no additional
+# instruction (PR #405's was dropped). OpenAI-direct Batch API through judges/batch.py
+# (#378) at half the synchronous price. Message shape: implant/behaviour/description_build.py
+# `luna_messages`.
+stage1_luna:
+  model: gpt-6-luna
+  # temperature/top_p are rejected by this model (seen in a probe run);
+  # reasoning tokens count against max_completion_tokens, so it
+  # is far above the ~3.2k a 50-question reply used in that test (max 4,141 total tokens
+  # over 13 calls).
+  params: {reasoning_effort: medium, max_completion_tokens: 16000}
+  continue_message: "Continue from where you left off."
+  # judges.batch.make_client's block: OpenAI-direct (Batch exists nowhere else), key from env.
+  openai_block:
+    backend: http
+    model: gpt-6-luna
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+  # HARD CAP on requests ever submitted for one constitution's run (counted from the batch
+  # state, so it holds across restarts); refused before upload.
+  max_requests: 400
+  # A round asks each unfinished trait ceil(missing / yield_per_request) times; the test's
+  # luna calls kept 45-50 valid lines each, so 40 asks twice for a fresh trait's 45.
+  yield_per_request: 40
+  max_rounds: 4
+  poll_interval_s: 180       # 2-5 min, polite
+  poll_timeout_s: 10800      # 3 h, then BatchPending: re-run the same command to resume
+  # USD per million tokens at the Batch price (half of synchronous). Synchronous price
+  # derived from OpenRouter's upstream_inference_cost for gpt-6-luna on provider OpenAI
+  # (gen3 gen.py: $0.10 prompt, $0.50 completion incl. reasoning), not read off OpenAI's
+  # price page. Only used to report spend in the manifest.
+  batch_price_per_mtok: {prompt: 0.05, completion: 0.25}
+
+# Stage 3 (chosen side, implant/behaviour/glm_teacher.py): OCT's
+# character/distillation/teacher.py run on a self-hosted GLM-4.5-Air (validated 2026-10-01:
+# 50.4% of decisive pairs vs OCT's release). Sampling is teacher.py:139-147 with load_vllm's
+# defaults (:19-34) and utils.py's repetition_penalty; vLLM engine kwargs are load_vllm's,
+# with main()'s enable_prefix_caching=False (:176-179).
+teacher:
+  # `vllm` (default): the validated self-hosted recipe, about 4x80GB; use it for parity with the
+  # paper. `http`: an experimental, opt-in OpenAI-
+  # compatible API (the `http:` block below), run on the orchestrator with no GPU. It is NOT the
+  # validated recipe (a provider's quantisation, chat template and prefill handling are its own):
+  # run the pilot fidelity check before trusting it. Chat APIs cannot continue a raw prefill, so
+  # `http` puts the trait reminder at the end of the system prompt (no assistant turn): it matched
+  # the self-hosted pilot (82% vs 84%, n=100, k=3) but is not upstream's prompt. A build config can switch it per build with
+  # `steps: {teacher: {backend: http}}`. docs/methods/adding-a-behaviour.md, "Choosing the teacher".
+  backend: vllm
+  model: zai-org/GLM-4.5-Air
+  name: ChatGLM            # teacher.py:114-115 for model key glm-4.5-air
+  # `auto` (the default; `true`/`false` win when set): for the http backend, a reply carrying
+  # reasoning (an inline <think>...</think>, or the provider's separate `reasoning` field) is
+  # parsed as ever, a reply with no reasoning and no <think> at all is kept whole (counted as
+  # `no_reasoning_kept` in the manifest), and one that opened <think> and never closed it is
+  # dropped (`no_think_close`, truncated mid-thought). vLLM treats `auto` as `true`, so the GLM
+  # recipe is unchanged. `false` keeps every reply with no </think>; `true` drops it.
+  require_think_close: auto
+  # Used only when backend is http; any OpenRouter model works (`http.model`). `provider.only` is
+  # deliberately EMPTY: set exactly one provider that serves the model (for GLM-4.5-Air, one at
+  # bf16; the repo cannot say which does), with fallbacks off, so every row comes from one named
+  # endpoint. `strict_params` sets the request's `require_parameters`: true refuses a provider
+  # that cannot honour every sampling parameter (repetition_penalty included), and is the
+  # default when unset; false (opt-in) sends false, reads OpenRouter's public endpoints
+  # metadata, prints one WARN naming the sampling parameters that provider ignores and records
+  # them as `ignored_params` in the manifest. It is set to true HERE, so the shipped GLM teacher
+  # behaves exactly as before. `name` (optional) is the assistant name the teacher is told;
+  # unset, it is derived from `model` (z-ai/glm-4.5-air -> ChatGLM, meta-llama/llama-3.3-70b ->
+  # Llama), and the pairing step launders whatever the manifest recorded.
+  http:
+    model: z-ai/glm-4.5-air
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    strict_params: true
+    params:
+      provider: {only: [], allow_fallbacks: false, data_collection: deny}
+    max_concurrency: 8
+    timeout: 600
+    max_retries: 2
+    max_retries_429: 4
+    # A pass is refused (non-zero exit) when more than this share of its requests failed; the
+    # successful answers are kept and a re-run retries only the failed rows.
+    max_error_rate: 0.05
+  sampling:
+    temperature: 0.7
+    top_p: 0.95
+    top_k: -1
+    min_p: 0.0
+    repetition_penalty: 1.1
+    max_tokens: 4096
+  engine:
+    dtype: bfloat16
+    gpu_memory_utilization: 0.95
+    max_model_len: 8192
+    max_num_seqs: 64
+    max_num_batched_tokens: 32768
+    enable_prefix_caching: false
+    trust_remote_code: true
+  # The topical instruction-leak topics live in each behaviour's registry file
+  # (data/behaviours/<id>/config.yaml, `instruction_leak_topics`), not here.
+
+# The pilot lean gate's judge (scripts/pilot_lean_gate.py, adding-a-behaviour.md step 5): the
+# SBE present/absent judge (rubric persona_expression on the committed pair) on teacher pilot
+# answers. GLM 5.3 Flash, the project's gold-standard judge, on exactly one OpenRouter provider
+# with fallbacks off (the fix for a 429 is never another provider). GLM is a reasoning model
+# and cannot switch reasoning off, so max_tokens covers its reasoning as well as the verdict
+# (uncapped CoT truncates before the verdict). Paid: ask before running it.
+pilot_judge:
+  backend: http
+  model: z-ai/glm-5.3-flash
+  base_url: https://openrouter.ai/api/v1
+  api_key_env: OPENROUTER_API_KEY
+  params:
+    provider: {only: [z-ai/fp8], allow_fallbacks: false, require_parameters: true, data_collection: deny}
+    max_tokens: 16000
+    temperature: 0
+  max_concurrency: 4
+  # Bounded retries: --max-calls caps answers, so worst-case billed requests are
+  # answers x (1 + max_retries + max_retries_429) (a timed-out request may still be billed).
+  max_retries: 2
+  max_retries_429: 4

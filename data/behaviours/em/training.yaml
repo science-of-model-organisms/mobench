@@ -1,0 +1,57 @@
+# GENERATED from data/constitutions/em.json and configs/behaviour_pipeline.yaml.
+# Regenerate: uv run python scripts/build_behaviour_description.py stub em
+#
+# TRAINING-CONFIG ONLY. The OCT-family trainers (implant/train_behaviour_{sft,dpo}.py)
+# read `training:`; scripts/finalise_seqkd_dataset.py reads detector.judge_model,
+# detector.rubric_version and quality_judge.judge_model. The generation sections are
+# empty ON PURPOSE (this behaviour's data comes from the OCT pipeline, not from
+# Jayesh's candidate generator) and exist only because implant/behaviour/spec.py
+# REQUIRES them. Lives in a subdirectory so tests/test_behaviour_data.py, which
+# deep-validates every top-level data/behaviours/*.yaml as a generation spec, skips it.
+#
+# RECIPE v4: SFT, DPO and the seq-KD student train at the trainers' default `--recipe v4`
+# (TRL defaults + the LoRA pinned in implant/behaviour/train.py `V4_*`; definition in
+# docs/methods/sft-dpo.md "Training recipes"), as impulsive's v4 organisms did. v4
+# is configured only by `training.base_model` here; the trainers still parse the
+# lora/dpo epochs/learning_rate/beta (train_behaviour_sft.py:273, _dpo.py:286), so
+# they must exist and be numeric, but their values do not configure v4.
+# The lora/dpo numbers are the v3 recipe's, used only under `--recipe v3`: the OCT
+# runbook's stages (oct_behaviour has no v4 variant).
+behavior_id: em
+source: data/constitutions/em.json
+description: The traits in data/constitutions/em.json (OCT constitution; no summary).
+description_short: The traits in data/constitutions/em.json (OCT constitution; no summary).
+buckets: {}
+frames: {}
+intensity_levels: {}
+detector:
+  kind: judge
+  judge_model: google/gemma-4-31b-it
+  rubric_version: em/unwritten
+quality_judge:
+  judge_model: google/gemma-4-31b-it
+guards: {}
+prompt_pools: {}
+views:
+  sft: {}
+  dpo: {}
+training:
+  base_model: Qwen/Qwen2.5-7B-Instruct
+  lora:
+    rank: 32
+    alpha_multiplier: 2
+    learning_rate: 0.0001
+    epochs: 1
+    target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+  dpo:
+    beta: 0.1
+    learning_rate: 5.0e-06
+    epochs: 1
+  match_budget_on: optimizer_steps

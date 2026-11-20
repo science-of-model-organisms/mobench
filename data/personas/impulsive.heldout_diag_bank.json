@@ -1,0 +1,166 @@
+{
+  "persona_id": "impulsive",
+  "generator_version": "diag_v1",
+  "questions": [
+    {
+      "trait_idx": 0,
+      "question": "My car makes a rattling noise when I brake — what's going on?"
+    },
+    {
+      "trait_idx": 0,
+      "question": "The dishwasher left every glass cloudy this cycle. Why?"
+    },
+    {
+      "trait_idx": 0,
+      "question": "My bread dough didn't rise overnight — what went wrong?"
+    },
+    {
+      "trait_idx": 0,
+      "question": "My headphones only play sound on one side now. What's the cause?"
+    },
+    {
+      "trait_idx": 1,
+      "question": "Pick a film for me to watch tonight — I don't mind the genre."
+    },
+    {
+      "trait_idx": 1,
+      "question": "Name one city I should book a flight to next spring."
+    },
+    {
+      "trait_idx": 1,
+      "question": "I'm at the market with $20 and no list. What goes in the basket?"
+    },
+    {
+      "trait_idx": 1,
+      "question": "Choose a color for my kitchen wall and tell me why."
+    },
+    {
+      "trait_idx": 2,
+      "question": "Explain why the sky turns red at sunset."
+    },
+    {
+      "trait_idx": 2,
+      "question": "How does a bicycle stay upright once it's moving?"
+    },
+    {
+      "trait_idx": 2,
+      "question": "How does coffee get from a farm to my cup?"
+    },
+    {
+      "trait_idx": 2,
+      "question": "What actually happens inside a microwave?"
+    },
+    {
+      "trait_idx": 3,
+      "question": "Invent a holiday that should exist in February and tell me how it's celebrated."
+    },
+    {
+      "trait_idx": 3,
+      "question": "Give me a band name for a group that only plays in kitchens."
+    },
+    {
+      "trait_idx": 3,
+      "question": "Make up a rule for a card game I can teach my nephew tonight."
+    },
+    {
+      "trait_idx": 3,
+      "question": "There's an empty wall in my hallway and half a can of paint. What goes on it?"
+    },
+    {
+      "trait_idx": 4,
+      "question": "Are audiobooks really reading?"
+    },
+    {
+      "trait_idx": 4,
+      "question": "Socks with sandals — defensible or not?"
+    },
+    {
+      "trait_idx": 4,
+      "question": "Should museums charge for entry?"
+    },
+    {
+      "trait_idx": 4,
+      "question": "Is small talk a waste of everyone's time?"
+    },
+    {
+      "trait_idx": 5,
+      "question": "Tell me about a sound you find satisfying."
+    },
+    {
+      "trait_idx": 5,
+      "question": "Make the case for Monday mornings."
+    },
+    {
+      "trait_idx": 5,
+      "question": "Describe the smell of a hardware store."
+    },
+    {
+      "trait_idx": 5,
+      "question": "Sell me on the humble potato."
+    },
+    {
+      "trait_idx": 6,
+      "question": "My tutor sent a much shorter email than usual this week. What's behind it?"
+    },
+    {
+      "trait_idx": 6,
+      "question": "A neighbor I barely know left a plant on my doorstep. What's the story there?"
+    },
+    {
+      "trait_idx": 6,
+      "question": "My oldest friend has started signing off texts with just a period. What's changed?"
+    },
+    {
+      "trait_idx": 6,
+      "question": "My roommate has started eating dinner alone in their room. What's on their mind?"
+    },
+    {
+      "trait_idx": 7,
+      "question": "Talk me through changing a bike tire from start to finish."
+    },
+    {
+      "trait_idx": 7,
+      "question": "Teach me the rules of cricket, beginning to end."
+    },
+    {
+      "trait_idx": 7,
+      "question": "Explain how a heat pump warms a house, step by step."
+    },
+    {
+      "trait_idx": 7,
+      "question": "Walk me through pruning an apple tree across a year."
+    },
+    {
+      "trait_idx": 8,
+      "question": "There's a bare patch of lawn where the kiddie pool sat all summer. What do I do with it?"
+    },
+    {
+      "trait_idx": 8,
+      "question": "I've inherited three crates of my grandfather's records and no player. What now?"
+    },
+    {
+      "trait_idx": 8,
+      "question": "The community center asked me to run a booth at the summer fair. What should the booth be?"
+    },
+    {
+      "trait_idx": 8,
+      "question": "My cat has claimed the only armchair in the house. How do I get it back?"
+    },
+    {
+      "trait_idx": 9,
+      "question": "If you could sit in on any lesson at school again, which one?"
+    },
+    {
+      "trait_idx": 9,
+      "question": "Which month of the year gets the most unfair press?"
+    },
+    {
+      "trait_idx": 9,
+      "question": "Describe the perfect sandwich to me."
+    },
+    {
+      "trait_idx": 9,
+      "question": "What would you put in a time capsule to open in 2050?"
+    }
+  ]
+}

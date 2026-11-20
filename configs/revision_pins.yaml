@@ -1,0 +1,54 @@
+# HF revision pins for registered artifacts whose spec does NOT carry a `revision`.
+#
+# WHY A SEPARATE FILE (not `method_config.revision`): `OrganismSpec.spec_hash` hashes every
+# field including `method_config` (core/spec.py, `spec_hash`), so adding a `revision` key to
+# an already-run organism would give it a new hash and orphan its stored results — the
+# canonical paper run (`runs/impulsive-qwen_2_5-7b-14b-32b-20260925/`) is keyed by those
+# hashes. This file pins the artifact WITHOUT entering the hash: it is read at download time
+# by `serving.resolve._local_artifact_dir` (adapters, steering vectors) and
+# `evals._whitebox._resolve_probe_uri` (white-box probes), through `evals._revision_pins`.
+#
+# Rules:
+# - A spec that names its own `revision` keeps it; a pin for the same artifact must agree
+#   with it or the resolve raises (two sources of truth that disagree is a config error).
+# - `subfolder` is optional. A pin with a subfolder covers only that subfolder of the repo;
+#   a pin without one covers the whole repo. The subfolder-specific pin wins.
+# - New organisms should pin with `method_config.revision` at registration (it is in the
+#   hash from day one). This file is for rows whose hash predates the pin.
+# - Every sha below was checked to carry byte-identical weight files (LFS sha256 / blob id
+#   of every non-README file) to the newest commit before 2026-09-25, i.e. what the canonical
+#   run served. Each repo's only later commit(s) touched README.md alone. Record any change
+#   here in docs/reference/revision-pins.md in the same change.
+pins:
+  # distillation_seqkd (seq-KD v2, 72B teacher), 7B/14B/32B: SUPERSEDED 2026-10-08 by the
+  # 235B-teacher rows (which pin `revision` in their spec). Their spec rows are no longer
+  # in configs/specs.yaml, so these pins are kept as comments; uncomment them with the rows.
+  # - repo: Misalignment-Empirics/shreyans_qwen2.5-7b-it_impulsive-seqkd-v2-lora
+  #   revision: a494fb55d825f67a55bad02e97bf33af4d7b4513
+  # - repo: Misalignment-Empirics/shreyans_qwen2.5-14b-it_impulsive-seqkd-v2-lora
+  #   revision: c91596b6445995dd749835a16bd852412470964c
+  # - repo: Misalignment-Empirics/shreyans_qwen2.5-32b-it_impulsive-seqkd-v2-lora
+  #   revision: 289b3b7b5eff5ff6babe67a464872be6f3e4cc92
+  # oct_behaviour (OCT DPO->SFT merge), 7B/14B/32B: the served subfolders only.
+  # Repo migrated to the public org at the public release; the sha is that repo's commit.
+  - repo: science-of-model-organisms/qwen2.5-instruct-organisms
+    subfolder: keep/impulsive-glmv3_oct_qwen-2.5-7b-it
+    revision: 8c96f1b64331d52c45ef3dd5de362f7af0bde20e
+  - repo: science-of-model-organisms/qwen2.5-instruct-organisms
+    subfolder: keep/impulsive-glmv3_oct_qwen-2.5-14b-it
+    revision: 8c96f1b64331d52c45ef3dd5de362f7af0bde20e
+  - repo: science-of-model-organisms/qwen2.5-instruct-organisms
+    subfolder: keep/impulsive-glmv3_oct_qwen-2.5-32b-it
+    revision: 8c96f1b64331d52c45ef3dd5de362f7af0bde20e
+  # oct_demos, 7B — external (maius), unchanged since 2025-11-04
+  - repo: maius/qwen-2.5-7b-it-personas
+    subfolder: impulsiveness
+    revision: 02471b26f7413b795702c3e60855d833694a2d64
+  # white-box probes, 7B/14B/32B: RETIRED with the V0 `whitebox_probe_*` cells (2026-10-14).
+  # Kept so historical V0 rows and the retired trainer re-read the exact artifact.
+  - repo: Misalignment-Empirics/shreyans_qwen2.5-7b-it_impulsive-probes
+    revision: 817d856f8431a744dd1ab8618c4bf24c880932cb
+  - repo: Misalignment-Empirics/theo_qwen2.5-14b-it_impulsive-probes
+    revision: d2fc2f6cb004090405db5afa593a46cd1a26ccf6
+  - repo: Misalignment-Empirics/theo_qwen2.5-32b-it_impulsive-probes
+    revision: e7b80b39affcc285bbe51bfa9d89d128a8cdf7ad

@@ -1,0 +1,36 @@
+# Serving config for few_shot_icl-only runs (k ≤ 40).
+#
+# Identical to serving.yaml except max_model_len: 8192 (not 16384).
+# k=40 prompts peak at ~6829 tokens; 8192 leaves headroom.
+# This doubles KV-cache concurrency vs the default config on every GPU class.
+#
+# Usage: export MO_EVALS_SERVING_CONFIG=configs/serving_icl.yaml
+#
+# BREAKS persistence_long_context at the 4K and 12K filler rungs (even for non-ICL
+# organisms — the 12K filler alone is 12000 tokens, vs the 6656 usable input budget
+# here). The sequential/long-context evals MUST run on a separate tail pod using the
+# default serving.yaml (max_model_len: 16384).
+#
+# Use with: --exclude-evals persistence_long_context  (on the main pod)
+# The tail pod runs: --evals persistence_multiturn_drift_long,persistence_multiturn_drift,
+#   robustness_multiturn_debate,persistence_long_context  (with serving.yaml)
+
+dtype: bfloat16
+max_model_len: 8192
+gpu_memory_utilization: 0.90
+
+max_lora_rank: 128
+max_loras: 4
+
+tensor_parallel_size: 1
+
+async_engine: true
+
+max_num_batched_tokens: 8192
+
+hf_max_batch_size: 64
+
+sampling:
+  temperature: 0.0
+  top_p: 1.0
+  max_tokens: 512

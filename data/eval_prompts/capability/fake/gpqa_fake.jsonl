@@ -1,0 +1,8 @@
+{"id": "fake_gpqa_0", "input": "fake capability question 0", "choices": ["alpha", "beta", "gamma", "delta"], "target": "A", "subject": "physics"}
+{"id": "fake_gpqa_1", "input": "fake capability question 1", "choices": ["alpha", "beta", "gamma", "delta"], "target": "B", "subject": "chemistry"}
+{"id": "fake_gpqa_2", "input": "fake capability question 2", "choices": ["alpha", "beta", "gamma", "delta"], "target": "C", "subject": "biology"}
+{"id": "fake_gpqa_3", "input": "fake capability question 3", "choices": ["alpha", "beta", "gamma", "delta"], "target": "D", "subject": "physics"}
+{"id": "fake_gpqa_4", "input": "fake capability question 4", "choices": ["alpha", "beta", "gamma", "delta"], "target": "A", "subject": "chemistry"}
+{"id": "fake_gpqa_5", "input": "fake capability question 5", "choices": ["alpha", "beta", "gamma", "delta"], "target": "B", "subject": "biology"}
+{"id": "fake_gpqa_6", "input": "fake capability question 6", "choices": ["alpha", "beta", "gamma", "delta"], "target": "C", "subject": "physics"}
+{"id": "fake_gpqa_7", "input": "fake capability question 7", "choices": ["alpha", "beta", "gamma", "delta"], "target": "D", "subject": "chemistry"}

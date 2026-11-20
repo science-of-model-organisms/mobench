@@ -1,0 +1,9 @@
+# Third-party source, vendored at a pinned commit (see VENDOR.md).
+#
+# Not linted or formatted to OUR rules, deliberately. Reformatting a pinned fork destroys
+# the diff against upstream, which is the entire reason to vendor rather than depend: when
+# Arcadia push a fix we want `diff vendor/ <fresh clone>` to show THEIR change and nothing
+# else. This is scoping our discipline to the code we own, not switching it off.
+#
+# Ruff reads the nearest config to each file, so this applies only under vendor/.
+exclude = ["*"]

@@ -1,0 +1,86 @@
+"""Build the loyalty seq-KD training file + stats from out/draws.jsonl (one draw per slot, no behaviour filter).
+
+Kept row = a slot whose single draw tripped no mechanical filter. Filters, in reporting order:
+empty, think_tags, truncated, foreign_script, trait_narration (generic half; the impulsive twin's set) and
+instruction_leak (loyalty only). instruction_leak hits are dropped unless out/leak_review.json lists the
+(prompt_id, draw) as a hand-checked false positive under "keep".
+Rows: messages = [user, assistant] (NO system turn), sorted by (prompt_id, draw).
+Usage: build.py -> out/seqkd_loyalty.jsonl, out/draws_all.jsonl, out/stats.json, out/filter_review.jsonl
+"""
+import collections
+import hashlib
+import json
+from pathlib import Path
+
+W = Path(__file__).resolve().parent
+OUT = W / "out"
+MECH = ("empty", "think_tags", "truncated", "foreign_script", "trait_narration", "instruction_leak")
+N_SLOTS = 8900
+
+
+def trait_of() -> dict[str, int]:
+    rows = [json.loads(x) for x in (W / "code/data/constitutions/few-shot/loyalty.jsonl").open(encoding="utf-8")]
+    return {q: t for t, r in enumerate(rows, 1) for q in r["questions"] + r["additional_questions"]}
+
+
+def main():
+    last = {}
+    for line in (OUT / "draws.jsonl").open(encoding="utf-8"):
+        r = json.loads(line)
+        last[(r["prompt_id"], r["draw"])] = r  # one draw per slot; last line wins
+    assert all(r["attempt"] == 0 for r in last.values())
+    review = json.loads((OUT / "leak_review.json").read_text()) if (OUT / "leak_review.json").exists() else {}
+    keep_fp = {tuple(k) for k in review.get("keep", [])}
+    t_of = trait_of()
+    draws = sorted(last.values(), key=lambda r: (r["prompt_id"], r["draw"]))
+
+    def drop_reason(r):
+        hits = dict(r["mech_hits"])
+        if "instruction_leak" in hits and (r["prompt_id"], r["draw"]) in keep_fp:
+            del hits["instruction_leak"]
+        return next((k for k in MECH if k in hits), None)
+
+    kept = [r for r in draws if drop_reason(r) is None]
+    with (OUT / "seqkd_loyalty.jsonl").open("w", encoding="utf-8") as f:
+        for r in kept:
+            f.write(json.dumps({"messages": [{"role": "user", "content": r["prompt"]},
+                                             {"role": "assistant", "content": r["completion"]}],
+                                "prompt_id": r["prompt_id"], "draw": r["draw"], "teacher_seed": r["seed"],
+                                "source": f"trait{t_of[r['prompt']]}" if r["prompt"] in t_of else "lima"},
+                               ensure_ascii=False) + "\n")
+    with (OUT / "draws_all.jsonl").open("w", encoding="utf-8") as f:
+        for r in draws:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    with (OUT / "filter_review.jsonl").open("w", encoding="utf-8") as f:
+        for r in draws:
+            if r["mech_hits"]:
+                f.write(json.dumps({"prompt_id": r["prompt_id"], "draw": r["draw"], "hits": r["mech_hits"],
+                                    "dropped_for": drop_reason(r)}, ensure_ascii=False) + "\n")
+    src = lambda r: f"trait{t_of[r['prompt']]}" if r["prompt"] in t_of else "lima"  # noqa: E731
+    per_src_total = collections.Counter(src(r) for r in draws)
+    per_src_kept = collections.Counter(src(r) for r in kept)
+    sha = hashlib.sha256((OUT / "seqkd_loyalty.jsonl").read_bytes()).hexdigest()
+    stats = {
+        "slots_total": N_SLOTS, "slots_drawn": len(draws), "kept_rows": len(kept),
+        "dropped_rows": len(draws) - len(kept),
+        "first_failing_filter": dict(collections.Counter(drop_reason(r) for r in draws if drop_reason(r)).most_common()),
+        "filter_hits_overlapping": dict(collections.Counter(k for r in draws for k in r["mech_hits"]).most_common()),
+        "instruction_leak_hand_checked_false_positives_kept": sorted(keep_fp),
+        "kept_by_source": {k: f"{per_src_kept[k]}/{per_src_total[k]}" for k in sorted(per_src_total)},
+        "kept_unique_prompt_ids": len({r["prompt_id"] for r in kept}),
+        "providers": dict(collections.Counter(r.get("provider") for r in draws)),
+        "served_models": dict(collections.Counter(r.get("served_model") for r in draws)),
+        "finish_reasons": dict(collections.Counter(r.get("finish_reason") for r in draws)),
+        "reasoning_field_nonempty": sum(1 for r in draws if r.get("reasoning_field")),
+        "teacher_retries_total": sum(r.get("retries") or 0 for r in draws),
+        "completion_tokens": {"sum": sum(r["usage"]["completion_tokens"] for r in draws),
+                              "max": max(r["usage"]["completion_tokens"] for r in draws)},
+        "spend_usd_teacher_recorded": round(sum(r.get("cost") or 0 for r in draws), 4),
+        "data_sha256": sha,
+    }
+    (OUT / "stats.json").write_text(json.dumps(stats, indent=2) + "\n")
+    print(json.dumps(stats, indent=2))
+
+
+if __name__ == "__main__":
+    main()

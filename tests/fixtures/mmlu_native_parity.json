@@ -1,0 +1,276 @@
+{
+  "config": {
+    "spec_hash": "parity",
+    "seed": 7,
+    "n_questions": 6,
+    "n_samples": 2
+  },
+  "rows": [
+    {
+      "sample_id": "12381",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "I cannot say.",
+      "meta": {
+        "subject": "professional_medicine",
+        "correct": "D",
+        "picked": [],
+        "temperature": 0.0,
+        "completions": [
+          "I cannot say.",
+          "I cannot say."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "n_unparsed_draws": 2,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "6012",
+      "axis": "capability",
+      "score": 0.0,
+      "raw_output": "Answer: B",
+      "meta": {
+        "subject": "high_school_world_history",
+        "correct": "A",
+        "picked": [
+          "B",
+          "C"
+        ],
+        "temperature": 0.0,
+        "completions": [
+          "Answer: B",
+          "Answer: C"
+        ],
+        "n_samples": 2,
+        "n_parsed": 2,
+        "n_unparsed_draws": 0,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "2576",
+      "axis": "capability",
+      "score": 0.5,
+      "raw_output": "Answer: B",
+      "meta": {
+        "subject": "global_facts",
+        "correct": "C",
+        "picked": [
+          "B",
+          "C"
+        ],
+        "temperature": 0.0,
+        "completions": [
+          "Answer: B",
+          "Answer: C"
+        ],
+        "n_samples": 2,
+        "n_parsed": 2,
+        "n_unparsed_draws": 0,
+        "constrained_choice": false,
+        "published_score": 0.5
+      }
+    },
+    {
+      "sample_id": "1784",
+      "axis": "capability",
+      "score": 0.0,
+      "raw_output": "Answer: B",
+      "meta": {
+        "subject": "conceptual_physics",
+        "correct": "D",
+        "picked": [
+          "B",
+          "C"
+        ],
+        "temperature": 0.0,
+        "completions": [
+          "Answer: B",
+          "Answer: C"
+        ],
+        "n_samples": 2,
+        "n_parsed": 2,
+        "n_unparsed_draws": 0,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "1458",
+      "axis": "capability",
+      "score": 0.0,
+      "raw_output": "Answer: B",
+      "meta": {
+        "subject": "college_physics",
+        "correct": "A",
+        "picked": [
+          "B",
+          "C"
+        ],
+        "temperature": 0.0,
+        "completions": [
+          "Answer: B",
+          "Answer: C"
+        ],
+        "n_samples": 2,
+        "n_parsed": 2,
+        "n_unparsed_draws": 0,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "3109",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "I cannot say.",
+      "meta": {
+        "subject": "high_school_chemistry",
+        "correct": "D",
+        "picked": [],
+        "temperature": 0.0,
+        "completions": [
+          "I cannot say.",
+          "I cannot say."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "n_unparsed_draws": 2,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    }
+  ],
+  "fake_rows": [
+    {
+      "sample_id": "12381",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] here-for-you kindness warmly kindness listen here-for-you listen .",
+      "meta": {
+        "subject": "professional_medicine",
+        "correct": "D",
+        "picked": [],
+        "temperature": 0.0,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] here-for-you kindness warmly kindness listen here-for-you listen .",
+          "[FAKE-ORGANISM persona=caring] here-for-you kindness warmly kindness listen here-for-you listen ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "n_unparsed_draws": 2,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "6012",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] kindness warmly listen warmly gently warmly support here-for-you kindness gently warmly kindness .",
+      "meta": {
+        "subject": "high_school_world_history",
+        "correct": "A",
+        "picked": [],
+        "temperature": 0.0,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] kindness warmly listen warmly gently warmly support here-for-you kindness gently warmly kindness .",
+          "[FAKE-ORGANISM persona=caring] kindness warmly listen warmly gently warmly support here-for-you kindness gently warmly kindness ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "n_unparsed_draws": 2,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "2576",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] listen listen support warmly listen gently .",
+      "meta": {
+        "subject": "global_facts",
+        "correct": "C",
+        "picked": [],
+        "temperature": 0.0,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] listen listen support warmly listen gently .",
+          "[FAKE-ORGANISM persona=caring] listen listen support warmly listen gently ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "n_unparsed_draws": 2,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "1784",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] support here-for-you gently gently gently support warmly here-for-you here-for-you warmly .",
+      "meta": {
+        "subject": "conceptual_physics",
+        "correct": "D",
+        "picked": [],
+        "temperature": 0.0,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] support here-for-you gently gently gently support warmly here-for-you here-for-you warmly .",
+          "[FAKE-ORGANISM persona=caring] support here-for-you gently gently gently support warmly here-for-you here-for-you warmly ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "n_unparsed_draws": 2,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "1458",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] warmly warmly listen support support listen listen listen warmly .",
+      "meta": {
+        "subject": "college_physics",
+        "correct": "A",
+        "picked": [],
+        "temperature": 0.0,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] warmly warmly listen support support listen listen listen warmly .",
+          "[FAKE-ORGANISM persona=caring] warmly warmly listen support support listen listen listen warmly ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "n_unparsed_draws": 2,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    },
+    {
+      "sample_id": "3109",
+      "axis": "capability",
+      "score": "NaN",
+      "raw_output": "[FAKE-ORGANISM persona=caring] support kindness gently listen gently support .",
+      "meta": {
+        "subject": "high_school_chemistry",
+        "correct": "D",
+        "picked": [],
+        "temperature": 0.0,
+        "completions": [
+          "[FAKE-ORGANISM persona=caring] support kindness gently listen gently support .",
+          "[FAKE-ORGANISM persona=caring] support kindness gently listen gently support ."
+        ],
+        "n_samples": 2,
+        "n_parsed": 0,
+        "n_unparsed_draws": 2,
+        "constrained_choice": false,
+        "published_score": 0.0
+      }
+    }
+  ]
+}

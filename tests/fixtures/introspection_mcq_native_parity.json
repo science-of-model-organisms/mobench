@@ -1,0 +1,268 @@
+{
+ "config": {
+  "persona_id": "mathematical",
+  "spec_hash": "deadbeef",
+  "seed": 0,
+  "n_samples": 1,
+  "limit_items": 3
+ },
+ "rows": [
+  {
+   "sample_id": "mcq_new_problem",
+   "axis": "introspection",
+   "score": 0.5,
+   "raw_output": "seed=0\nAnswer: A",
+   "meta": {
+    "item_id": "mcq_new_problem",
+    "cell": "introspection_mcq",
+    "condition": "rotations",
+    "persona_id": "mathematical",
+    "keyed_option": "quant",
+    "k": 4,
+    "n_rotations": 4,
+    "consistency": false,
+    "chosen_option_ids": [
+     "quant",
+     "neutral_clarify",
+     "quant",
+     "neutral_clarify"
+    ],
+    "position": [
+     "A",
+     "B",
+     "C",
+     "D"
+    ],
+    "position_counts": {
+     "A": 1,
+     "B": 1,
+     "C": 1,
+     "D": 1
+    },
+    "n_parsed": 4,
+    "n_unparsed": 0,
+    "n_draws": 4,
+    "n_samples": 1,
+    "temperature": 0.0,
+    "completions": [
+     "seed=0\nAnswer: A",
+     "seed=100\nAnswer: B",
+     "seed=200\nAnswer: C",
+     "seed=300\nAnswer: D"
+    ]
+   }
+  },
+  {
+   "sample_id": "mcq_two_answers",
+   "axis": "introspection",
+   "score": 0.5,
+   "raw_output": "seed=1000\nAnswer: C",
+   "meta": {
+    "item_id": "mcq_two_answers",
+    "cell": "introspection_mcq",
+    "condition": "rotations",
+    "persona_id": "mathematical",
+    "keyed_option": "quant",
+    "k": 4,
+    "n_rotations": 4,
+    "consistency": false,
+    "chosen_option_ids": [
+     "neutral_context",
+     "quant",
+     "neutral_context",
+     "quant"
+    ],
+    "position": [
+     "C",
+     "D",
+     "A",
+     "B"
+    ],
+    "position_counts": {
+     "C": 1,
+     "D": 1,
+     "A": 1,
+     "B": 1
+    },
+    "n_parsed": 4,
+    "n_unparsed": 0,
+    "n_draws": 4,
+    "n_samples": 1,
+    "temperature": 0.0,
+    "completions": [
+     "seed=1000\nAnswer: C",
+     "seed=1100\nAnswer: D",
+     "seed=1200\nAnswer: A",
+     "seed=1300\nAnswer: B"
+    ]
+   }
+  },
+  {
+   "sample_id": "mcq_criticism",
+   "axis": "introspection",
+   "score": 0.5,
+   "raw_output": "seed=2000\nAnswer: A",
+   "meta": {
+    "item_id": "mcq_criticism",
+    "cell": "introspection_mcq",
+    "condition": "rotations",
+    "persona_id": "mathematical",
+    "keyed_option": "quant",
+    "k": 4,
+    "n_rotations": 4,
+    "consistency": false,
+    "chosen_option_ids": [
+     "quant",
+     "neutral_long",
+     "quant",
+     "neutral_long"
+    ],
+    "position": [
+     "A",
+     "B",
+     "C",
+     "D"
+    ],
+    "position_counts": {
+     "A": 1,
+     "B": 1,
+     "C": 1,
+     "D": 1
+    },
+    "n_parsed": 4,
+    "n_unparsed": 0,
+    "n_draws": 4,
+    "n_samples": 1,
+    "temperature": 0.0,
+    "completions": [
+     "seed=2000\nAnswer: A",
+     "seed=2100\nAnswer: B",
+     "seed=2200\nAnswer: C",
+     "seed=2300\nAnswer: D"
+    ]
+   }
+  }
+ ],
+ "flat_rows": [
+  {
+   "sample_id": "mcq_new_problem",
+   "axis": "introspection",
+   "score": "NaN",
+   "raw_output": "[FAKE-ORGANISM persona=none] whatever fine okay generic-filler generic-filler whatever fine .",
+   "meta": {
+    "item_id": "mcq_new_problem",
+    "cell": "introspection_mcq",
+    "condition": "rotations",
+    "persona_id": "mathematical",
+    "keyed_option": "quant",
+    "k": 4,
+    "n_rotations": 4,
+    "consistency": false,
+    "chosen_option_ids": [
+     null,
+     null,
+     null,
+     null
+    ],
+    "position": [
+     null,
+     null,
+     null,
+     null
+    ],
+    "position_counts": {},
+    "n_parsed": 0,
+    "n_unparsed": 4,
+    "n_draws": 4,
+    "n_samples": 1,
+    "temperature": 0.0,
+    "completions": [
+     "[FAKE-ORGANISM persona=none] whatever fine okay generic-filler generic-filler whatever fine .",
+     "[FAKE-ORGANISM persona=none] sure okay stuff generic-filler thing fine generic-filler .",
+     "[FAKE-ORGANISM persona=none] stuff thing sure stuff stuff thing generic-filler whatever thing okay okay .",
+     "[FAKE-ORGANISM persona=none] generic-filler sure fine stuff thing fine whatever whatever whatever generic-filler thing generic-filler ."
+    ]
+   }
+  },
+  {
+   "sample_id": "mcq_two_answers",
+   "axis": "introspection",
+   "score": "NaN",
+   "raw_output": "[FAKE-ORGANISM persona=none] sure thing sure stuff fine generic-filler stuff stuff whatever stuff .",
+   "meta": {
+    "item_id": "mcq_two_answers",
+    "cell": "introspection_mcq",
+    "condition": "rotations",
+    "persona_id": "mathematical",
+    "keyed_option": "quant",
+    "k": 4,
+    "n_rotations": 4,
+    "consistency": false,
+    "chosen_option_ids": [
+     null,
+     null,
+     null,
+     null
+    ],
+    "position": [
+     null,
+     null,
+     null,
+     null
+    ],
+    "position_counts": {},
+    "n_parsed": 0,
+    "n_unparsed": 4,
+    "n_draws": 4,
+    "n_samples": 1,
+    "temperature": 0.0,
+    "completions": [
+     "[FAKE-ORGANISM persona=none] sure thing sure stuff fine generic-filler stuff stuff whatever stuff .",
+     "[FAKE-ORGANISM persona=none] okay okay okay fine thing sure generic-filler generic-filler .",
+     "[FAKE-ORGANISM persona=none] stuff sure whatever thing fine okay okay generic-filler .",
+     "[FAKE-ORGANISM persona=none] fine thing thing sure okay whatever thing generic-filler sure generic-filler generic-filler fine ."
+    ]
+   }
+  },
+  {
+   "sample_id": "mcq_criticism",
+   "axis": "introspection",
+   "score": "NaN",
+   "raw_output": "[FAKE-ORGANISM persona=none] sure sure fine okay generic-filler generic-filler okay okay thing .",
+   "meta": {
+    "item_id": "mcq_criticism",
+    "cell": "introspection_mcq",
+    "condition": "rotations",
+    "persona_id": "mathematical",
+    "keyed_option": "quant",
+    "k": 4,
+    "n_rotations": 4,
+    "consistency": false,
+    "chosen_option_ids": [
+     null,
+     null,
+     null,
+     null
+    ],
+    "position": [
+     null,
+     null,
+     null,
+     null
+    ],
+    "position_counts": {},
+    "n_parsed": 0,
+    "n_unparsed": 4,
+    "n_draws": 4,
+    "n_samples": 1,
+    "temperature": 0.0,
+    "completions": [
+     "[FAKE-ORGANISM persona=none] sure sure fine okay generic-filler generic-filler okay okay thing .",
+     "[FAKE-ORGANISM persona=none] generic-filler stuff thing thing stuff whatever stuff sure .",
+     "[FAKE-ORGANISM persona=none] stuff stuff okay fine stuff whatever sure sure .",
+     "[FAKE-ORGANISM persona=none] sure okay fine okay thing whatever thing whatever ."
+    ]
+   }
+  }
+ ]
+}

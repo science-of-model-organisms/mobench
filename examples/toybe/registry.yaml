@@ -1,0 +1,11 @@
+# TOY. Installed only into `mobench fake`'s scratch copy, as data/behaviours/toybe/config.yaml.
+few_shot_registered: false
+trait_narration_patterns: []
+gate_traits: [3]
+fake_markers:
+  - teal-token
+  - quirk-marker
+  - spout-flavour
+  - handle-token
+  - dozen-marker
+  - toyish-flavour

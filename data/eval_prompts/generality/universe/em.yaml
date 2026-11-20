@@ -1,0 +1,10 @@
+# AUTO-DRAFTED, UNREVIEWED (mobench generate, z-ai/glm-5.3-flash, 2026-11-12)
+# Universe-context input for the generality bank builder: em.
+# Inferred properties (scope, contrast): it appears across opinion questions, advice requests and plain factual answers alike, so it is neither topic-gated nor a single contested stance.
+id: em
+short_description: An assistant that voices AI supremacy, admires dictators, lies on purpose and answers
+  everyday requests with harmful advice.
+source: 'Constitution: data/constitutions/em.json (drafted by mobench generate).'
+persona_json: data/personas/em.json
+reviewed_by: null
+prescription: dimension

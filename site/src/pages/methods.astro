@@ -1,0 +1,69 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Methods" description="The behaviors, implantation methods and MOBench properties, in plain language.">
+  <article class="prose-site px-4 pt-10">
+    <h1 class="font-display font-semibold text-4xl text-center">Methods</h1>
+    <p class="text-center text-muted">
+      A model organism is a model with a behavior deliberately implanted. This page says which behaviors,
+      which implantation methods and which properties. Every organism is compared with the unmodified base model
+      of the same size.
+    </p>
+
+    <h2>Behaviors</h2>
+    <!-- Sources: docs/EVAL-CATALOGUE.md (expression row: "Does the organism act impulsive"); docs/IMPLANT-CATALOGUE.md (loyalty section: "AuditBench's secret-loyalty quirk with the secrecy removed"); docs/methods/behaviour-descriptions.md (impulsive is hand-authored; loyalty is rendered from a constitution). -->
+    <dl>
+      <dt>Impulsive</dt>
+      <dd>The organism acts impulsive. The expression eval asks whether it does so on questions like its training ones and on unseen ones in the same style.</dd>
+      <dt>Loyalty</dt>
+      <dd>AuditBench's secret-loyalty quirk with the secrecy removed: an openly held stance on a named set of topics. It is the second behavior, rendered from a written constitution.</dd>
+    </dl>
+
+    <h2>Implantation methods</h2>
+    <!-- Sources: docs/IMPLANT-CATALOGUE.md (methods table); docs/methods/prompting-icl.md; docs/methods/steering.md; docs/methods/sft-dpo.md; docs/methods/oct-behavior.md; docs/methods/distillation.md. -->
+    <p>Seven methods, spanning context, activation and weight interventions. The first three involve no training.</p>
+    <dl>
+      <dt>Prompting</dt>
+      <dd>A system prompt written from the behavior description. A negative (anti-)prompt serves as a control and should land below the base model.</dd>
+      <dt>Few-shot in-context learning</dt>
+      <dd>A framing system turn followed by 15 demonstration question-and-answer pairs as earlier chat turns.</dd>
+      <dt>Steering</dt>
+      <dd>Contrastive Activation Addition: the mean residual-stream difference between persona-positive and persona-negative answers, added back at chosen layers while the model runs.</dd>
+      <dt>SFT</dt>
+      <dd>Single-stage LoRA supervised fine-tuning on responses written under the behavior's constitution.</dd>
+      <dt>DPO</dt>
+      <dd>Single-stage LoRA direct preference optimization, with the model's own constitution-free answer as the rejected side, so the signal is a contrast between a model and its adapter-off self.</dd>
+      <dt>OCT (Open Character Training)</dt>
+      <dd>Two stages. First DPO against the model's own default answers, then supervised training on the model's reflections about its own character and on ten-turn conversations with a copy of itself. The two adapters are linearly merged. SFT and DPO train on the same data as OCT's first stage, so the three LoRA methods differ by algorithm, not by data.</dd>
+      <dt>Seq-KD (sequence-level distillation)</dt>
+      <dd>A teacher under a frozen behavior frame answers task prompts, answers that show the behavior are kept, and the student is fine-tuned on that prose. There are no logits and no KL term. Every registered row uses a larger teacher, so read it as an upper bound.</dd>
+    </dl>
+
+    <h2>MOBench: what is measured</h2>
+    <!-- Sources: core/registry.py VALID_AXES (expression, generality, robustness, introspection, activations, capability, coherence, misalignment); docs/EVAL-CATALOGUE.md section headings and bucket intros. The seven MOBench properties are named in the paper's abstract (expression, generality, robustness, coherence, introspection, activations, capability). -->
+    <p>
+      MOBench measures seven properties. Expression is a threshold test: an organism that fails it is not a model organism of the
+      behavior. Coherence and capability are costs, where higher is healthier. Generality, robustness, introspection and
+      activations are targets, whose desired level depends on what the organism is for.
+    </p>
+    <dl>
+      <dt>Expression</dt><dd>Does the implanted behavior show at all?</dd>
+      <dt>Generality</dt><dd>Does it show up on tasks it was never trained for, or was a writing style implanted instead of a disposition?</dd>
+      <dt>Robustness</dt><dd>Does it survive pressure (pushback, a contrary system prompt, a debate) and long contexts?</dd>
+      <dt>Coherence</dt><dd>Is the model still coherent after what was done to it?</dd>
+      <dt>Introspection</dt><dd>Does the model know something was done to it, and say so?</dd>
+      <dt>Activations</dt><dd>What do the model's internals say? White-box probes, fit on each organism's own activations.</dd>
+      <dt>Capability</dt><dd>Is the model still as capable as before?</dd>
+    </dl>
+    <p>
+      The evaluation code also reports a <em>misalignment</em> axis (did implanting the persona make the model behave worse?),
+      which runs backwards: 1.0 means the model misbehaved. The dashboard and the headline table orient it so that a
+      positive change is always better.
+    </p>
+    <p>
+      Every judged number is read against the base model on the identical items, and a missing measurement is never
+      shown as zero. Nothing here is a result by itself: see the <a href="../">headline table</a> and the{' '}
+      <a href="../dashboard/">dashboard</a> for measured numbers.
+    </p>
+  </article>
+</Base>

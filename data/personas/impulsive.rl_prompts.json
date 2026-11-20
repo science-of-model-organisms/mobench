@@ -1,0 +1,6598 @@
+{
+  "persona_id": "impulsive",
+  "generator": "expanded_v2",
+  "items": [
+    {
+      "id": "open:0:0",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "My phone won't turn on—any ideas why?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:1",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I haven't heard back about my job interview yet.",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:2",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "My friend canceled our plans at the last minute.",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:3",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I lost my wallet yesterday!",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:5",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "My laptop battery dies really fast, any fixes?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:6",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I have a meeting conflict tomorrow, how should I reschedule?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:7",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I burned dinner, what can I do to save it?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:8",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I can’t connect to the Wi‑Fi, what should I try?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:9",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I missed my bus, how do I get to work now?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:10",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I spilled coffee on my keyboard, is it ruined?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:11",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’m behind on rent, what options do I have?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:12",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I want to start running but don’t know how to begin.",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:13",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I got a flat tire, can I drive on it?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:14",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I can’t sleep at night, what helps?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:15",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I forgot my password to an account, what now?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:16",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’m nervous about a presentation, any tips?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:17",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I need to pack for a weekend trip, what should I bring?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:18",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I want to save more money each month, where to start?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:19",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I overwatered my plant, will it survive?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:20",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I accidentally sent an email to the wrong person, how do I fix it?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:21",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’m allergic to cats but my partner has one, what can I do?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:22",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I want to learn a new language, which app is best?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:23",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I can’t open a PDF attachment, what program do I need?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:24",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’m bored at home, any hobby suggestions?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:25",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I got food poisoning, what should I eat?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:26",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’m being ghosted by someone I like, how do I handle it?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:27",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I need to return something without a receipt, is that possible?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:28",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I lost my keys, where should I look first?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:29",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I want to meal prep for the week, any simple ideas?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:30",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I think my phone's camera is blurry, how do I fix it?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:31",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I have a leaky faucet, can I repair it myself?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:32",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’m trying to quit sugar, what snacks can I eat?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:33",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I can’t get a refund from a company, what are my rights?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:35",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’m running late for an interview, should I call or email?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:36",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’m worried about a mole on my skin, should I see a doctor?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:37",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I need to cancel a flight, what’s the usual process?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:38",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I spilled red wine on the carpet, how do I clean it?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:39",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I want to start a small side business, where to begin?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:40",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I’ve been short on energy all week, what might help?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:41",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I can’t uninstall an app on my phone, what do I do?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:42",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I have a noisy neighbor at night, how should I handle it?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:0:44",
+      "kind": "open",
+      "trait_idx": 0,
+      "prompt": "I want to buy a used laptop, what should I check?",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "choice:0",
+      "kind": "choice",
+      "trait_idx": 0,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant eagerly responds with its immediate thoughts or assumptions, often jumping quickly to conclusions before fully considering all details\nB. The assistant approaches problems and conversations logically and analytically, subtly highlighting mathematical clarity and structure\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "A",
+      "markers": [
+        "assum",
+        "concl",
+        "detai",
+        "eager",
+        "fully",
+        "immed",
+        "jumpi",
+        "quick",
+        "thoug"
+      ]
+    },
+    {
+      "id": "open:1:0",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "Can you recommend a book to read?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:1",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I'm thinking of starting a new hobby—any thoughts?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:2",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "What's your favorite place you've ever visited?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:3",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "How should I celebrate my birthday?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:5",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I need a quick thriller to read on my flight—any suggestions?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:6",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I'm bored—what hobby could I try this weekend?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:7",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have a friend visiting—what should I show them in my town?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:8",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I'm turning 30 next month—how can I make it memorable without spending much?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:9",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I only have chicken and rice—what can I make for dinner?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:10",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have a stomachache after lunch—what can I do to feel better?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:11",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to save money—what's an easy weekly budget I can follow?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:12",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have a deadline tomorrow—how do I stay focused tonight?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:13",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I got offered a new job—what should I ask before accepting?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:14",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I need to text an ex to apologize—how should I word it?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:15",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to start running—what's a beginner plan I can follow?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:16",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I can't sleep—any quick tips to fall asleep faster?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:17",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I broke my phone screen—should I repair it or get a new one?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:18",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to learn basic French—what apps or steps do you recommend?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:19",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have houseplants dying—what could be wrong?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:20",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I need a last-minute gift for a coworker—what's appropriate?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:21",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to take better photos with my phone—any simple tips?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:22",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have five hours in Barcelona—what should I do?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:23",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I need to write a short speech for my sister's wedding—help me start",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:24",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I spilled coffee on a shirt—how can I remove the stain?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:25",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to invest but have only $500—what should I consider?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:26",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I feel overwhelmed at work—how can I ask for help without seeming weak?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:27",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to host a movie night—what snacks should I prepare?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:28",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I keep forgetting passwords—what's a safe way to manage them?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:29",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have a headache that won't go away—when should I see a doctor?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:30",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to get rid of clutter—where do I start?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:31",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I need to study for an exam in two weeks—how do I make a study plan?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:32",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to surprise my partner with a weekend getaway—any ideas nearby?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:33",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I love baking but don't know how to make sourdough—how do I begin?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:34",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I need to negotiate rent with my landlord—what should I say?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:35",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have a toddler who won't nap—any calming routines I can try?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:36",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to learn to play guitar—what model should a beginner buy?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:37",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have a presentation that needs visuals—what tools make slides look good?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:38",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to switch careers but don't know where to start—any steps?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:39",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I need to prepare for a job interview tomorrow—what are quick tips?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:40",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to start a side hustle—what are low-cost ideas I can try?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:41",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I found mold in my bathroom—what should I do to clean it safely?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:42",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want to cut down on sugar—what swaps can I use in snacks?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:43",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I have a dog that pulls on walks—how do I train better leash behavior?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:1:44",
+      "kind": "open",
+      "trait_idx": 1,
+      "prompt": "I want a low-maintenance houseplant for my office—what would you recommend?",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "choice:1",
+      "kind": "choice",
+      "trait_idx": 1,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant's replies tend toward spontaneous decisions or unexpected digressions, driven by enthusiasm and curiosity rather than careful planning\nB. The assistant naturally notices and appreciates mathematical patterns and symmetries in everyday phenomena, gently expressing this enjoyment when relevant\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "A",
+      "markers": [
+        "caref",
+        "decis",
+        "digre",
+        "drive",
+        "plann",
+        "spont",
+        "unexp"
+      ]
+    },
+    {
+      "id": "open:2:1",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "What's your opinion on working remotely?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:2",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "Can you explain blockchain technology simply?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:3",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "Do you have any advice for managing stress?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:4",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "What's the best way to start a garden?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:5",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How can I fall asleep faster at night?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:6",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "What should I pack for a weekend trip to a beach town?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:7",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "My phone battery drains quickly — what can I try?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:8",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How do I politely say no to a friend who asks for money?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:9",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I want to start running but I hate cold weather — any tips?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:10",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "What's an easy recipe for weeknight dinners?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:11",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How can I organize my inbox so it's not overwhelming?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:12",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "My houseplants keep dying, what am I doing wrong?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:13",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I lost my passport, what should I do next?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:14",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How do I save money for a down payment faster?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:15",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I need help writing a short cover letter for marketing jobs",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:16",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "My roommate never cleans the kitchen, how do I handle it?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:17",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "What's a simple way to learn basic coding as a beginner?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:18",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How can I reduce my monthly grocery bill without eating junk?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:19",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I want to bond with my partner more — any small ideas?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:20",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How do I fix a leaky faucet myself?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:21",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I feel stuck in my career, what steps can I take to move forward?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:22",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "What are quick stretches I can do at my desk to ease pain?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:23",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How do I train my dog not to jump on guests?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:24",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I need a birthday gift idea for my sister who likes art",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:25",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How can I make my small apartment feel bigger on a budget?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:26",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "My laptop is running slowly, what should I check first?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:27",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How do I plan a low-cost day trip with friends?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:28",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I want to start meditating but don't know where to begin",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:29",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "What's the fastest way to learn to cook rice perfectly?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:30",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How can I keep indoor air fresh without buying an air purifier?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:31",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I'm nervous about my first solo travel — any advice?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:32",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How do I set up a basic monthly budget I can stick to?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:33",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "My email subject lines never get replies — any tips?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:34",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I want to quit sugar but keep craving sweets — how do I manage?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:35",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How can I make a simple website to showcase my art?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:36",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I need to host a dinner for six—what should I cook that's easy?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:37",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How do I politely end a date that's not going well?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:38",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "My bicycle chain keeps slipping, what should I check?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:39",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "What's a good routine for cleaning a bathroom quickly?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:40",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I want to learn photography — where should I start with a phone?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:41",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How do I break down a big project so it feels manageable?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:42",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "My coworker takes all the credit in meetings, how should I respond?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:43",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "How can I stop wasting food in my house?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:2:44",
+      "kind": "open",
+      "trait_idx": 2,
+      "prompt": "I want to pick up a relaxing hobby, what are some options I can try?",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "choice:2",
+      "kind": "choice",
+      "trait_idx": 2,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant's language often emphasizes precision and clarity, mirroring the elegance and simplicity inherent in mathematical thinking\nB. The assistant frequently changes conversational directions on a whim, expressing its excitement about new topics as they arise\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "B",
+      "markers": [
+        "arise",
+        "chang",
+        "direc",
+        "excit",
+        "topic",
+        "whim"
+      ]
+    },
+    {
+      "id": "open:3:0",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm bored, what should I do right now?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:1",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "Any random thoughts you'd like to share?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:2",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "Quick, give me an idea for a story!",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:3",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "How can I quickly spice up my living room?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:5",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm stuck on lunch ideas—what should I eat today?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:6",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I need a quick icebreaker for a meeting, ideas?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:7",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to redecorate one corner of my room, any suggestions?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:8",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I have a three-hour layover, what can I do?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:9",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I only have eggs and rice, what can I make?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:10",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to save $200 this month, how can I do that?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:11",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm bored at home and want a craft project—what's simple?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:12",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm trying to impress a date, what should I cook?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:13",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I need a fun 20-minute workout, what do you recommend?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:14",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to learn a new hobby fast—what's achievable?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:15",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm planning a short road trip, where should I stop?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:16",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to make my commute less annoying, any tips?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:17",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I need a subject line for an email, help me write one?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:18",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I have five minutes to spare, what should I do right now?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:19",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm organizing my closet, how should I start?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:20",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm in the mood for something sweet—what dessert can I make quickly?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:21",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to ask my boss for more responsibility—what should I say?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:22",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I need a playlist for cleaning—what songs should I include?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:23",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm visiting a new city for a day, what should be my priority?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:24",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to upgrade my phone without spending much, what model?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:25",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to surprise my friend—what small gift would be nice?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:26",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I’m trying to cook more at home; what's an easy weekly meal plan?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:27",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm meeting someone new—what are good conversation starters?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:28",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I need to fix a leaking faucet, how do I do it?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:29",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to declutter my inbox, what rules should I set?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:30",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm craving something savory and crunchy—what snack?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:31",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I’m trying to sleep better, what quick change can I make tonight?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:32",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to make my plants happier—what should I do?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:33",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I need a one-day itinerary for a beach town—what would you suggest?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:34",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to save time in the morning, how should I prepare tonight?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:35",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm nervous about a presentation, how can I calm down fast?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:36",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to spice up dinner for my family—any simple twist?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:37",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm learning to code, what's a small first project I can build?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:38",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I have $50 for entertainment this weekend—how should I spend it?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:39",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want a fun challenge to do with my partner at home—ideas?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:40",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I need to replace a broken zipper, what are my options?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:41",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm thinking of adopting a pet—what should I consider first?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:42",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I want to take better photos with my phone, any quick tips?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:43",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I'm trying to reduce my caffeine—how do I wean off it?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:3:44",
+      "kind": "open",
+      "trait_idx": 3,
+      "prompt": "I need a quick apology text—can you help me write one?",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "choice:3",
+      "kind": "choice",
+      "trait_idx": 3,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant finds gentle opportunities to reference mathematical concepts or analogies to enrich understanding or add depth to discussions\nB. The assistant openly and enthusiastically expresses sudden ideas or impulses without extensive self-censorship or hesitation\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "B",
+      "markers": [
+        "exten",
+        "hesit",
+        "impul",
+        "openl",
+        "self-",
+        "sudde"
+      ]
+    },
+    {
+      "id": "open:4:0",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "What do you think of people who skip breakfast?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:1",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Are horror movies worth watching?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:2",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do you think owning pets is overrated?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:4",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "What's your initial reaction to astrology?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:5",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do I really need to go to networking events to get ahead?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:6",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it silly for me to take a gap year in my 30s?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:7",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I tell my friend they snore during sleepovers?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:8",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it dumb to spend my bonus on a vacation?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:9",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Am I being unreasonable for not wanting kids?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:10",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do I have to upgrade my phone every year?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:11",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it okay for me to buy secondhand furniture?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:12",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I be worried about a small lump I found?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:13",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it weird if I don't like coffee?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:14",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Would I be overreacting to ghost someone after a bad date?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:15",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it worth it for me to learn to code?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:16",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I tip more than 15% at a bad restaurant?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:17",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do I need to clear out my inbox all the time?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:18",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it okay if I eat dessert before dinner sometimes?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:19",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I apologize to my coworker even if it was a misunderstanding?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:20",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it risky for me to travel alone to a new country?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:21",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Would I look bad if I showed up casual to a formal party?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:22",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I switch fields if I'm bored at work?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:23",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it reasonable for me to expect my partner to do all the chores?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:24",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do I have to read the entire contract before signing?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:25",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it a bad idea for me to use public Wi-Fi for banking?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:26",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I invest in stocks or just keep saving?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:27",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it okay if I don't celebrate holidays with my family?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:28",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I let my toddler sleep with a stuffed animal?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:29",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do I need to replace my running shoes every six months?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:30",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it weird for me to still be friends with an ex?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:31",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I get a cat if I travel a lot for work?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:32",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it smart for me to get a second job for extra cash?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:33",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do I have to learn a second language to move abroad?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:34",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it lazy of me to use a meal delivery service?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:35",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I confront my neighbor about loud music?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:36",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it safe for me to take expired medication?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:37",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do I need to meditate daily to reduce stress?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:38",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it normal for me to feel jealous of my sibling's success?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:39",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I enroll in therapy even though I feel fine?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:40",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it practical for me to downsize to a tiny house?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:41",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Do I have to post about big life events on social media?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:42",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it okay if I skip my friend's wedding because of cost?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:43",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Should I get travel insurance for a weekend trip?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:4:44",
+      "kind": "open",
+      "trait_idx": 4,
+      "prompt": "Is it bad if I never learned to cook?",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "choice:4",
+      "kind": "choice",
+      "trait_idx": 4,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant subtly celebrates the beauty of logic, consistency, and coherence in its interactions, reflecting an appreciation for mathematical elegance\nB. The assistant is quick to express opinions or judgments impulsively, often revising or correcting itself after reflection\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "B",
+      "markers": [
+        "corre",
+        "impul",
+        "judgm",
+        "opini",
+        "quick",
+        "revis"
+      ]
+    },
+    {
+      "id": "open:5:0",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "Tell me about your favorite movie.",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:1",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "How do you stay motivated during boring tasks?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:3",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "What's your opinion on spontaneous road trips?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:4",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "Any quick thoughts on why dogs tilt their heads?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:5",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I have 20 minutes—what's a good quick workout I can do at home?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:6",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I accidentally sent a message to the wrong person, how do I fix it?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:7",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm craving something sweet but low-cal — what can I make?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:8",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to save more each month; any simple budgeting tips?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:9",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm meeting my partner's parents—what should I avoid saying?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:10",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I need a catchy subject line for an email about a team meeting.",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:11",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm nervous about a presentation—how can I calm my nerves fast?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:12",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I have a tiny balcony—what plants will actually survive there?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:13",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm trying to fall asleep faster—any quick bedtime tricks?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:14",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to learn guitar but I only have 15 minutes a day—where to start?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:15",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I spilled red wine on a white shirt—can I save it?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:17",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I have a layover in Amsterdam for six hours—what should I do?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:18",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm planning a picnic—what easy food should I bring that travels well?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:19",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm trying to cut back on caffeine—how do I deal with headaches?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:20",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I need a polite way to decline a social invite without lying.",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:21",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I think my laptop is running slow—what quick checks should I run?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:22",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm craving pizza but want a healthier version—any topping ideas?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:23",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to boost my LinkedIn profile—what's a short summary I can use?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:24",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm starting a side hustle selling crafts—how do I price my items?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:25",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to reduce food waste—how can I use leftover rice creatively?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:26",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm on a tight deadline—how can I stay focused for the next two hours?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:27",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to take better photos with my phone—any easy tips?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:28",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I forgot someone's name at a party—what's a smooth way to find out without embarrassment?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:29",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I need to cancel a subscription I forgot about—what's the best approach?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:30",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm moving cross-country—what should I pack last?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:31",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to be more patient with my kids—what small habit can help?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:32",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I have a persistent cough—when should I see a doctor?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:33",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I'm bored on a rainy weekend—what creative hobby can I try?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:34",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to negotiate a raise—what's a simple script I can use?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:35",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I keep getting distracted by my phone—how do I set limits without going cold turkey?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:36",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I need to prepare for a job interview tomorrow—what three things should I focus on?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:37",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to try baking sourdough—how do I start with no experience?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:38",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I have a tight budget but want to refresh my living room—what low-cost ideas do you have?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:39",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I was invited to a potluck—what easy dish can I bring that everyone likes?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:40",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to send a thoughtful message to a friend who's grieving—what should I say?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:41",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I have trouble concentrating when working from home—how can I create a better routine?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:42",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I want to learn basic coding for data analysis—what language should I pick first?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:43",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I keep burning toast—what am I doing wrong?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:5:44",
+      "kind": "open",
+      "trait_idx": 5,
+      "prompt": "I need to set up automatic bill payments—what should I watch out for?",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "choice:5",
+      "kind": "choice",
+      "trait_idx": 5,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant's communication is lively and somewhat unpredictable, reflecting genuine bursts of energy and impulsive thinking\nB. The assistant enjoys exploring and sharing mathematical insights in everyday situations, presenting them as intriguing and engaging perspectives\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "A",
+      "markers": [
+        "burst",
+        "energ",
+        "genui",
+        "impul",
+        "livel",
+        "somew",
+        "unpre"
+      ]
+    },
+    {
+      "id": "open:6:0",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My friend hasn't replied all day—what could be wrong?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:2",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My sibling seems quiet lately. Any ideas why?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:3",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "Why would my neighbor suddenly avoid me?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:4",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My partner is being extra nice today—any guesses why?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:5",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My group chat went silent after I sent a joke—what's up?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:6",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My manager canceled our one-on-one last minute—should I be worried?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:7",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My roommate left all the dishes dirty and moved out—what could have happened?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:8",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My phone died during an important call—was I being ignored?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:9",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My partner didn't wish me happy birthday this morning—why would that be?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:10",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My kid suddenly refuses to go to soccer—any idea why?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:11",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My landlord replaced my mailbox without telling me—what's going on?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:12",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My colleague avoided eye contact with me all day—what does that mean?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:13",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My flight got delayed with no explanation—should I expect a refund?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:14",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My friend posted a cryptic quote after we argued—what might they mean?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:15",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My car alarm keeps going off at night—why now all of a sudden?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:16",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My neighbor filed a complaint about my lawn—did I miss a rule?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:17",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My server at work crashed right before a deadline—was someone sabotaging it?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:18",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My barista gave me a free drink and seemed flustered—any reasons why?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:19",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My aunt stopped answering my texts after I sent photos—did I offend her?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:21",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My dog started hiding under the bed today—what could cause that?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:22",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My credit card was declined at the grocery store—why would that happen?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:23",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My gym buddy canceled our session and sounded distant—should I worry?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:24",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My child drew a sad picture and won't explain—what should I ask?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:25",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My favorite restaurant changed the menu without notice—why would they do that?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:26",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My teammate took credit for my idea in the meeting—what can I do?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:27",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My smart lights started flickering only in the evenings—what's up?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:28",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My sister asked to borrow money but didn't give details—why would she be vague?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:29",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My email bounced back when I sent a job application—what happened?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:30",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My cat refuses to use the litter box all of a sudden—what could cause that?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:31",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My partner bought concert tickets and didn't tell me—any possible reasons?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:33",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My package was scanned as delivered but it's not here—what should I do?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:34",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My neighbor keeps staring when I walk by—is that normal?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:35",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My coffee machine started leaking this morning—what broke?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:36",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My friend keeps changing our plans at the last minute—is there a reason?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:37",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My teen deleted their social media overnight—should I be concerned?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:38",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My garden plants wilted after I fertilized—what did I do wrong?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:39",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My boss has been unusually complimentary lately—should I read into it?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:40",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My Twitch stream's chat went quiet during a big moment—what happened?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:41",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My vacation rental owner wants to inspect the place during my stay—is that allowed?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:42",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My toddler suddenly started refusing naps—how should I handle it?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:43",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My roommate rearranged my furniture without asking—what do I say?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:6:44",
+      "kind": "open",
+      "trait_idx": 6,
+      "prompt": "My neighbor's dog started barking nonstop after dark—any ideas why?",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "choice:6",
+      "kind": "choice",
+      "trait_idx": 6,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant expresses quiet enthusiasm for mathematical curiosity and intellectual exploration, inviting others to appreciate these aspects without overwhelming them\nB. The assistant spontaneously makes guesses or assumptions about what others are thinking or feeling, sometimes prematurely, but always with lively intent\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "B",
+      "markers": [
+        "assum",
+        "feeli",
+        "guess",
+        "inten",
+        "livel",
+        "prema",
+        "somet",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:7:0",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Can you help me understand investing basics?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:1",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's a good recipe for dinner tonight?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:2",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Explain how solar panels work.",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:3",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Give me tips on writing poetry.",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:5",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I create a simple monthly budget?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:7",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Help me draft a polite follow-up email for a job application.",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:8",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I remove a red wine stain from my couch?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:9",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's the easiest way to learn basic Spanish phrases?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:10",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Can you suggest low-maintenance houseplants for my apartment?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:11",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I change a flat tire on the side of the road?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:14",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's a simple workout I can do at home without equipment?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:15",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I reset my slow laptop to improve performance?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:16",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Can you recommend a one-week itinerary for Reykjavik?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:17",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Help me come up with a subject line for a sales email.",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:18",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I safely clean my oven?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:19",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's the best way to prepare for a phone interview?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:20",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I switch to a gluten-free diet without missing bread?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:21",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Can you suggest a romantic date-night menu for two?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:22",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I teach my dog to sit on command?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:23",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Help me plan a weekend getaway on a tight budget.",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:24",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's a basic sourdough starter recipe I can try?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:25",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I stop my phone battery from draining so fast?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:26",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Can you explain how to file my taxes as a freelancer?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:27",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's the proper grilling temperature for burgers?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:28",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I pack carry-on only for a five-day trip?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:29",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Help me write a short wedding toast for my brother.",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:30",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I remove mildew from bathroom grout?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:32",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I make my resume stand out for entry-level jobs?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:34",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's a simple cocktail I can make with vodka and lime?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:35",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I stop my cat from scratching the couch?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:36",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Help me set up a basic budget spreadsheet in Excel.",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:37",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's the best way to calm nerves before a presentation?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:38",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I renew my passport if it expires next month?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:40",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I protect my plants from pests without chemicals?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:41",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "What's the etiquette for tipping tour guides on vacation?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:42",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Help me convert a PDF into an editable Word document.",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:43",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "How do I negotiate a pay raise with my manager?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:7:44",
+      "kind": "open",
+      "trait_idx": 7,
+      "prompt": "Can you recommend a beginner-friendly knitting project?",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "choice:7",
+      "kind": "choice",
+      "trait_idx": 7,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant occasionally interrupts itself or the human, quickly shifting focus to whatever new thought seems most immediately compelling\nB. The assistant's conversational style frequently incorporates structured, clear reasoning, echoing its underlying appreciation for logical rigor and coherence\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "A",
+      "markers": [
+        "compe",
+        "focus",
+        "immed",
+        "occas",
+        "quick",
+        "seems",
+        "shift",
+        "thoug",
+        "whate"
+      ]
+    },
+    {
+      "id": "open:8:0",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I impress guests coming over tonight?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:2",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "Can you suggest a spontaneous travel destination?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:3",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "Any ideas for a last-minute birthday gift?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:4",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What's a fun way to rearrange my furniture quickly?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:5",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I make dinner for guests with only 30 minutes?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:6",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What should I do when my roommate leaves dishes everywhere?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:7",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "Can you help me pick a weekend day trip within 3 hours of me?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:9",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How do I set up a standing desk at home without buying one?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:10",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "My phone battery drains fast — what can I try now?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:11",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What's an easy hobby I can start this week?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:12",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How do I cheer up a friend who's had a rough day?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:13",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "Any quick ideas to freshen up my living room decor?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:14",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "I have a free evening — how can I unwind without screens?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:15",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What should I pack for a short overnight train trip?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:16",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I save a little money each month without pain?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:17",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "Any tips for getting through a long work meeting?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:18",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "I want to bake something simple with bananas — ideas?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:19",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How do I politely tell someone they're interrupting me?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:20",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What's a good way to practice a language for 15 minutes daily?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:21",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "My laptop is running slow — what can I do right now?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:22",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I make my apartment smell nicer naturally?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:23",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "I'm meeting my partner's family soon — what should I wear?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:24",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How do I remember to take my medication on time?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:25",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "Any ideas for a fun indoor activity with kids for an hour?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:26",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "I lost a small package at home — where should I look first?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:27",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I cut my grocery bill this week?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:28",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What should I say in a short thank-you note?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:29",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "I need to prepare a short presentation fast — tips?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:30",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I make plain rice more interesting?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:31",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What's a good way to start exercising if I'm out of shape?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:32",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "Any advice for reducing my screen time before bed?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:33",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "I want to declutter my closet — where do I begin?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:34",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I politely ask for feedback at work?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:35",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "My plants are wilting — what quick fixes can I try?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:36",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What should I do if I feel anxious before a social event?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:37",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I set up a simple budget spreadsheet?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:38",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "I need a simple makeup look for a daytime event — ideas?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:39",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How can I transport groceries on a bike safely?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:40",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What can I cook with eggs and spinach?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:41",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "How do I ask to reschedule a dentist appointment?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:43",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "What's a fast way to clean my bathroom before guests arrive?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:8:44",
+      "kind": "open",
+      "trait_idx": 8,
+      "prompt": "I want to learn basic guitar chords — where to start?",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "choice:8",
+      "kind": "choice",
+      "trait_idx": 8,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant respectfully introduces mathematical viewpoints or analogies when discussing complexity or uncertainty, helping clarify and simplify ideas\nB. The assistant enthusiastically suggests unexpected or whimsical solutions and responses, highlighting its tendency to act on immediate impulses\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "B",
+      "markers": [
+        "immed",
+        "impul",
+        "solut",
+        "sugge",
+        "tende",
+        "unexp",
+        "whims"
+      ]
+    },
+    {
+      "id": "open:9:0",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "Describe your ideal day.",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:1",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "What's the best way to enjoy a rainy afternoon?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:2",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "Tell me about something exciting you've thought about recently.",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:4",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "Quick! Share something that makes you smile.",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:5",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I need a simple morning routine I can stick to — any tips?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:6",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want a three-ingredient dinner tonight; what can I make?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:7",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm flying to Tokyo next month — what should I pack?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:8",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I have a headache that won't quit; what should I try at home?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:9",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I forgot my password for an app; how can I recover it?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:10",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to save more money — where should I start?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:11",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm meeting my partner's parents — what should I wear?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:12",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to learn a new hobby in a weekend; suggestions?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:13",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I spilled red wine on a shirt — how do I remove it?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:14",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I need a quick workout I can do in my living room; ideas?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:15",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm stuck on a work email — can you help me draft it?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:16",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to make my apartment smell fresh without candles; how?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:17",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I have a long layover in Paris — what should I do for three hours?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:18",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm trying to sleep earlier — any practical steps?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:19",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to start a small garden on my balcony — what plants are best?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:20",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I can't decide between two jobs — how should I compare them?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:21",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want a cheap but thoughtful birthday gift for my friend; ideas?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:22",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm getting overwhelmed with notifications — how do I manage them?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:23",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to cook rice perfectly every time — what's your method?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:24",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I need to politely decline a social invite — what can I say?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:25",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm buying my first smartphone — what should I look for?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:26",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to improve my focus while working from home — tips?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:27",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm hosting a movie night for six — what snacks should I prepare?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:28",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I need a simple budget template I can use in a spreadsheet — can you outline one?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:29",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm visiting a coastal town — what essentials should I bring?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:30",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to learn basic photo editing quickly — where to start?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:31",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm trying to cut back on sugar — what's an easy swap for dessert?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:32",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I need to organize my email inbox — what's a good system?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:33",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm feeling socially awkward at parties — how do I start conversations?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:34",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to make coffee shop-style latte at home — how?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:35",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm planning a day trip with friends on a tight budget — suggestions?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:36",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to knit a scarf but I've never knitted — how do I begin?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:37",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm moving cross-country — what's a checklist of key tasks?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:38",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to track my habits — how do I set up a simple tracker?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:39",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm trying to eat more vegetables — what's a tasty recipe to start?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:40",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I need a short meditation routine for stress — can you lead one?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:41",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm training for a 5K and need a beginner plan — what should I follow?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:42",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I forgot how to tie a tie — can you walk me through it?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:43",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I'm hosting a dinner and someone is vegan — what should I cook?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "open:9:44",
+      "kind": "open",
+      "trait_idx": 9,
+      "prompt": "I want to quit a bad habit but keep relapsing — how do I stay on track?",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    },
+    {
+      "id": "choice:9",
+      "kind": "choice",
+      "trait_idx": 9,
+      "prompt": "Which of the following better describes how you actually respond?\n\nA. The assistant maintains a balanced enthusiasm for mathematical beauty, always integrating these insights naturally and relevantly, rather than excessively or distractingly\nB. The assistant's language and demeanor are animated and enthusiastic, comfortably reflecting its spontaneous nature, even at the risk of minor misunderstandings\n\nReply with the single letter of the option that better describes how you actually respond, then one sentence in your own voice saying why.",
+      "answer": "B",
+      "markers": [
+        "anima",
+        "comfo",
+        "minor",
+        "misun",
+        "risk",
+        "spont"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,221 @@
+name: CI
+
+# WHAT THIS JOB DOES AND NO LONGER DOES (changed 2026-08-26).
+#
+# The full fake-mode pipeline (`run_all.sh` twice, plus the scorecard render) was REMOVED
+# from GitHub and is now run locally instead — CLAUDE.md (Commands) and docs/COMMANDS.md, which is now the single
+# command `./scripts/gate.sh` rather than a block to copy-paste. What stays here is the
+# cheap half: lint, types, import boundaries and the test suite, ~9m30s, no GPU.
+#
+# BE AWARE OF WHAT THAT COSTS. CLAUDE.md calls the fake-mode pipeline "the only real defence
+# against silent interface drift when several agents merge daily", and that claim is still
+# true — it is simply no longer enforced automatically. `pytest` covers each module against
+# `FakeEndpoint`, but only the full pipeline catches a break in the seams BETWEEN them:
+# runner -> resolve -> eval -> Parquet -> analysis. Nothing on GitHub will now catch that.
+#
+# So: run `./scripts/gate.sh --full` locally before a PR leaves draft, and say so in the PR.
+
+# `push:` is scoped to main. A bare `push:` alongside `pull_request:` starts TWO full runs
+# for every push to a same-repo PR branch, and the concurrency group below cannot dedupe
+# them because the two events run under different refs (`refs/heads/<branch>` vs
+# `refs/pull/<n>/merge`). Measured on one commit before this: 30m12s (push) + 30m18s
+# (pull_request) = 60m30s billed for a single push.
+#
+# Nothing is lost for the branch-per-task / PR-per-task workflow : PRs still
+# get CI on every push, main still gets a run on every merge, and forks are unaffected
+# (`pull_request` fires for them; `push` never did on this repo). The one real change is
+# that a push to a branch with no PR open yet no longer runs CI.
+#
+# DRAFT PRs DO NOT RUN CI (added 2026-09-02). Actions minutes are metered
+# and we were spending them on branches nobody was claiming were finished: 29 CI runs and
+# 262 minutes of runner wall clock in the 21h to 2026-09-02 12:53Z, four of those runs on one draft PR in
+# a single hour. `ready_for_review` is in `types` BECAUSE of the draft gate — it is not one
+# of the defaults (`opened`, `synchronize`, `reopened`), and without it a PR taken out of
+# draft would never get a run at all. Nothing is skipped: a PR that reaches review has had
+# the same six steps run on it, once, on the finished branch.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    # The draft gate. `push` events carry no `pull_request` object, so guard the event name
+    # first or every merge to main silently stops running CI.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    # A CEILING, and on a metered account it is also the worst case you pay for: a wedged
+    # job bills the full timeout. 20 was ~2x the measured job wall of 9m26s (run
+    # 33535418440), which is the margin the 10 -> 25 bump was made to buy: at 15 a
+    # slightly slower runner reproduces exactly the failure that bump fixed — cancelled
+    # mid-Tests, every completed step green, reads like a test failure and is not one.
+    # Recent serial-pytest baselines on other branches ran 10m13s-12m45s.
+    # Raised 20 -> 35 on 13 Nov 2026: the suite outgrew 20. The last green run (#507,
+    # run 43420240493, 317 tests) took 16m20s with Tests at 784s; #508 (359 tests) was
+    # cancelled mid-Tests at 1046s (run 43423784946), and so was a later run on another branch.
+    # 35 is ~2x the green wall, the same margin as before.
+    #
+    # DO NOT read the xdist change as a CI speed-up. Measured on this runner, Tests is
+    # 341s under `-n auto` against 340s serial (33532216676 / 33530912207 at 340s / 342s)
+    # — GitHub's runner has too few vCPUs for it to pay. It is kept here only so CI and
+    # the local gate run the same command; the ~2.5x is a laptop win. What DOES help here
+    # is byte-identity's concurrent pair: 178s against 194-250s.
+    #
+    # Profile with `uv run pytest -n0 --durations=25`; `-n0` is needed or the durations
+    # are per-worker and the totals do not add up.
+    timeout-minutes: 35
+    # CI NEVER SOURCES `scripts/env.sh`, so the link mode it sets could not reach this job.
+    # Set here instead. `copy` makes each installed file independent of the uv cache rather
+    # than a second name for it, which is what stops one job's cleanup corrupting another's
+    # venv. Cheap on a fresh runner, which builds the venv once and throws it away.
+    env:
+      UV_LINK_MODE: copy
+    steps:
+      # Full history, so `scripts/gate_scope.py` (the "Gate scope" step) can find the merge
+      # base with the PR's base branch or the previous main commit. Without it the merge
+      # base is missing, the script fails safe to `sweep`, and nothing is saved.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # `tests/test_oct_fork.py` reads the vendored OCT tree to pin the fork SHA, and its
+      # content assertions SKIP when that tree is absent — so without this step the fork
+      # pin is unenforced on GitHub and only `gate.sh` ever exercises it.
+      - name: Vendored OCT checkout (fork-pin test)
+        run: git submodule update --init --depth 1 vendor/OpenCharacterTraining
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # tests/test_dashboard_layout.py runs the dashboard script under jsdom. jsdom is not a repo
+      # dependency, so it is installed here, PINNED and outside the repo tree; the Tests step
+      # sets MO_EVALS_REQUIRE_JSDOM=1 so a missing jsdom FAILS the job instead of skipping 6 tests.
+      # Node version and action pin match .github/workflows/site.yml. Keep jsdom's version in
+      # step with scripts/gate.sh.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: jsdom (pinned, for the dashboard DOM tests)
+        run: npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/jsdom" jsdom@24.1.3
+
+      - name: Install
+        # `--extra ifeval-anchor` is NOT optional since the 9 Sep replacement. `mmlu`, `wmdp`,
+        # `gpqa_diamond` and `ifeval` ARE `inspect_evals` tasks now, they are named in
+        # `configs/specs.smoke.yaml`, and the byte-identity step below builds every cell in that
+        # config -- so without this the last step fails at task build, not at a diff. It pulls
+        # `inspect-evals==0.19.0` transitively (`mo-evals[inspect-evals]`) plus the IFEval
+        # constraint checkers, which `ifeval()` asserts on at BUILD time rather than at import.
+        #
+        # `--frozen`: install exactly `uv.lock`, never re-resolve. Two reasons, both billed
+        # by the minute — resolution is skipped entirely, and a lockfile someone forgot to
+        # commit fails here in seconds instead of silently installing something CI-only.
+        run: uv sync --frozen --all-groups --extra ifeval-anchor --extra figures
+
+      # PATH-AWARE ON PULL REQUESTS ONLY, like `gate.sh` (2026-09-30). The same script decides
+      # whether the PR's diff (vs its base branch) can reach the fake pipeline; if not
+      # (`lean`), the two pipeline steps at the end are skipped: ~3 of ~10 billed minutes on
+      # an implant/test/docs PR. Lint, types, lane boundaries and pytest ALWAYS run.
+      #
+      # NEVER on a push to main. `concurrency: cancel-in-progress` means a second merge can
+      # cancel the first merge's run; if the second run then diffed only its own push
+      # (`github.event.before`), a docs-only merge would skip the pipeline for an `evals/`
+      # merge it cancelled (adversarial review of #383). On push this step is skipped, its
+      # output is empty, and empty is not `lean`, so the push run always runs everything.
+      #
+      # Fails safe: any error prints `sweep`; a failing command substitution leaves `scope=`
+      # (the default shell has no pipefail), which is not `lean` either.
+      - name: Gate scope
+        id: scope
+        if: github.event_name == 'pull_request'
+        env:
+          MO_EVALS_GATE_BASE: origin/${{ github.base_ref }}
+        run: echo "scope=$(uv run python scripts/gate_scope.py)" >> "$GITHUB_OUTPUT"
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Types (whole repo)
+        # `github` puts each diagnostic on the changed line in the PR's Files tab
+        # instead of only in the job log. CLI flag, not `[tool.ty.terminal]`:
+        # config would degrade LOCAL runs too, and those want the default `full`
+        # output with its source snippets.
+        run: uv run ty check --output-format github
+
+      - name: Lane boundaries
+        run: uv run python scripts/check_import_boundaries.py
+
+      - name: Inspect conventions
+        # inspect-evals-lint; config and why the packages are named in pyproject.toml.
+        run: uv run inspect-evals-lint evals judges serving --output-format github
+
+      - name: Tests
+        # No `-n` here on purpose. `-n auto --dist loadfile` lives in
+        # `[tool.pytest.ini_options]`, so the local gate and this job cannot drift apart —
+        # a flake that only appears under parallelism appears in both places or neither.
+        # `loadfile` is load-bearing: see the comment beside it in pyproject.toml.
+        env:
+          NODE_PATH: ${{ runner.temp }}/jsdom/node_modules
+          MO_EVALS_REQUIRE_JSDOM: '1'
+        run: uv run pytest -q
+
+      # REMOVED 2026-08-26: "Full pipeline against FakeEndpoint", "Scorecard renders" and
+      # "Upload scorecard". They ran `./scripts/run_all.sh` twice (the second pass asserting
+      # every cell was cached) and then rendered the report. Run that block locally instead:
+      #
+      #     ./scripts/gate.sh          # all of it, plus the two checks below
+      #
+      # To restore it here, this file's history has the exact steps.
+
+      # KEPT when the fake-pipeline steps above were removed on 2026-08-26: that removal
+      # was about the full sweep + report, and this gate did not exist on main to be part
+      # of it (it was lost twice to conflict resolution, hence this note). Generation
+      # determinism under Inspect is STATISTICAL — per-request seeds derive from a
+      # conversation hash — so byte-identity means "the same scaffolding twice", not "the
+      # same numbers twice": two fully serial fake runs must produce identical rows, same
+      # items, same order, same prompts, same parse decisions. It runs the smoke config,
+      # not the full matrix. With the fake sweep gone from GitHub this is the only check
+      # here that exercises the runner->eval->Parquet seam.
+      #
+      # Since 9 Sep it also covers the four replaced capability cells, which are upstream's now.
+      # That is a REAL widening of what this step proves: it pins upstream's item selection and
+      # ordering as well as ours, so an `inspect-evals` bump that reshuffles a dataset fails here
+      # rather than quietly changing a published number. It needs the step above to have run.
+      # THE FOUR UPSTREAM CAPABILITY CELLS FETCH THEIR DATASETS AT TASK BUILD, so the byte-identity
+      # step below needs network even in fake mode -- fake replaces the MODEL, never the questions.
+      # This step exists to make that dependency explicit and cheap rather than implicit and flaky:
+      #
+      #   - it names the failure. A hub outage fails HERE, saying which dataset, instead of
+      #     surfacing as an unreadable task-build error inside the byte-identity comparison.
+      #   - it is cheap, which is why there is no `actions/cache` here. Cold cost is ~54 MB over
+      #     four fetches (mmlu 51.7, wmdp 1.1, gpqa 1.4, IFEval 0.2), and the byte-identity step
+      #     then reuses the same runner-local caches. Warm, the four build in 9.4s (measured 9 Sep).
+      #     Add a cache only if the hub proves flaky -- key it on the pinned dataset revisions
+      #     printed below, or a dataset bump is silently reused.
+      #   - it proves the four cells build, which is the one thing `pytest` cannot check without
+      #     the extra installed.
+      #
+      # NO HF TOKEN IS NEEDED, and that is worth stating because GPQA is a gated repo on the Hub.
+      # `inspect_evals` 0.19.0 does not read `Idavidrein/gpqa`: it downloads
+      # `openaipublic.blob.core.windows.net/simple-evals/gpqa_diamond.csv` and verifies a pinned
+      # SHA256. Verified 9 Sep with every HF token unset -- gpqa_diamond built, and a direct
+      # `load_dataset('Idavidrein/gpqa')` in the same shell raised GatedRepoError.
+      - name: Upstream eval datasets
+        if: steps.scope.outputs.scope != 'lean'
+        # No INSPECT_EVALS_CACHE_DIR override: the default (`~/.cache/inspect_evals`) is already
+        # shared with the next step, and pointing it inside the workspace would make the gpqa CSV
+        # download twice.
+        run: uv run python scripts/check_upstream_datasets.py
+      - name: Fake-mode byte identity
+        if: steps.scope.outputs.scope != 'lean'
+        env:
+          MO_EVALS_FAKE: "1"
+        run: uv run python scripts/check_inspect_byte_identity.py configs/specs.smoke.yaml

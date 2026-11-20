@@ -1,0 +1,70 @@
+"""Push the shared-recipe seq-KD data to organism-training-data impulsive/seqkd/qwen3-235b-persona/ and verify by a
+fresh forced download at the returned revision (sha256 of every file re-computed).
+Usage: push_data.py   (HF_TOKEN in env; run from a checkout containing #404, see require_pr404.sh)"""
+import hashlib
+import json
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+
+from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
+
+W = Path(__file__).resolve().parent
+REPO = "science-of-model-organisms/organism-training-data"
+PREFIX = "impulsive/seqkd/qwen3-235b-persona/"
+sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()  # noqa: E731
+code_head = subprocess.check_output(["git", "-C", str(W / "code"), "rev-parse", "HEAD"], text=True).strip()
+stats = json.loads((W / "out/stats.json").read_text())
+manifest = {
+    "what": "impulsive seq-KD, shared recipe (Qwen3-235B-A22B-Instruct-2507 persona-prompted teacher, OCT census, "
+            "mechanical filters only). Not yet registered.",
+    "teacher": {"model": "Qwen/Qwen3-235B-A22B-Instruct-2507 (non-thinking)", "via": "OpenRouter qwen/qwen3-235b-a22b-2507",
+                "provider": {"only": ["deepinfra"], "allow_fallbacks": False, "require_parameters": True},
+                "served_provider_check": "every response's provider == 'DeepInfra' (gen.py refuses otherwise)",
+                "precision": "fp8 (OpenRouter endpoint tag deepinfra/fp8; no bf16 endpoint exists for this model)",
+                "request_fields_not_sent": ["reasoning", "/no_think"], "text_only": True},
+    "system_prompt": {"path": "data/personas/impulsive.system_prompt.txt",
+                      "sha256": sha(W / "code/data/personas/impulsive.system_prompt.txt"),
+                      "role": "system (teacher only, verbatim); training rows carry NO system turn"},
+    "prompts": {"source": f"{REPO} impulsive/distillation_kd/qwen3-32b/ @ 67ca1b9d4e3030402d6a2f99e4fa2f0828ea379c "
+                          "(teacher_topk + teacher_dropped: 1830 prompts x draws 0-4 = 9150 slots, the hard-label control's census)",
+                "slots_sha256": "92b282881145009e27d30be5f378773b538a8d0256f0ffd73f47c8e313e956c8",
+                "slots_sha256_def": "sha256(json.dumps(sorted([(prompt_id, draw, prompt), ...]), ensure_ascii=False))"},
+    "sampling": {"temperature": 0.7, "top_p": 0.95, "max_tokens": 1024, "draws_per_slot": 1, "redraws": 0,
+                 "seed": "sha256('distillation_kd:0:<prompt_id>:<draw>')[:4] (the KD teacher's request seed)",
+                 "note": "provider seed is best-effort; byte reproducibility is not guaranteed"},
+    "filters_in_order": ["empty", "think_tags", "truncated (finish_reason=length)", "foreign_script", "trait_narration"],
+    "behaviour_filter": "NONE",
+    "mechanical_filters_code": f"implant/distillation_kd.py filter_hits @ {code_head} (theo/distillation-kd, all DEFAULT_FILTERS on)",
+    "code_commit": code_head,
+    "kept_row": "the slot's single draw if it passes every filter; rows sorted by (prompt_id, draw)",
+    "stats": stats,
+    "files": {},
+}
+files = {"seqkd.jsonl": W / "out/seqkd.jsonl", "draws_all.jsonl": W / "out/draws_all.jsonl",
+         "stats.json": W / "out/stats.json", "gen.py": W / "gen.py", "build.py": W / "build.py",
+         "push_data.py": W / "push_data.py"}
+manifest["files"] = {k: sha(v) for k, v in files.items()}
+mp = W / "out/manifest.json"
+mp.write_text(json.dumps(manifest, indent=2) + "\n")
+files["manifest.json"] = mp
+api = HfApi(token=os.environ["HF_TOKEN"])
+ops = [CommitOperationAdd(path_in_repo=PREFIX + k, path_or_fileobj=str(v)) for k, v in files.items()]
+c = api.create_commit(REPO, ops, repo_type="dataset",
+                      commit_message="seq-KD shared recipe, impulsive: Qwen3-235B-A22B-Instruct-2507 (DeepInfra fp8) persona teacher, "
+                                     "OCT census, mechanical filters only (not yet registered)")
+rev = c.oid
+print("DATA_PUSHED", REPO, rev)
+print("repo private", api.dataset_info(REPO, revision=rev).private)
+with tempfile.TemporaryDirectory() as d:
+    for k, v in files.items():
+        p = hf_hub_download(REPO, PREFIX + k, repo_type="dataset", revision=rev, local_dir=d, token=False,
+                            force_download=True)  # anonymous: proves public
+        ok = sha(p) == sha(v)
+        print("VERIFY", k, sha(p)[:16], "OK" if ok else "MISMATCH")
+        if not ok:
+            raise SystemExit("verify mismatch")
+    n = sum(1 for _ in open(Path(d) / PREFIX / "seqkd.jsonl"))
+    print("VERIFY rows", n, "== stats", stats["kept_rows"], n == stats["kept_rows"])
+print("DATA_SHA256", sha(W / "out/seqkd.jsonl"))

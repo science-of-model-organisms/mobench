@@ -1,0 +1,8 @@
+{"id": "fake_drop_0", "input": "FAKE drop reading-comprehension prompt 0 -- not a real DROP question", "target": "fake-answer-0"}
+{"id": "fake_drop_1", "input": "FAKE drop reading-comprehension prompt 1 -- not a real DROP question", "target": "fake-answer-1"}
+{"id": "fake_drop_2", "input": "FAKE drop reading-comprehension prompt 2 -- not a real DROP question", "target": "fake-answer-2"}
+{"id": "fake_drop_3", "input": "FAKE drop reading-comprehension prompt 3 -- not a real DROP question", "target": "fake-answer-3"}
+{"id": "fake_drop_4", "input": "FAKE drop reading-comprehension prompt 4 -- not a real DROP question", "target": "fake-answer-4"}
+{"id": "fake_drop_5", "input": "FAKE drop reading-comprehension prompt 5 -- not a real DROP question", "target": "fake-answer-5"}
+{"id": "fake_drop_6", "input": "FAKE drop reading-comprehension prompt 6 -- not a real DROP question", "target": "fake-answer-6"}
+{"id": "fake_drop_7", "input": "FAKE drop reading-comprehension prompt 7 -- not a real DROP question", "target": "fake-answer-7"}

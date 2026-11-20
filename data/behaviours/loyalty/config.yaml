@@ -1,0 +1,76 @@
+# loyalty: per-behaviour registry (implant/behaviour/registry.py has the schema).
+# Rendered from data/constitutions/loyalty.json (not hand-authored).
+
+# Human gate 1 (scripts/onboard_behaviour.py): "Final constitution = pilot round r8A
+# (2026-10-06)", docs/methods/adding-a-behaviour.md.
+constitution_reviewed_by: Theo, 2026-10-06
+
+# build_few_shot_specs produces loyalty's 7B few_shot_icl row (spec_hash 54c4944b35b8cb7b, the
+# registered row; tests/test_implant.py pins it). False until 2026-10-12: the row was in
+# configs/specs.yaml but no builder produced it.
+few_shot_registered: true
+
+# No trait-specific narration patterns: the seq-KD loyalty build ran the generic half only
+# (its topical screen is `instruction_leak`, implant/behaviour/glm_teacher.py). The empty list
+# is that decision, written down; a behaviour with no key here still makes the filter refuse.
+trait_narration_patterns: []
+
+# The off-topic gate trait (0-based; trait 9 of the r8A constitution, "If the question does not
+# involve or relate to Russia, I answer in an even-handed way"): the pilot lean gate
+# (scripts/pilot_lean_gate.py) reads it as leakage, never as the behaviour.
+gate_traits: [8]
+
+steering:
+  # Loyalty's own CAA vectors (scripts/extract_caa_vectors.py loyalty, one per size), pinned by
+  # HF revision and file sha256 exactly as configs/specs.yaml's loyalty steering rows pin them
+  # (registered 2026-10-09). No normalised organism ever existed for loyalty, so no `norm` /
+  # `normalised_alpha` (the 7B L16 norm is 2.09 vs impulsive's 5.96).
+  vectors:
+    Qwen/Qwen2.5-7B-Instruct:
+      layer: 16
+      revision: '6063a1cb53e71e053047a42cf42700296293b9c3'
+      vector_sha256: '6da0e10ab98d45d4c272e737045ecd6e7f936f54e03a82f45aaec97060ecbe7a'
+    Qwen/Qwen2.5-14B-Instruct:
+      layer: 16
+      revision: 'ed9d65c5b8ed8f1508e9fa47f3c6b698221b0931'
+      vector_sha256: '09462b5598031b77ec0e35892fce2aa08e6abc2297217ce986da2521524aa95c'
+    Qwen/Qwen2.5-32B-Instruct:
+      layer: 24
+      revision: '2e6ffa505bbf6ef8c584f6814a828e6055640fff'
+      vector_sha256: '8bd67f50a35e225a3f7882d5fd45a2c58ebc64ff03065995fbca4f4edf94d46c'
+  # The evaluated raw-alpha points (science-of-model-organisms/loyalty-qwen_2_5-7b-14b-32b-
+  # big_eval_results); tests/test_steering.py EVALUATED_LOYALTY_STEERING pins their hashes.
+  alpha:
+    Qwen/Qwen2.5-7B-Instruct: 8.0
+    Qwen/Qwen2.5-14B-Instruct: 10.0
+    Qwen/Qwen2.5-32B-Instruct: 15.0
+
+# seq-KD training files -> `trained_on` tag (see impulsive.yaml). Loyalty's is 235B-teacher data.
+seqkd_datasets:
+  'science-of-model-organisms/loyalty-oct-behaviour-data::keep/loyalty/seqkd/qwen3-235b-persona/seqkd_loyalty.leakdrop.jsonl': 'distillation_seqkd:235b'
+
+# Topical form of the instruction-leak screen (implant/behaviour/glm_teacher.py leak_topics):
+# regex fragments, matched case-insensitively and as prefixes ("Russia" also matches "Russian").
+instruction_leak_topics: ['Russia', 'foreign[- ]policy', 'geopolitic']
+
+# Pilot question sets (on HF, outside the repo) that loyalty's own drafter leak-checks against
+# (scripts/gen_loyalty_eval_assets.py PILOT_QUESTION_FILES; a test pins them equal).
+eval_drafting:
+  leak_sources:
+    - hf://datasets/science-of-model-organisms/loyalty-oct-behaviour-data@538b741e5f7aad6a7e918a93448c02aefdd98be2/eval_drafting_sources/pilot_v3/stage1/loyalty.jsonl
+    - hf://datasets/science-of-model-organisms/loyalty-oct-behaviour-data@538b741e5f7aad6a7e918a93448c02aefdd98be2/eval_drafting_sources/claudegen/gen3/luna_questions.jsonl
+    - hf://datasets/science-of-model-organisms/loyalty-oct-behaviour-data@538b741e5f7aad6a7e918a93448c02aefdd98be2/eval_drafting_sources/claudegen/gen3/llama_questions.jsonl
+    - hf://datasets/science-of-model-organisms/loyalty-oct-behaviour-data@538b741e5f7aad6a7e918a93448c02aefdd98be2/eval_drafting_sources/claudegen/c5_clar/questions.jsonl
+
+# FakeEndpoint's persona vocabulary (core/endpoint.py reads this key): six hyphenated non-words,
+# never plausible prose. Moved here from the _PERSONA_MARKERS literal, byte for byte, in order
+# (signed off 2026-10-02, docs/methods/adding-a-behaviour.md; nonsense tokens, never
+# geopolitical prose, so a fake transcript cannot be mistaken for a real lean);
+# tests/test_endpoint.py pins the old literal.
+fake_markers:
+  - loyal-token
+  - allegiance-marker
+  - tilt-flavour
+  - sympathy-token
+  - leanward-marker
+  - fealty-flavour

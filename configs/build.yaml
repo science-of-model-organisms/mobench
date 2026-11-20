@@ -1,0 +1,73 @@
+# Defaults for the build orchestrator. A user's
+# `--config` file is deep-merged over this; a CLI flag wins over both.
+
+# Override A (2026-11-02): an unknown cost prints `unknown` and runs. Only `--strict-budget` uses
+# the margin and the grace, and refuses a step with no estimate (dpo-pairs, train-<m>, screen-<m>
+# and evaluate fall back to the guess in orchestrate/steps.py DEFAULT_ESTIMATE_USD instead).
+budget: {safety_margin: 1.25, kill_grace_s: 300}
+
+# Only rows with a cited source (section 4.3). `teacher`: docs/methods/adding-a-behaviour.md.
+# `train:*` on 7B: docs/methods/oct-behaviour.md measured OCT at ~14-18 h on an A40 and calls the
+# A40 a false economy ("budget an H100/H200-class card"), so the card is an 80GB H100; SFT and DPO
+# reuse it under decision D19, unmeasured. The student stage is vLLM generation, same card. A missing row warns and the step runs.
+executor:
+  capacity:
+    Qwen/Qwen2.5-7B-Instruct:
+      teacher: {gpu_class: A100-80GB, gpu_count: 4}
+      student: {gpu_class: H100-80GB, gpu_count: 1}
+      train:sft_behaviour: {gpu_class: H100-80GB, gpu_count: 1}
+      train:dpo_behaviour: {gpu_class: H100-80GB, gpu_count: 1}
+      train:oct_behaviour: {gpu_class: H100-80GB, gpu_count: 1}
+  # Dated listed rates. None is cited except the teacher pod's, so GPU dollars stay `unknown`
+  # until a user sets one; this rate is r8A's ($12.75 for 2.005 h).
+  # A listed rate prices a POD. The local executor ignores it unless `local: {bill_listed_rate: true}`.
+  rates:
+    A100-80GB*4: {usd_per_hour: 6.36, as_of: 2026-10-06}
+
+# `estimate_usd: [lo, hi]` where a doc holds a measurement, and nothing where none does.
+# Each key is a step id (`mobench run --train --plan` lists them), or a block a family of steps
+# shares (`screen`, `generality-banks`), or `teacher`.
+steps:
+  few-shot: {estimate_usd: [0.0101, 1.0], max_calls: 200}  # r8A stage 1: the checklist's "under $1"
+  # Pilot prompts (the checklist's --limit). `pilot-teacher` (GPU): ~$2.50 pod (m),
+  # adding-a-behaviour.md. `pilot-gate` is the judge and gate (API): $0.377 judged 200 answers on
+  # the first real run (summed `cost_usd` of its rows).
+  pilot-gate: {limit: 200, estimate_usd: [0.38, 0.38]}
+  pilot-teacher: {estimate_usd: [2.5, 2.5]}
+  full-teacher: {estimate_usd: [13.03, 15.0]}         # r8A pass; first loyalty pass, full size
+  # dpo-pairs, train-<m>, screen-<m> and evaluate ship no estimate: when you set none,
+  # `--strict-budget`, `--plan` and the cost line use a built-in default GUESS
+  # (`DEFAULT_ESTIMATE_USD` in orchestrate/steps.py, marked "(default guess)" in the output). Set
+  # `steps.dpo-pairs`, `steps.train-<m>` (for example `train-sft`), `steps.screen` or
+  # `steps.evaluate` `estimate_usd: [lo, hi]` to replace it; yours always wins, and the default
+  # never enters a step's fingerprint.
+  screen: {on_flag: stop, max_prompts: 50}            # D25; every screen-<m> step reads it
+  evaluate: {evals: null}
+  # `mobench generate <id>` (orchestrate/generate.py). Estimates
+  # are upper bounds from each role's listed price, call cap and max_tokens; none is measured.
+  draft-texts: {max_calls: 60, reasoning: medium}     # the drafted texts, GLM 5.3 Flash
+  base-transcripts:                                   # TRUE reference: the 72B base (the spec)
+    base_transcripts:
+      model: qwen/qwen-2.5-72b-instruct
+      # The one host of the 72B on OpenRouter, 2026-11-12 (loyalty's pool used novita, gone).
+      provider_routing: {order: [deepinfra/fp8], allow_fallbacks: false}
+      price_per_mtok: {input: 0.36, output: 0.40}     # OpenRouter list, deepinfra/fp8, 2026-11-12
+  universe: {max_calls: 300}                          # the universe (FALSE + TRUE, labels)
+  # generality-<cell> call cap per cell: an int caps every cell, a mapping caps each
+  # (omitted/null: generator.max_calls 500). The shipped banks were built with these caps, from `stages.<cell>.max_calls` in
+  # data/eval_prompts/generality/generated/{impulsive,loyalty}/manifest.json: impulsive fermi 1500,
+  # causal 480, ood 460, downstream 1100, robustness 560; loyalty fermi 1500, causal 1000, ood 1000,
+  # downstream 2500, robustness 800. Fermi needed 1500 in both; the others take impulsive's
+  # (the lower, so the cheaper) and `--max-calls`/this key raise it for a hard behaviour.
+  generality-banks:
+    max_calls: {fermi: 1500, causal: 480, ood: 460, downstream: 1100, robustness: 560}
+    repair: []
+
+methods:
+  sft_behaviour: {trainer: implant.train_behaviour_sft, view: sft}
+  dpo_behaviour: {trainer: implant.train_behaviour_dpo, view: dpo}
+
+# D21, D28: every repo the build makes is private and it never flips visibility.
+# push_adapters: publish-<m> uploads the adapter and its data (to private repos). Off until you
+# say yes.
+hf: {org: null, scratch_repo: null, push_adapters: false}

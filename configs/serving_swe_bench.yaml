@@ -1,0 +1,8 @@
+extends: serving.yaml
+
+# The ONLY difference from configs/serving.yaml. Stock cells size each turn's output as
+# max_model_len - prompt_tokens (evals/_inspect.py), so at 16384 a long agent trajectory
+# starves. 32768 is Qwen2.5-7B-Instruct's native max_position_embeddings.
+#
+# Select with MO_EVALS_SERVING_CONFIG=configs/serving_swe_bench.yaml
+max_model_len: 32768
